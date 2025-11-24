@@ -1,0 +1,404 @@
+.dishes-container {
+  direction: rtl;
+  padding: 1rem;
+
+  .header-section {
+    .p-selectbutton {
+      .p-button {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+
+        .pi {
+          margin-left: 0.5rem;
+          margin-right: 0;
+        }
+      }
+    }
+  }
+
+  .toolbar-section {
+    .p-input-icon-left {
+      .pi-search {
+        right: 0.75rem;
+        left: auto;
+      }
+    }
+
+    .p-multiselect {
+      min-width: 200px;
+      text-align: right;
+
+      .p-multiselect-label {
+        text-align: right;
+      }
+    }
+  }
+
+  /* =====================================
+     TABLE SECTION
+     ===================================== */
+  .table-section {
+    .p-datatable {
+      .p-datatable-header {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-bottom: 0;
+        padding: 1rem;
+      }
+
+      th {
+        text-align: right;
+        background: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+        border-color: #dee2e6;
+
+        .p-sortable-column-icon {
+          margin-right: 0.5rem;
+          margin-left: 0;
+        }
+      }
+
+      td {
+        text-align: right;
+        border-color: #dee2e6;
+
+        .p-tag {
+          margin-left: 0.25rem;
+          margin-right: 0;
+        }
+
+        .p-badge {
+          margin-left: 0.5rem;
+          margin-right: 0;
+        }
+      }
+    }
+  }
+
+  /* =====================================
+     CARDS SECTION
+     ===================================== */
+  .cards-section {
+    .p-card {
+      height: 100%;
+      transition: all 0.3s ease;
+      border: 1px solid #e9ecef;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 25px rgba(0,0,0,0.15);
+      }
+
+      .dish-image-header {
+        height: 180px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-size: cover;
+        background-position: center;
+        position: relative;
+
+        &.default-image {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          &::before {
+            content: '\e902';
+            font-family: 'PrimeIcons';
+            font-size: 3rem;
+            color: white;
+            opacity: 0.7;
+          }
+        }
+
+        .image-overlay {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+        }
+      }
+
+      .dish-details {
+        .ingredients-summary {
+          background: #f8f9fa;
+          padding: 0.5rem;
+          border-radius: 4px;
+          border-right: 3px solid #007bff;
+        }
+      }
+
+      .p-card-footer {
+        .p-button.flex-1 {
+          flex: 1;
+        }
+      }
+    }
+  }
+
+  /* =====================================
+     EVENT SELECTION
+     ===================================== */
+  .event-selection-section {
+    .p-splitter {
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+
+      .p-splitter-panel:first-child {
+        border-left: 1px solid #dee2e6;
+      }
+    }
+
+    .dish-item {
+      transition: all 0.2s ease;
+      cursor: pointer;
+
+      &:hover {
+        background: #f8f9fa;
+        transform: translateX(-2px);
+      }
+
+      .p-tag {
+        margin-left: 0.25rem;
+        margin-right: 0;
+      }
+    }
+
+    .selected-dishes-list {
+      .selected-dish-item {
+        transition: all 0.2s ease;
+
+        &:hover {
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .p-inputnumber {
+          width: 80px;
+
+          input {
+            text-align: center;
+          }
+        }
+      }
+    }
+  }
+
+  /* =====================================
+     DIALOGS
+     ===================================== */
+  .p-dialog {
+    .p-dialog-header {
+      background: #f8f9fa;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .p-fieldset {
+      .p-fieldset-legend {
+        background: #fff;
+        border: 1px solid #007bff;
+        color: #007bff;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+      }
+
+      .p-fieldset-content {
+        padding: 1rem;
+      }
+    }
+
+    .ingredient-item,
+    .equipment-item {
+      background: #f8f9fa;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #e9ecef;
+      }
+    }
+  }
+
+  /* SHOPPING LIST */
+  .p-dialog .p-datatable {
+    .p-datatable-caption {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-bottom: 0;
+      padding: 1rem;
+      text-align: right;
+    }
+
+    .p-datatable-footer tr td {
+      background: #f8f9fa;
+      font-weight: 600;
+      border-top: 2px solid #007bff;
+    }
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .toolbar-section .flex {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: stretch;
+    }
+
+    .p-dialog {
+      width: 95vw !important;
+      margin: 1rem;
+    }
+
+    .event-selection-section .p-splitter {
+      height: auto !important;
+
+      .p-splitter-panel {
+        min-height: 400px;
+      }
+    }
+  }
+
+  /* ANIMATIONS */
+  .fade-in {
+    animation: fadeIn 0.3s ease-in;
+  }
+
+  .slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* RTL FIXES */
+.p-input-icon-left > i:first-of-type {
+  right: 0.75rem;
+  left: auto;
+}
+
+.p-button .pi {
+  margin-left: 0.25rem;
+  margin-right: 0;
+}
+
+.p-badge {
+  margin-left: 0.25rem;
+  margin-right: 0;
+}
+
+.p-multiselect-token {
+  margin-left: 0.25rem;
+  margin-right: 0;
+}
+
+.p-datatable .p-row-toggler {
+  margin-left: 0.25rem;
+  margin-right: 0;
+}
+
+/* =====================================
+   INGREDIENTS DIALOG
+   ===================================== */
+.dish-ingredients-dialog {
+  .p-dialog-content {
+    padding: 1.5rem;
+  }
+
+  .dish-ingredients-content {
+    .ingredient-row {
+      transition: all 0.15s ease;
+      background: var(--surface-ground);
+
+      &:hover {
+        background: var(--surface-hover);
+        border-color: var(--primary-color);
+      }
+
+      .grid {
+        align-items: end;
+      }
+
+      .p-button {
+        height: 2.5rem;
+      }
+    }
+
+    .ingredients-container {
+      max-height: 40vh;
+      overflow-y: auto;
+      padding-right: 0.25rem;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: var(--surface-ground);
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: var(--surface-border);
+        border-radius: 3px;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .dish-ingredients-dialog {
+    .p-dialog {
+      width: 95vw !important;
+      margin: 1rem;
+    }
+
+    .ingredient-row .grid > div {
+      padding: 0.25rem;
+    }
+  }
+}
+
+/* =====================================
+   GLOBAL P-TAG OUTLINE STYLE (NEW)
+   ===================================== */
+.p-tag {
+  background: #fff !important;
+  border-width: 2px !important;
+  border-style: solid !important;
+  font-weight: 600;
+
+  &.p-tag-info {
+    border-color: #0dcaf0 !important;
+    color: #0dcaf0 !important;
+  }
+
+  &.p-tag-success {
+    border-color: #198754 !important;
+    color: #198754 !important;
+  }
+
+  &.p-tag-warning {
+    border-color: #ffc107 !important;
+    color: #ffc107 !important;
+  }
+
+  &.p-tag-danger {
+    border-color: #dc3545 !important;
+    color: #dc3545 !important;
+  }
+
+  &.p-tag-primary {
+    border-color: #0d6efd !important;
+    color: #0d6efd !important;
+  }
+}
