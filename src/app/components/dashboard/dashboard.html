@@ -1,0 +1,213 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="dashboard-header mb-4">
+    <div class="flex align-items-center justify-content-between">
+      <div>
+        <h1 class="text-3xl font-bold text-900 mb-2">לוח בקרה</h1>
+        <p class="text-600 m-0">סקירה כללית של המערכת</p>
+      </div>
+      <div class="flex align-items-center gap-2">
+        <p-button 
+          label="רענן נתונים" 
+          icon="pi pi-refresh" 
+          severity="secondary" 
+          [outlined]="true"
+          (onClick)="loadDashboardData()">
+        </p-button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards Row -->
+  <div class="grid mb-4">
+    <div class="col-12 lg:col-3 md:col-6">
+      <p-card class="stat-card h-full">
+        <ng-template pTemplate="content">
+          <div class="flex align-items-center">
+            <div class="stat-icon bg-blue-100 text-blue-600">
+              <i class="pi pi-star text-2xl"></i>
+            </div>
+            <div class="stat-content mr-3">
+              <div class="stat-value text-2xl font-bold text-900">{{ totalDishes }}</div>
+              <div class="stat-label text-600">סה"כ מנות</div>
+            </div>
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-3 md:col-6">
+      <p-card class="stat-card h-full">
+        <ng-template pTemplate="content">
+          <div class="flex align-items-center">
+            <div class="stat-icon bg-green-100 text-green-600">
+              <i class="pi pi-list text-2xl"></i>
+            </div>
+            <div class="stat-content mr-3">
+              <div class="stat-value text-2xl font-bold text-900">{{ totalIngredients }}</div>
+              <div class="stat-label text-600">מרכיבים שונים</div>
+            </div>
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-3 md:col-6">
+      <p-card class="stat-card h-full">
+        <ng-template pTemplate="content">
+          <div class="flex align-items-center">
+            <div class="stat-icon bg-orange-100 text-orange-600">
+              <i class="pi pi-calendar text-2xl"></i>
+            </div>
+            <div class="stat-content mr-3">
+              <div class="stat-value text-2xl font-bold text-900">{{ totalEvents }}</div>
+              <div class="stat-label text-600">אירועים מתוכננים</div>
+            </div>
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
+
+    <div class="col-12 lg:col-3 md:col-6">
+      <p-card class="stat-card h-full">
+        <ng-template pTemplate="content">
+          <div class="flex align-items-center">
+            <div class="stat-icon bg-purple-100 text-purple-600">
+              <i class="pi pi-chart-bar text-2xl"></i>
+            </div>
+            <div class="stat-content mr-3">
+              <div class="stat-value text-2xl font-bold text-900">{{ averageIngredientsPerDish | number:'1.1-1' }}</div>
+              <div class="stat-label text-600">ממוצע מרכיבים למנה</div>
+            </div>
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
+  </div>
+
+  <!-- Charts and Quick Actions Row -->
+  <div class="grid mb-4">
+    <!-- Charts Column -->
+    <div class="col-12 lg:col-8">
+      <div class="grid">
+        <!-- Categories Chart -->
+        <div class="col-12 xl:col-6">
+          <p-card class="chart-card h-full">
+            <ng-template pTemplate="header">
+              <div class="card-header-custom">
+                <h3 class="text-lg font-semibold text-900 m-0">מנות לפי קטגוריה</h3>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="content">
+              <div class="chart-container" style="height: 300px;">
+                <p-chart 
+                  type="doughnut" 
+                  [data]="dishCategoriesData" 
+                  [options]="dishCategoriesOptions"
+                  class="w-full h-full">
+                </p-chart>
+              </div>
+            </ng-template>
+          </p-card>
+        </div>
+
+        <!-- Kosher Types Chart -->
+        <div class="col-12 xl:col-6">
+          <p-card class="chart-card h-full">
+            <ng-template pTemplate="header">
+              <div class="card-header-custom">
+                <h3 class="text-lg font-semibold text-900 m-0">מנות לפי כשרות</h3>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="content">
+              <div class="chart-container" style="height: 300px;">
+                <p-chart 
+                  type="pie" 
+                  [data]="kosherTypesData" 
+                  [options]="kosherTypesOptions"
+                  class="w-full h-full">
+                </p-chart>
+              </div>
+            </ng-template>
+          </p-card>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions Column -->
+    <div class="col-12 lg:col-4">
+      <p-card class="quick-actions-card h-full">
+        <ng-template pTemplate="header">
+          <div class="card-header-custom">
+            <h3 class="text-lg font-semibold text-900 m-0">פעולות מהירות</h3>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="content">
+          <div class="quick-actions-grid">
+            <div 
+              *ngFor="let action of quickActions" 
+              class="quick-action-item mb-3">
+              <p-button 
+                [label]="action.label"
+                [icon]="action.icon"
+                [severity]="action.color"
+                [outlined]="true"
+                [routerLink]="action.route"
+                class="w-full"
+                pRipple>
+              </p-button>
+              <div class="action-description mt-1">
+                <small class="text-500">{{ action.description }}</small>
+              </div>
+            </div>
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="grid">
+    <div class="col-12">
+      <p-card class="activity-card">
+        <ng-template pTemplate="header">
+          <div class="card-header-custom">
+            <h3 class="text-lg font-semibold text-900 m-0">פעילות אחרונה</h3>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="content">
+          <div class="activity-timeline">
+            <div 
+              *ngFor="let activity of recentActivity; let last = last" 
+              class="activity-item"
+              [class.last-item]="last">
+              <div class="activity-marker">
+                <i [class]="getActivityIcon(activity.type)" 
+                   [class.text-success-600]="activity.type === 'dish'"
+                   [class.text-warning-600]="activity.type === 'event'"
+                   [class.text-info-600]="activity.type === 'ingredient'"></i>
+              </div>
+              <div class="activity-content">
+                <div class="activity-main">
+                  <span class="font-medium">{{ activity.action }}</span>
+                  <span class="activity-title mr-1">{{ activity.title }}</span>
+                  <p-tag 
+                    [value]="activity.type === 'dish' ? 'מנה' : activity.type === 'event' ? 'אירוע' : 'מרכיב'" 
+                    [severity]="getActivityColor(activity.type)"
+                    class="text-xs">
+                  </p-tag>
+                </div>
+                <div class="activity-time text-500 text-sm">{{ activity.time }}</div>
+              </div>
+            </div>
+            
+            <div *ngIf="recentActivity.length === 0" class="text-center p-4">
+              <i class="pi pi-info-circle text-4xl text-400 mb-3"></i>
+              <p class="text-500">אין פעילות אחרונה</p>
+            </div>
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
+  </div>
+</div>

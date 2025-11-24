@@ -1,0 +1,137 @@
+.cart-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.stats-container {
+  .stat-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    backdrop-filter: blur(10px);
+  }
+}
+
+.empty-cart {
+  background: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  border-radius: 12px;
+  margin: 2rem 0;
+}
+
+.event-panel {
+  margin-bottom: 1rem;
+  
+  .p-accordion-header {
+    border-radius: 8px !important;
+    
+    &.p-accordion-header-active {
+      background: #e3f2fd !important;
+      border-color: #2196f3 !important;
+    }
+  }
+  
+  .p-accordion-content {
+    border-radius: 0 0 8px 8px !important;
+  }
+}
+
+.dish-item {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+.quantity-controls {
+  background: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+.event-total {
+  border: 2px solid #e3f2fd;
+}
+
+.grand-total {
+  border: 2px solid #2196f3;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+}
+
+.empty-event {
+  background: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.event-details-dialog {
+  .event-info {
+    h3 {
+      color: #2196f3;
+      border-bottom: 2px solid #e3f2fd;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    p {
+      margin-bottom: 0.5rem;
+      
+      strong {
+        color: #333;
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .cart-container {
+    padding: 1rem;
+  }
+  
+  .header-section {
+    padding: 1rem;
+    text-align: center;
+    
+    .stats-container {
+      justify-content: center;
+      gap: 1rem !important;
+    }
+  }
+  
+  .dish-item {
+    .flex {
+      flex-direction: column;
+      align-items: stretch !important;
+      gap: 1rem;
+    }
+  }
+  
+  .quantity-controls {
+    justify-content: space-between;
+  }
+}
+
+// Hebrew RTL support
+[dir="rtl"] {
+  .cart-container {
+    text-align: right;
+  }
+  
+  .stats-container {
+    .stat-item {
+      text-align: center;
+    }
+  }
+}

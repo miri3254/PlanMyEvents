@@ -1,0 +1,510 @@
+.dishes-container {
+  padding: 2rem;
+  direction: rtl;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// Header Section
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 2rem;
+  flex-wrap: wrap;
+
+  .header-content {
+    position: relative;
+    flex: 1;
+
+    .gradient-background {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #ff732d 0%, #E8590C 100%);
+      border-radius: 12px;
+      opacity: 0.1;
+      z-index: -1;
+    }
+
+    .gradient-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0;
+      background: linear-gradient(135deg, #ff732d 0%, #E8590C 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #666;
+      margin: 0.5rem 0 0 0;
+      font-size: 1rem;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+}
+
+// Search & Filter Card
+.search-card {
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-filter-section {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+
+  .search-input-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+
+    .search-icon {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+      z-index: 1;
+    }
+
+    .search-input {
+      width: 100%;
+      padding-right: 40px;
+    }
+  }
+
+  .filter-select {
+    min-width: 200px;
+  }
+}
+
+// Main Content Layout
+.main-content {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: 1fr;
+
+  &.with-cart {
+    grid-template-columns: 1fr 350px;
+  }
+}
+
+// Dishes Grid
+.dishes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.dish-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(255, 115, 45, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .dish-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+
+    .dish-name {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem 0;
+      color: #333;
+    }
+
+    .dish-description {
+      font-size: 0.875rem;
+      color: #666;
+      margin: 0;
+      line-height: 1.4;
+    }
+  }
+
+  .dish-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .dish-detail {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.875rem;
+
+      .detail-label {
+        color: #666;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .dish-card-footer {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: auto;
+
+    .flex-1 {
+      flex: 1;
+    }
+  }
+}
+
+// Kosher Badges
+.kosher-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.kosher-dairy {
+    background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+    color: white;
+  }
+
+  &.kosher-meat {
+    background: linear-gradient(135deg, #ff732d 0%, #E8590C 100%);
+    color: white;
+  }
+
+  &.kosher-parve {
+    background: linear-gradient(135deg, #27AE60 0%, #1E8449 100%);
+    color: white;
+  }
+
+  i {
+    font-size: 1rem;
+  }
+}
+
+// Cart Sidebar
+.cart-sidebar {
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+  max-height: calc(100vh - 4rem);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+
+  .cart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+  }
+
+  .cart-subtitle {
+    color: #666;
+    margin: 0.5rem 0 0 0;
+    font-size: 0.875rem;
+  }
+
+  .empty-cart {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #999;
+  }
+
+  .cart-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .cart-item {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+
+    .cart-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+
+      .cart-item-name {
+        font-weight: 600;
+        margin: 0;
+        color: #333;
+      }
+    }
+
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+
+      .quantity-input {
+        width: 80px;
+        text-align: center;
+      }
+    }
+
+    .cart-item-price {
+      font-size: 0.875rem;
+      color: #666;
+      margin: 0;
+    }
+  }
+
+  .cart-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 1rem 0;
+
+    .total-price {
+      color: #ff732d;
+      font-size: 1.5rem;
+    }
+  }
+
+  .cart-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+// Table View
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+// Dialog Forms
+.dialog-form {
+  padding: 1rem 0;
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    label {
+      font-weight: 600;
+      color: #333;
+      font-size: 0.875rem;
+    }
+
+    &.checkbox-field {
+      flex-direction: row;
+      align-items: center;
+      gap: 0.75rem;
+
+      label {
+        font-weight: 500;
+        margin: 0;
+      }
+    }
+
+    &.full-width {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+
+  p {
+    margin: 0;
+    color: #666;
+  }
+}
+
+// Ingredients List
+.ingredients-list,
+.equipment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ingredient-item,
+.equipment-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+
+  .ingredient-fields,
+  .equipment-fields {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 1rem;
+    align-items: end;
+  }
+
+  .equipment-fields {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+// Shopping List
+.shopping-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: 1rem 0;
+  border-top: 2px solid #e5e7eb;
+  margin-bottom: 1rem;
+
+  .total-price {
+    color: #ff732d;
+    font-size: 1.5rem;
+  }
+}
+
+.dishes-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+// Dialog Footer
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+// Empty Message
+.empty-message {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+  font-size: 1rem;
+}
+
+// Utility Classes
+.w-full {
+  width: 100%;
+}
+
+// Button Overrides
+::ng-deep {
+  .btn-gradient {
+    background: linear-gradient(135deg, #ff732d 0%, #E8590C 100%);
+    border: none;
+    color: white;
+
+    &:hover {
+      background: linear-gradient(135deg, #E8590C 0%, #ff732d 100%);
+    }
+  }
+
+  .cart-btn {
+    border-color: #ff732d;
+    color: #ff732d;
+
+    &:hover {
+      background: rgba(255, 115, 45, 0.1);
+    }
+  }
+
+  .shopping-list-btn {
+    border-color: #27AE60;
+    color: #27AE60;
+
+    &:hover {
+      background: rgba(39, 174, 96, 0.1);
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 1024px) {
+  .main-content.with-cart {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-sidebar {
+    position: relative;
+    top: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .dishes-container {
+    padding: 1rem;
+  }
+
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dishes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ingredient-fields,
+  .equipment-fields {
+    grid-template-columns: 1fr !important;
+  }
+
+  .search-filter-section {
+    flex-direction: column;
+
+    .search-input-wrapper,
+    .filter-select {
+      width: 100%;
+    }
+  }
+}
