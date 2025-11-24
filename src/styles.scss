@@ -1,1 +1,292 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global Styles - PlanMyEvents */
+
+/* === Color Variables === */
+:root {
+  /* Primary - Orange gradient theme */
+  --primary: hsl(24, 95%, 53%);
+  --primary-dark: hsl(14, 90%, 48%);
+  --primary-light: hsl(24, 95%, 95%);
+  
+  /* Kosher Type Colors */
+  --kosher-dairy: hsl(210, 100%, 56%);
+  --kosher-meat: hsl(24, 95%, 53%);
+  --kosher-parve: hsl(142, 76%, 48%);
+  
+  /* Backgrounds */
+  --background: hsl(40, 10%, 98%);
+  --card-bg: hsl(0, 0%, 100%);
+  
+  /* Text */
+  --foreground: hsl(20, 14%, 10%);
+  --muted-foreground: hsl(25, 8%, 45%);
+  
+  /* Borders & Shadows */
+  --border: hsl(36, 20%, 88%);
+  --shadow-glow: 0 8px 32px hsla(24, 95%, 53%, 0.15);
+  --shadow-hover: 0 12px 48px hsla(24, 95%, 53%, 0.2);
+}
+
+/* === Reset & Base === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  direction: rtl;
+  text-align: right;
+  font-family: 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 
+               'Helvetica Neue', Arial, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* === Typography === */
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* === Gradient Elements === */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+}
+
+.gradient-card {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.9), 
+    rgba(255, 255, 255, 0.95));
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 115, 45, 0.2);
+  border-radius: 12px;
+  box-shadow: var(--shadow-glow);
+  transition: all 0.3s ease;
+}
+
+.gradient-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* === Kosher Badges === */
+.kosher-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 2px solid;
+  transition: all 0.2s ease;
+}
+
+.kosher-badge-dairy {
+  background: linear-gradient(135deg, 
+    hsla(210, 100%, 56%, 0.15), 
+    hsla(210, 100%, 56%, 0.05));
+  color: var(--kosher-dairy);
+  border-color: hsla(210, 100%, 56%, 0.4);
+  box-shadow: 0 2px 8px hsla(210, 100%, 56%, 0.15);
+}
+
+.kosher-badge-meat {
+  background: linear-gradient(135deg, 
+    hsla(24, 95%, 53%, 0.15), 
+    hsla(24, 95%, 53%, 0.05));
+  color: var(--kosher-meat);
+  border-color: hsla(24, 95%, 53%, 0.4);
+  box-shadow: 0 2px 8px hsla(24, 95%, 53%, 0.15);
+}
+
+.kosher-badge-parve {
+  background: linear-gradient(135deg, 
+    hsla(142, 76%, 48%, 0.15), 
+    hsla(142, 76%, 48%, 0.05));
+  color: var(--kosher-parve);
+  border-color: hsla(142, 76%, 48%, 0.4);
+  box-shadow: 0 2px 8px hsla(142, 76%, 48%, 0.15);
+}
+
+/* === Inventory Status Badges === */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.status-in-stock {
+  background: hsla(142, 76%, 48%, 0.1);
+  color: hsl(142, 76%, 36%);
+  border: 1px solid hsla(142, 76%, 48%, 0.3);
+}
+
+.status-low-stock {
+  background: hsla(45, 100%, 51%, 0.1);
+  color: hsl(45, 100%, 40%);
+  border: 1px solid hsla(45, 100%, 51%, 0.3);
+}
+
+.status-out-of-stock {
+  background: hsla(0, 84%, 60%, 0.1);
+  color: hsl(0, 84%, 50%);
+  border: 1px solid hsla(0, 84%, 60%, 0.3);
+}
+
+/* === Buttons === */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-glow);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* === Cards === */
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* === PrimeNG RTL Adjustments === */
+.p-component {
+  direction: rtl;
+  font-family: inherit;
+}
+
+.p-inputtext,
+.p-inputnumber-input,
+.p-dropdown,
+.p-multiselect {
+  text-align: right;
+}
+
+.p-button-icon-left {
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+.p-button-icon-right {
+  margin-right: 0.5rem;
+  margin-left: 0;
+}
+
+.p-dialog .p-dialog-footer {
+  direction: rtl;
+}
+
+.p-toast {
+  direction: rtl;
+  
+  .p-toast-message {
+    direction: rtl;
+  }
+}
+
+.p-datatable {
+  direction: rtl;
+  
+  .p-datatable-thead > tr > th {
+    text-align: right;
+  }
+  
+  .p-datatable-tbody > tr > td {
+    text-align: right;
+  }
+}
+
+/* === Utility Classes === */
+.text-center {
+  text-align: center;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.p-2 {
+  padding: 0.5rem;
+}
+
+.p-4 {
+  padding: 1rem;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+  
+  .card {
+    padding: 15px;
+  }
+}

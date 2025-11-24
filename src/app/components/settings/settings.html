@@ -1,0 +1,464 @@
+<div class="settings-container p-4">
+  <div class="flex align-items-center justify-content-between mb-4">
+    <h1 class="text-3xl font-bold text-900">הגדרות מערכת</h1>
+    <div class="flex gap-2">
+      <p-button 
+        label="שמור הגדרות" 
+        icon="pi pi-save" 
+        (onClick)="saveSettings()"
+        severity="success">
+      </p-button>
+      <p-button 
+        label="איפוס" 
+        icon="pi pi-refresh" 
+        (onClick)="resetToDefaults()"
+        severity="secondary"
+        [outlined]="true">
+      </p-button>
+    </div>
+  </div>
+
+  <div class="settings-sections">
+    <!-- General Settings Section -->
+    <p-card styleClass="mb-4">
+      <ng-template pTemplate="header">
+        <div class="flex align-items-center p-3">
+          <i class="pi pi-cog mr-2 text-primary"></i>
+          <span class="font-bold text-lg">הגדרות כלליות</span>
+        </div>
+      </ng-template>
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <p-card header="הגדרות בסיסיות" styleClass="h-full">
+            <div class="flex flex-column gap-4">
+              <p-floatlabel>
+                <input pInputText 
+                       id="app-name" 
+                       [(ngModel)]="settings.general.appName" 
+                       class="w-full" />
+                <label for="app-name">שם האפליקציה</label>
+              </p-floatlabel>
+
+              <p-floatlabel>
+                <p-inputNumber 
+                  id="default-participants"
+                  [(ngModel)]="settings.general.defaultParticipants"
+                  [min]="1"
+                  [max]="1000"
+                  class="w-full">
+                </p-inputNumber>
+                <label for="default-participants">מספר משתתפים ברירת מחדל</label>
+              </p-floatlabel>
+
+              <p-floatlabel>
+                <p-select 
+                  id="currency"
+                  [options]="currencyOptions"
+                  [(ngModel)]="settings.general.currency"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full">
+                </p-select>
+                <label for="currency">מטבע</label>
+              </p-floatlabel>
+            </div>
+          </p-card>
+        </div>
+
+        <div class="col-12 md:col-6">
+          <p-card header="מראה ותחושה" styleClass="h-full">
+            <div class="flex flex-column gap-4">
+              <p-floatlabel>
+                <p-select 
+                  id="language"
+                  [options]="languageOptions"
+                  [(ngModel)]="settings.general.language"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full">
+                </p-select>
+                <label for="language">שפה</label>
+              </p-floatlabel>
+
+              <p-floatlabel>
+                <p-select 
+                  id="theme"
+                  [options]="themeOptions"
+                  [(ngModel)]="settings.general.theme"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full">
+                </p-select>
+                <label for="theme">עיצוב</label>
+              </p-floatlabel>
+            </div>
+          </p-card>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Dishes Settings Section -->
+    <p-card styleClass="mb-4">
+      <ng-template pTemplate="header">
+        <div class="flex align-items-center p-3">
+          <i class="pi pi-star mr-2 text-primary"></i>
+          <span class="font-bold text-lg">הגדרות מנות</span>
+        </div>
+      </ng-template>
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <p-card header="ברירות מחדל למנות" styleClass="h-full">
+            <div class="flex flex-column gap-4">
+              <p-floatlabel>
+                <p-inputNumber 
+                  id="default-serving"
+                  [(ngModel)]="settings.dishes.defaultServingSize"
+                  [min]="1"
+                  [max]="100"
+                  class="w-full">
+                </p-inputNumber>
+                <label for="default-serving">מספר מנות ברירת מחדל</label>
+              </p-floatlabel>
+
+              <p-floatlabel>
+                <p-select 
+                  id="default-category"
+                  [options]="dishCategories"
+                  [(ngModel)]="settings.dishes.defaultCategory"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full">
+                </p-select>
+                <label for="default-category">קטגוריה ברירת מחדל</label>
+              </p-floatlabel>
+
+              <p-floatlabel>
+                <p-select 
+                  id="default-kosher"
+                  [options]="kosherTypes"
+                  [(ngModel)]="settings.dishes.defaultKosherType"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full">
+                </p-select>
+                <label for="default-kosher">כשרות ברירת מחדל</label>
+              </p-floatlabel>
+            </div>
+          </p-card>
+        </div>
+
+        <div class="col-12 md:col-6">
+          <p-card header="הגדרות תצוגה" styleClass="h-full">
+            <div class="flex flex-column gap-4">
+              <div class="flex align-items-center">
+                <p-checkbox 
+                  id="show-prices"
+                  [(ngModel)]="settings.dishes.showPricesInCards"
+                  binary="true">
+                </p-checkbox>
+                <label for="show-prices" class="mr-2">הצג מחירים בכרטיסים</label>
+              </div>
+
+              <div class="flex align-items-center">
+                <p-checkbox 
+                  id="show-ingredients-count"
+                  [(ngModel)]="settings.dishes.showIngredientsCount"
+                  binary="true">
+                </p-checkbox>
+                <label for="show-ingredients-count" class="mr-2">הצג מספר מרכיבים</label>
+              </div>
+
+              <div class="flex align-items-center">
+                <p-checkbox 
+                  id="auto-save"
+                  [(ngModel)]="settings.dishes.autoSaveChanges"
+                  binary="true">
+                </p-checkbox>
+                <label for="auto-save" class="mr-2">שמירה אוטומטית</label>
+              </div>
+            </div>
+          </p-card>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Events Settings Section -->
+    <p-card styleClass="mb-4">
+      <ng-template pTemplate="header">
+        <div class="flex align-items-center p-3">
+          <i class="pi pi-calendar mr-2 text-primary"></i>
+          <span class="font-bold text-lg">הגדרות אירועים</span>
+        </div>
+      </ng-template>
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <p-card header="ברירות מחדל לאירועים" styleClass="h-full">
+            <div class="flex flex-column gap-4">
+              <p-floatlabel>
+                <p-select 
+                  id="default-event-type"
+                  [options]="eventTypes"
+                  [(ngModel)]="settings.events.defaultEventType"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full">
+                </p-select>
+                <label for="default-event-type">סוג אירוע ברירת מחדל</label>
+              </p-floatlabel>
+
+              <p-floatlabel>
+                <p-select 
+                  id="default-food-type"
+                  [options]="foodTypes"
+                  [(ngModel)]="settings.events.defaultFoodType"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full">
+                </p-select>
+                <label for="default-food-type">סוג אוכל ברירת מחדל</label>
+              </p-floatlabel>
+
+              <p-floatlabel>
+                <p-inputNumber 
+                  id="max-events"
+                  [(ngModel)]="settings.events.maxEventsHistory"
+                  [min]="10"
+                  [max]="500"
+                  class="w-full">
+                </p-inputNumber>
+                <label for="max-events">מקסימום אירועים בהיסטוריה</label>
+              </p-floatlabel>
+            </div>
+          </p-card>
+        </div>
+
+        <div class="col-12 md:col-6">
+          <p-card header="התנהגות מערכת" styleClass="h-full">
+            <div class="flex flex-column gap-4">
+              <div class="flex align-items-center">
+                <p-checkbox 
+                  id="auto-select-event"
+                  [(ngModel)]="settings.events.autoSelectCurrentEvent"
+                  binary="true">
+                </p-checkbox>
+                <label for="auto-select-event" class="mr-2">בחירת אירוע אוטומטית</label>
+              </div>
+
+              <div class="flex align-items-center">
+                <p-checkbox 
+                  id="show-event-header"
+                  [(ngModel)]="settings.events.showEventInfoInHeader"
+                  binary="true">
+                </p-checkbox>
+                <label for="show-event-header" class="mr-2">הצג מידע אירוע בכותרת</label>
+              </div>
+            </div>
+          </p-card>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Products Settings Section -->
+    <p-card styleClass="mb-4">
+      <ng-template pTemplate="header">
+        <div class="flex align-items-center p-3">
+          <i class="pi pi-box mr-2 text-primary"></i>
+          <span class="font-bold text-lg">הגדרות מוצרים</span>
+        </div>
+      </ng-template>
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <p-card header="ברירות מחדל למוצרים" styleClass="h-full">
+            <div class="flex flex-column gap-4">
+              <p-floatlabel>
+                <p-select 
+                  id="default-view"
+                  [options]="viewOptions"
+                  [(ngModel)]="settings.products.defaultView"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full">
+                </p-select>
+                <label for="default-view">תצוגת ברירת מחדל</label>
+              </p-floatlabel>
+
+              <p-floatlabel>
+                <p-select 
+                  id="default-product-category"
+                  [options]="productCategories"
+                  [(ngModel)]="settings.products.defaultCategory"
+                  optionLabel="label"
+                  optionValue="value"
+                  class="w-full">
+                </p-select>
+                <label for="default-product-category">קטגוריה ברירת מחדל</label>
+              </p-floatlabel>
+
+              <p-floatlabel>
+                <p-inputNumber 
+                  id="low-stock"
+                  [(ngModel)]="settings.products.lowStockThreshold"
+                  [min]="0"
+                  [max]="100"
+                  class="w-full">
+                </p-inputNumber>
+                <label for="low-stock">סף מלאי נמוך</label>
+              </p-floatlabel>
+            </div>
+          </p-card>
+        </div>
+
+        <div class="col-12 md:col-6">
+          <p-card header="הגדרות תצוגה" styleClass="h-full">
+            <div class="flex flex-column gap-4">
+              <div class="flex align-items-center">
+                <p-checkbox 
+                  id="auto-update-prices"
+                  [(ngModel)]="settings.products.autoUpdatePrices"
+                  binary="true">
+                </p-checkbox>
+                <label for="auto-update-prices" class="mr-2">עדכון מחירים אוטומטי</label>
+              </div>
+
+              <div class="flex align-items-center">
+                <p-checkbox 
+                  id="show-supplier"
+                  [(ngModel)]="settings.products.showSupplierInfo"
+                  binary="true">
+                </p-checkbox>
+                <label for="show-supplier" class="mr-2">הצג מידע ספקים</label>
+              </div>
+            </div>
+          </p-card>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Advanced Settings Section -->
+    <p-card styleClass="mb-4">
+      <ng-template pTemplate="header">
+        <div class="flex align-items-center p-3">
+          <i class="pi pi-cogs mr-2 text-primary"></i>
+          <span class="font-bold text-lg">הגדרות מתקדמות</span>
+        </div>
+      </ng-template>
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <p-card header="ביצועים ורישום" styleClass="h-full">
+            <div class="flex flex-column gap-4">
+              <div class="flex align-items-center">
+                <p-checkbox 
+                  id="enable-logging"
+                  [(ngModel)]="settings.advanced.enableLogging"
+                  binary="true">
+                </p-checkbox>
+                <label for="enable-logging" class="mr-2">אפשר רישום פעילות</label>
+              </div>
+
+              <div class="flex align-items-center">
+                <p-checkbox 
+                  id="clear-on-exit"
+                  [(ngModel)]="settings.advanced.clearDataOnExit"
+                  binary="true">
+                </p-checkbox>
+                <label for="clear-on-exit" class="mr-2">נקה נתונים ביציאה</label>
+              </div>
+            </div>
+          </p-card>
+        </div>
+
+        <div class="col-12 md:col-6">
+          <p-card header="גיבוי נתונים" styleClass="h-full">
+            <div class="flex flex-column gap-4">
+              <div class="flex align-items-center">
+                <p-checkbox 
+                  id="auto-backup"
+                  [(ngModel)]="settings.advanced.autoBackup"
+                  binary="true">
+                </p-checkbox>
+                <label for="auto-backup" class="mr-2">גיבוי אוטומטי</label>
+              </div>
+
+              <p-floatlabel>
+                <p-inputNumber 
+                  id="backup-interval"
+                  [(ngModel)]="settings.advanced.backupInterval"
+                  [min]="1"
+                  [max]="30"
+                  suffix=" ימים"
+                  class="w-full">
+                </p-inputNumber>
+                <label for="backup-interval">מרווח גיבוי (בימים)</label>
+              </p-floatlabel>
+            </div>
+          </p-card>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Data Management Section -->
+    <p-card styleClass="mb-4">
+      <ng-template pTemplate="header">
+        <div class="flex align-items-center p-3">
+          <i class="pi pi-database mr-2 text-primary"></i>
+          <span class="font-bold text-lg">ניהול נתונים</span>
+        </div>
+      </ng-template>
+      <div class="grid">
+        <div class="col-12 md:col-6">
+          <p-card header="יבוא ויצוא הגדרות" styleClass="h-full">
+            <div class="flex flex-column gap-3">
+              <p class="text-600">
+                אפשרות לשמור ולשחזר הגדרות מקובץ חיצוני
+              </p>
+              
+              <p-button 
+                label="יצא הגדרות" 
+                icon="pi pi-download"
+                (onClick)="exportSettings()"
+                severity="info"
+                class="w-full">
+              </p-button>
+
+              <div class="flex flex-column gap-2">
+                <label class="font-medium">יבא הגדרות מקובץ:</label>
+                <input 
+                  type="file" 
+                  accept=".json"
+                  (change)="importSettings($event)"
+                  class="p-inputtext w-full" />
+              </div>
+            </div>
+          </p-card>
+        </div>
+
+        <div class="col-12 md:col-6">
+          <p-card header="ניקוי נתונים" styleClass="h-full">
+            <div class="flex flex-column gap-3">
+              <p class="text-600">
+                <i class="pi pi-exclamation-triangle text-orange-500 mr-2"></i>
+                פעולות אלו הן בלתי הפיכות!
+              </p>
+
+              <p-button 
+                label="נקה את כל הנתונים" 
+                icon="pi pi-trash"
+                (onClick)="clearAllData()"
+                severity="danger"
+                [outlined]="true"
+                class="w-full">
+              </p-button>
+
+              <small class="text-500">
+                פעולה זו תמחק את כל המנות, מוצרים ואירועים אך תשאיר את ההגדרות
+              </small>
+            </div>
+          </p-card>
+        </div>
+      </div>
+    </p-card>
+  </div>
+</div>
+
+<!-- Toast Messages -->
+<p-toast position="top-right"></p-toast>

@@ -1,0 +1,14 @@
+:host {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-main {
+  height: calc(100vh - 72px);
+  overflow-y: auto;
+  background: var(--background);
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}

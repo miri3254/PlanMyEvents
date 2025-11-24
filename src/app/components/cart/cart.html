@@ -1,0 +1,406 @@
+<div class="cart-container p-4">
+  <div class="header-section mb-4">
+    <div class="flex align-items-center justify-content-between">
+      <div class="flex align-items-center gap-3">
+        <h1 class="text-3xl font-bold text-900">עגלת קניות</h1>
+        <p-badge 
+          [value]="getTotalEvents()" 
+          severity="info" 
+          *ngIf="getTotalEvents() > 0">
+        </p-badge>
+      </div>
+
+      <div class="flex align-items-center gap-3">
+        <div class="stats-container flex gap-4">
+          <div class="stat-item text-center">
+            <div class="text-2xl font-bold text-primary">{{ getTotalEvents() }}</div>
+            <div class="text-sm text-600">אירועים</div>
+          </div>
+          <div class="stat-item text-center">
+            <div class="text-2xl font-bold text-success">{{ getTotalDishes() }}</div>
+            <div class="text-sm text-600">מנות</div>
+          </div>
+          <div class="stat-item text-center">
+            <div class="text-2xl font-bold text-orange-500">₪{{ getGrandTotal() }}</div>
+            <div class="text-sm text-600">סה"כ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty Cart State -->
+  <div *ngIf="events.length === 0" class="empty-cart text-center py-8">
+    <i class="pi pi-shopping-cart text-6xl text-400 mb-4"></i>
+    <h2 class="text-2xl text-600 mb-3">העגלה ריקה</h2>
+    <p class="text-500 mb-4">טרם נוצרו אירועים. צור אירוע חדש כדי להתחיל לבנות תפריט.</p>
+    <p-button 
+      label="צור אירוע חדש" 
+      icon="pi pi-plus"
+      routerLink="/"
+      severity="success">
+    </p-button>
+  </div>
+
+  <!-- Events List -->
+  <div *ngIf="events.length > 0" class="events-list">
+    <div *ngFor="let event of events" class="event-card mb-4">
+
+      <p-panel 
+        [toggleable]="true"
+        [collapsed]="!isCurrentEvent(event.id)"
+        styleClass="event-panel">
+
+        <!-- Panel Header -->
+        <ng-template pTemplate="header">
+          <div class="flex align-items-center justify-content-between w-full">
+            <div class="flex align-items-center gap-3">
+              <i [class]="getEventTypeIcon(event.eventType)" class="text-xl"></i>
+              <div>
+                <h3 class="m-0 text-lg font-bold">{{ event.name }}</h3>
+                <div class="flex align-items-center gap-2 mt-1">
+                  <span class="text-sm text-600">
+                    <i class="pi pi-users mr-1"></i>{{ event.participants }} משתתפים
+                  </span>
+
+                  <p-tag 
+                    [value]="event.eventType" 
+                    severity="secondary" 
+                    size="small">
+                  </p-tag>
+
+                  <p-tag 
+                    [value]="event.foodType" 
+                    [severity]="getFoodTypeColor(event.foodType)" 
+                    size="small">
+                  </p-tag>
+
+                  <p-badge 
+                    *ngIf="isCurrentEvent(event.id)"
+                    value="פעיל"
+                    severity="success"
+                    size="small">
+                  </p-badge>
+
+                </div>
+              </div>
+            </div>
+
+            <div class="flex align-items-center gap-2">
+              <div class="text-center">
+                <div class="font-bold text-lg">₪{{ getEventTotal(event.id) }}</div>
+                <div class="text-sm text-600">{{ getTotalCartItems(event.id) }} מנות</div>
+              </div>
+
+              <p-badge 
+                [value]="getTotalCartItems(event.id)" 
+                severity="info"
+                *ngIf="getTotalCartItems(event.id) > 0">
+              </p-badge>
+            </div>
+          </div>
+        </ng-template>
+
+        <!-- Panel Content -->
+        <ng-template pTemplate="content">
+          <div class="event-content">
+
+            <!-- Event Actions -->
+            <div class="flex gap-2 mb-4">
+              <p-button 
+                label="צפה בפרטים" 
+                icon="pi pi-eye"
+                severity="info"
+                [outlined]="true"
+                size="small"
+                (onClick)="viewEventDetails(event)">
+              </p-button>
+
+              <p-button 
+                *ngIf="!isCurrentEvent(event.id)"
+                label="הפוך לפעיל" 
+                icon="pi pi-check-circle"
+                severity="success"
+                [outlined]="true"
+                size="small"
+                (onClick)="setCurrentEvent(event.id)">
+              </p-button>
+
+              <p-button 
+                label="נקה תפריט" 
+                icon="pi pi-trash"
+                severity="warn"
+                [outlined]="true"
+                size="small"
+                [disabled]="getTotalCartItems(event.id) === 0"
+                (onClick)="clearEventCart(event.id)">
+              </p-button>
+
+              <p-button 
+                label="מחק אירוע" 
+                icon="pi pi-times"
+                severity="danger"
+                [outlined]="true"
+                size="small"
+                (onClick)="deleteEvent(event)">
+              </p-button>
+            </div>
+
+            <!-- Dishes -->
+            <div class="dishes-section" *ngIf="getCartItemsForEvent(event.id).length > 0">
+              <h4 class="text-lg font-bold mb-3">מנות באירוע</h4>
+
+              <div class="dishes-list">
+                <div 
+                  *ngFor="let item of getCartItemsForEvent(event.id)" 
+                  class="dish-item p-3 border-1 border-200 border-round mb-2 bg-white">
+
+                  <div class="flex align-items-center justify-content-between">
+
+                    <div class="flex-1">
+                      <h5 class="m-0 mb-1 font-bold">{{ item.dishName }}</h5>
+
+                      <ng-container *ngIf="getDishById(item.dishId) as dish">
+                        <p class="m-0 text-600 text-sm mb-2">{{ dish.description }}</p>
+
+                        <div class="flex align-items-center gap-2">
+                          <p-tag 
+                            [value]="dish.category" 
+                            [severity]="getCategorySeverity(dish.category)" 
+                            size="small">
+                          </p-tag>
+
+                          <p-tag 
+                            [value]="dish.kosherType" 
+                            [severity]="getKosherTypeSeverity(dish.kosherType)" 
+                            size="small">
+                          </p-tag>
+
+                          <span class="text-sm text-500">₪{{ dish.estimatedPrice }} למנה</span>
+                        </div>
+                      </ng-container>
+                    </div>
+
+                    <div class="flex align-items-center gap-3">
+
+                      <div class="quantity-controls flex align-items-center gap-2">
+                        <span class="text-sm">כמות:</span>
+
+                        <p-inputNumber
+                          [(ngModel)]="item.quantity"
+                          [min]="0"
+                          [max]="100"
+                          size="small"
+                          [style]="{'width': '80px'}"
+                          (onInput)="updateCartItemQuantity(item, item.quantity)">
+                        </p-inputNumber>
+                      </div>
+
+                      <div class="price-info text-center">
+                        <ng-container *ngIf="getDishById(item.dishId) as dish">
+                          <div class="font-bold">₪{{ dish.estimatedPrice * item.quantity }}</div>
+                          <div class="text-sm text-600">סה"כ</div>
+                        </ng-container>
+                      </div>
+
+                      <p-button 
+                        icon="pi pi-trash" 
+                        severity="danger"
+                        [text]="true"
+                        size="small"
+                        pTooltip="הסר מנה"
+                        (onClick)="removeCartItem(item)">
+                      </p-button>
+
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+
+              <div class="event-total mt-4 p-3 bg-gray-50 border-round">
+                <div class="flex align-items-center justify-content-between">
+                  <span class="font-bold text-lg">סה"כ עבור האירוע:</span>
+                  <span class="font-bold text-xl text-primary">₪{{ getEventTotal(event.id) }}</span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Empty Event -->
+            <div *ngIf="getCartItemsForEvent(event.id).length === 0" class="empty-event text-center py-4">
+              <i class="pi pi-shopping-cart text-3xl text-400 mb-2"></i>
+              <p class="text-500">טרם נבחרו מנות לאירוע זה</p>
+
+              <p-button 
+                label="הוסף מנות" 
+                icon="pi pi-plus"
+                routerLink="/dishes"
+                size="small"
+                (onClick)="setCurrentEvent(event.id)">
+              </p-button>
+            </div>
+
+          </div>
+        </ng-template>
+      </p-panel>
+
+    </div>
+  </div>
+
+  <!-- Grand Total -->
+  <div *ngIf="events.length > 0 && getTotalDishes() > 0" 
+       class="grand-total mt-4 p-4 bg-primary-50 border-round">
+
+    <div class="flex align-items-center justify-content-between">
+      <div class="text-lg font-bold">סה"כ כללי:</div>
+
+      <div class="flex align-items-center gap-4">
+        <div class="text-center">
+          <div class="text-sm text-600">אירועים</div>
+          <div class="font-bold">{{ getTotalEvents() }}</div>
+        </div>
+
+        <div class="text-center">
+          <div class="text-sm text-600">מנות</div>
+          <div class="font-bold">{{ getTotalDishes() }}</div>
+        </div>
+
+        <div class="text-center">
+          <div class="text-sm text-600">סכום</div>
+          <div class="text-2xl font-bold text-primary">₪{{ getGrandTotal() }}</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div> <!-- cart-container end -->
+
+
+<!-- Event Details Dialog -->
+<p-dialog 
+  [(visible)]="showEventDetails" 
+  [header]="'פרטי אירוע - ' + (selectedEvent?.name || '')"
+  [modal]="true" 
+  [style]="{width: '70vw', minHeight: '60vh'}"
+  [maximizable]="true"
+  [closable]="true"
+  styleClass="event-details-dialog">
+
+  <ng-template pTemplate="content" *ngIf="selectedEvent">
+
+    <div class="event-details-content">
+
+      <div class="event-info mb-4 p-3 bg-gray-50 border-round">
+        <div class="grid">
+
+          <div class="col-12 md:col-6">
+            <h3 class="mt-0">פרטי האירוע</h3>
+            <p><strong>שם האירוע:</strong> {{ selectedEvent.name }}</p>
+            <p><strong>סוג האירוע:</strong> {{ selectedEvent.eventType }}</p>
+            <p><strong>סוג האוכל:</strong> {{ selectedEvent.foodType }}</p>
+            <p><strong>מספר משתתפים:</strong> {{ selectedEvent.participants }}</p>
+          </div>
+
+          <div class="col-12 md:col-6">
+            <h3 class="mt-0">סטטיסטיקות</h3>
+            <p><strong>מספר מנות:</strong> {{ selectedEventCart.length }}</p>
+            <p><strong>סה"כ כמות:</strong> {{ getTotalCartItems(selectedEvent.id) }}</p>
+            <p><strong>עלות כוללת:</strong> ₪{{ getEventTotal(selectedEvent.id) }}</p>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="dishes-table" *ngIf="selectedEventCart.length > 0">
+        <h3>מנות האירוע</h3>
+
+        <p-table 
+          [value]="selectedEventCart" 
+          styleClass="p-datatable-sm"
+          [paginator]="selectedEventCart.length > 5"
+          [rows]="5">
+
+          <ng-template pTemplate="header">
+            <tr>
+              <th>שם המנה</th>
+              <th>קטגוריה</th>
+              <th>כשרות</th>
+              <th>מחיר ליחידה</th>
+              <th>כמות</th>
+              <th>סה"כ</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-item>
+            <tr>
+
+              <td>
+                <strong>{{ item.dishName }}</strong>
+                <ng-container *ngIf="getDishById(item.dishId) as dish">
+                  <div class="text-sm text-600">{{ dish.description }}</div>
+                </ng-container>
+              </td>
+
+              <td>
+                <ng-container *ngIf="getDishById(item.dishId) as dish">
+                  <p-tag 
+                    [value]="dish.category" 
+                    [severity]="getCategorySeverity(dish.category)" 
+                    size="small">
+                  </p-tag>
+                </ng-container>
+              </td>
+
+              <td>
+                <ng-container *ngIf="getDishById(item.dishId) as dish">
+                  <p-tag 
+                    [value]="dish.kosherType" 
+                    [severity]="getKosherTypeSeverity(dish.kosherType)" 
+                    size="small">
+                  </p-tag>
+                </ng-container>
+              </td>
+
+              <td>
+                <ng-container *ngIf="getDishById(item.dishId) as dish">
+                  ₪{{ dish.estimatedPrice }}
+                </ng-container>
+              </td>
+
+              <td>{{ item.quantity }}</td>
+
+              <td>
+                <ng-container *ngIf="getDishById(item.dishId) as dish">
+                  <strong>₪{{ dish.estimatedPrice * item.quantity }}</strong>
+                </ng-container>
+              </td>
+
+            </tr>
+          </ng-template>
+
+        </p-table>
+      </div>
+
+    </div>
+
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <p-button 
+      label="סגור" 
+      icon="pi pi-times"
+      (onClick)="closeEventDetails()"
+      severity="secondary">
+    </p-button>
+  </ng-template>
+
+</p-dialog>
+
+<!-- Toast Messages -->
+<p-toast position="top-right"></p-toast>
+
+<!-- Confirmation Dialog -->
+<p-confirmDialog></p-confirmDialog>

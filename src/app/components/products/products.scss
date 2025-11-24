@@ -1,0 +1,26 @@
+// ====================================
+// Products Component - RTL Support Only
+// ====================================
+
+.products-container {
+    direction: rtl;
+    text-align: right;
+    max-width: 80%;
+    width: 100%;
+    padding-top: 50px;
+    margin: 0 auto;
+    box-sizing: border-box;
+
+    // RTL adjustments for icons in search
+    .p-input-icon-left {
+        .pi {
+            right: 0.75rem;
+            left: auto;
+        }
+
+        input {
+            padding-right: 2.5rem;
+            padding-left: 0.75rem;
+        }
+    }
+}
