@@ -4,20 +4,9 @@
 }
 
 .header-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 12px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-}
-
-.stats-container {
-  .stat-item {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 1rem;
-    backdrop-filter: blur(10px);
-  }
+  padding: 1rem 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #f0f0f0;
 }
 
 .empty-cart {
@@ -27,20 +16,39 @@
   margin: 2rem 0;
 }
 
+.event-card {
+  border: 3px solid #764ba2;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(118, 75, 162, 0.15);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  
+  &:hover {
+    box-shadow: 0 4px 16px rgba(118, 75, 162, 0.25);
+    transform: translateY(-2px);
+  }
+}
+
 .event-panel {
   margin-bottom: 1rem;
   
-  .p-accordion-header {
-    border-radius: 8px !important;
-    
-    &.p-accordion-header-active {
-      background: #e3f2fd !important;
-      border-color: #2196f3 !important;
-    }
+  ::ng-deep .p-panel {
+    border: none;
+    box-shadow: none;
   }
   
-  .p-accordion-content {
-    border-radius: 0 0 8px 8px !important;
+  ::ng-deep .p-panel-header {
+    background: white;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    padding: 1.25rem;
+    font-weight: 600;
+  }
+  
+  ::ng-deep .p-panel-content {
+    border: none;
+    border-radius: 0 0 8px 8px;
+    background: white;
   }
 }
 

@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Product } from '../../models/product.model';
+import { EventService } from '../../core/services/event.service';
+import { Product } from '../../core/models';
+import { INVENTORY_STATUS, CATEGORIES } from '../../core/constants/app.constants';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -13,22 +15,16 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
-import { TooltipModule } from 'primeng/tooltip';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { RippleModule } from 'primeng/ripple';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DividerModule } from 'primeng/divider';
-import { FloatLabelModule } from 'primeng/floatlabel';
-
-
-
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-products',
   standalone: true,
   imports: [
     CommonModule,
-    DividerModule,
     FormsModule,
     ButtonModule,
     DialogModule,
@@ -40,38 +36,63 @@ import { FloatLabelModule } from 'primeng/floatlabel';
     ToastModule,
     SelectModule,
     TableModule,
-    TooltipModule,
     SelectButtonModule,
-    RippleModule,
     CheckboxModule,
-    FloatLabelModule
+    DividerModule,
+    TooltipModule
   ],
   templateUrl: './products.html',
   styleUrls: ['./products.scss'],
   providers: [ConfirmationService, MessageService]
 })
 export class ProductsComponent implements OnInit {
+  // Data properties
   products: Product[] = [];
   filteredProducts: Product[] = [];
+  selectedProducts: Product[] = [];
+  
+  // UI state
+  viewMode: 'table' | 'grid' = 'table';
+  searchValue: string = '';
+  filterInventoryStatus: string = '';
   productDialog: boolean = false;
   submitted: boolean = false;
-  product: Product = this.createEmptyProduct();
-  searchValue: string = '';
+  
+  // Sorting state
+  sortField: string = '';
+  sortOrder: 'asc' | 'desc' | '' = '';
+  
+  // Current product being edited/created
+  product: Product = this.getEmptyProduct();
+  
+  // Statistics
+  inventoryStats = {
+    inStock: 0,
+    lowStock: 0,
+    outOfStock: 0
+  };
+  
+  // Dropdown options
+  inventoryStatuses = INVENTORY_STATUS.map(status => ({ 
+    label: status, 
+    value: status 
+  }));
+  
+  categories = CATEGORIES.map(category => ({ 
+    label: category, 
+    value: category 
+  }));
 
-  inventoryStatuses = [
-    { label: 'במלאי', value: 'במלאי' },
-    { label: 'אזל', value: 'אזל' },
-    { label: 'מלאי-נמוך', value: 'מלאי-נמוך' }
+  statusOptions = [
+    { label: 'כל הסטטוסים', value: '' },
+    ...INVENTORY_STATUS.map(status => ({ label: status, value: status }))
   ];
-
-  categories = [
-    { label: 'מוצרי מזון', value: 'מוצרי מזון' },
-    { label: 'משקאות', value: 'משקאות' },
-    { label: 'חטיפים', value: 'חטיפים' },
-    { label: 'מוצרי חלב', value: 'מוצרי חלב' }
-  ];
+  
+  // For inline editing in table
+  clonedProducts: { [s: string]: Product } = {};
 
   constructor(
+    private eventService: EventService,
     private confirmationService: ConfirmationService,
     private messageService: MessageService
   ) {}
@@ -81,62 +102,96 @@ export class ProductsComponent implements OnInit {
   }
 
   loadProducts(): void {
-    // TODO: Replace with actual data service call
-    this.products = [
-      {
-        name: 'לחם אחיד',
-        inventoryStatus: 'במלאי',
-        brand: 'אנגל',
-        packageQuantity: 1,
-        estimatedPrice: 12,
-        category: 'מוצרי מזון',
-        supplier: 'ספק לחמים בע"מ'
-      },
-      {
-        name: 'חלב 3%',
-        inventoryStatus: 'במלאי',
-        brand: 'תנובה',
-        packageQuantity: 1,
-        estimatedPrice: 7,
-        category: 'מוצרי חלב',
-        supplier: 'תנובה בע"מ'
-      },
-      {
-        name: 'ביסלי',
-        inventoryStatus: 'מלאי-נמוך',
-        brand: 'אוסם',
-        packageQuantity: 6,
-        estimatedPrice: 25,
-        category: 'חטיפים',
-        supplier: 'אוסם בע"מ'
-      },
-      {
-        name: 'קוקה קולה',
-        inventoryStatus: 'במלאי',
-        brand: 'קוקה קולה',
-        packageQuantity: 12,
-        estimatedPrice: 45,
-        category: 'משקאות',
-        supplier: 'קוקה קולה ישראל'
-      }
-    ];
-    this.filteredProducts = [...this.products];
+    this.eventService.products$.subscribe(products => {
+      this.products = products;
+      this.calculateStats();
+      this.applyFilters();
+    });
   }
 
-  createEmptyProduct(): Product {
-    return {
-      name: '',
-      inventoryStatus: 'במלאי',
-      brand: '',
-      packageQuantity: 1,
-      estimatedPrice: 0,
-      category: 'מוצרי מזון',
-      supplier: ''
+  calculateStats(): void {
+    this.inventoryStats = {
+      inStock: this.products.filter(p => p.inventoryStatus === 'במלאי').length,
+      lowStock: this.products.filter(p => p.inventoryStatus === 'מלאי-נמוך').length,
+      outOfStock: this.products.filter(p => p.inventoryStatus === 'אזל').length
     };
   }
 
+  setViewMode(mode: 'table' | 'grid'): void {
+    this.viewMode = mode;
+  }
+
+  applyFilters(): void {
+    // First, filter the products
+    this.filteredProducts = this.products.filter(product => {
+      const matchesSearch = !this.searchValue || 
+        product.name.toLowerCase().includes(this.searchValue.toLowerCase()) ||
+        product.brand.toLowerCase().includes(this.searchValue.toLowerCase()) ||
+        product.supplier.toLowerCase().includes(this.searchValue.toLowerCase());
+      
+      const matchesStatus = !this.filterInventoryStatus || 
+        product.inventoryStatus === this.filterInventoryStatus;
+      
+      return matchesSearch && matchesStatus;
+    });
+
+    // Then apply sorting if a sort field is set
+    if (this.sortField && this.sortOrder) {
+      this.filteredProducts.sort((a, b) => {
+        let aValue = (a as any)[this.sortField];
+        let bValue = (b as any)[this.sortField];
+
+        // Handle string comparisons
+        if (typeof aValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+
+        let result = 0;
+        if (aValue < bValue) {
+          result = -1;
+        } else if (aValue > bValue) {
+          result = 1;
+        }
+
+        return this.sortOrder === 'asc' ? result : -result;
+      });
+    } else {
+      // If no sorting, show newest first (by id which is timestamp)
+      this.filteredProducts.sort((a, b) => {
+        const aId = parseInt(a.id) || 0;
+        const bId = parseInt(b.id) || 0;
+        return bId - aId; // Descending order (newest first)
+      });
+    }
+  }
+
+  onSearch(): void {
+    this.applyFilters();
+  }
+
+  clearSearch(): void {
+    this.searchValue = '';
+    this.applyFilters();
+  }
+
+  filterByInventoryStatus(status: string): void {
+    this.filterInventoryStatus = status;
+    this.applyFilters();
+  }
+
+  clearFilters(): void {
+    this.searchValue = '';
+    this.filterInventoryStatus = '';
+    this.applyFilters();
+  }
+
+  toggleView(): void {
+    this.viewMode = this.viewMode === 'table' ? 'grid' : 'table';
+  }
+
   openNew(): void {
-    this.product = this.createEmptyProduct();
+    this.product = this.getEmptyProduct();
     this.submitted = false;
     this.productDialog = true;
   }
@@ -148,18 +203,40 @@ export class ProductsComponent implements OnInit {
 
   deleteProduct(product: Product): void {
     this.confirmationService.confirm({
-      message: `האם אתה בטוח שברצונך למחוק את המוצר "${product.name}"?`,
+      message: `האם אתה בטוח שברצונך למחוק את ${product.name}?`,
       header: 'אישור מחיקה',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'כן',
       rejectLabel: 'לא',
       accept: () => {
-        this.products = this.products.filter(p => p !== product);
-        this.filteredProducts = this.filteredProducts.filter(p => p !== product);
+        this.eventService.deleteProduct(product.id);
         this.messageService.add({
           severity: 'success',
           summary: 'הצלחה',
-          detail: 'המוצר נמחק בהצלחה'
+          detail: 'המוצר נמחק בהצלחה',
+          life: 3000
+        });
+      }
+    });
+  }
+
+  deleteSelectedProducts(): void {
+    this.confirmationService.confirm({
+      message: `האם אתה בטוח שברצונך למחוק ${this.selectedProducts.length} מוצרים?`,
+      header: 'אישור מחיקה',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'כן',
+      rejectLabel: 'לא',
+      accept: () => {
+        this.selectedProducts.forEach(product => {
+          this.eventService.deleteProduct(product.id);
+        });
+        this.selectedProducts = [];
+        this.messageService.add({
+          severity: 'success',
+          summary: 'הצלחה',
+          detail: 'המוצרים נמחקו בהצלחה',
+          life: 3000
         });
       }
     });
@@ -173,74 +250,57 @@ export class ProductsComponent implements OnInit {
   saveProduct(): void {
     this.submitted = true;
 
-    if (this.product.name?.trim()) {
-      if (this.product.name) {
-        // Edit existing product
-        const index = this.products.findIndex(p => p.name === this.product.name);
-        if (index !== -1) {
-          this.products[index] = this.product;
-        } else {
-          // Add new product
-          this.products.push(this.product);
-        }
-        this.filteredProducts = [...this.products];
-        this.messageService.add({
-          severity: 'success',
-          summary: 'הצלחה',
-          detail: this.product.name ? 'המוצר עודכן בהצלחה' : 'המוצר נוסף בהצלחה'
-        });
+    if (!this.product.name?.trim()) {
+      return;
+    }
+
+    // If it's a new product (no id), generate id and add timestamp
+    if (!this.product.id) {
+      this.product.id = Date.now().toString();
+    }
+
+    this.eventService.saveProduct(this.product);
+    this.messageService.add({
+      severity: 'success',
+      summary: 'הצלחה',
+      detail: 'המוצר נשמר בהצלחה',
+      life: 3000
+    });
+    
+    // Reload to show new product at top
+    this.loadProducts();
+    
+    this.productDialog = false;
+    this.product = this.getEmptyProduct();
+  }
+
+  sortBy(field: string): void {
+    if (this.sortField === field) {
+      // Toggle sort order
+      if (this.sortOrder === 'asc') {
+        this.sortOrder = 'desc';
+      } else if (this.sortOrder === 'desc') {
+        this.sortOrder = '';
+        this.sortField = '';
+      } else {
+        this.sortOrder = 'asc';
       }
-
-      this.productDialog = false;
-      this.product = this.createEmptyProduct();
-    }
-  }
-
-  onSearch(): void {
-    if (this.searchValue.trim()) {
-      this.filteredProducts = this.products.filter(product =>
-        product.name.toLowerCase().includes(this.searchValue.toLowerCase()) ||
-        product.brand.toLowerCase().includes(this.searchValue.toLowerCase()) ||
-        product.category.toLowerCase().includes(this.searchValue.toLowerCase()) ||
-        product.supplier.toLowerCase().includes(this.searchValue.toLowerCase())
-      );
     } else {
-      this.filteredProducts = [...this.products];
+      this.sortField = field;
+      this.sortOrder = 'asc';
     }
+    
+    this.applyFilters();
   }
 
-  clearSearch(): void {
-    this.searchValue = '';
-    this.filteredProducts = [...this.products];
-  }
-
-  trackByProduct(index: number, product: Product): string {
-    return product.name + product.brand;
-  }
-
-  getStatusSeverity(status: string): "success" | "info" | "warn" | "danger" | "secondary" | "contrast" | null {
-    switch (status) {
-      case 'במלאי':
-        return 'success';
-      case 'אזל':
-        return 'danger';
-      case 'מלאי-נמוך':
-        return 'warn';
-      default:
-        return 'info';
+  getSortIcon(field: string): string {
+    if (this.sortField !== field) {
+      return 'pi pi-sort-alt';
     }
+    return this.sortOrder === 'asc' ? 'pi pi-sort-amount-up' : 'pi pi-sort-amount-down';
   }
 
-  viewMode: 'table' | 'cards' = 'table';
-  selectedProducts: Product[] = [];
-  
-  toggleView() { 
-    this.viewMode = this.viewMode === 'table' ? 'cards' : 'table'; 
-  }
-
-  clonedProducts: { [s: string]: Product } = {};
-
-  onSelectAllChange(event: any) {
+  onSelectAllChange(event: any): void {
     if (event.checked) {
       this.selectedProducts = [...this.filteredProducts];
     } else {
@@ -248,61 +308,59 @@ export class ProductsComponent implements OnInit {
     }
   }
 
-  deleteSelectedProducts() {
-    this.confirmationService.confirm({
-      message: `האם אתה בטוח שברצונך למחוק ${this.selectedProducts.length} מוצרים?`,
-      header: 'אישור מחיקה',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'כן',
-      rejectLabel: 'לא',
-      accept: () => {
-        this.products = this.products.filter(p => !this.selectedProducts.includes(p));
-        this.filteredProducts = this.filteredProducts.filter(p => !this.selectedProducts.includes(p));
-        this.messageService.add({
-          severity: 'success',
-          summary: 'הצלחה',
-          detail: `${this.selectedProducts.length} מוצרים נמחקו בהצלחה`
-        });
-        this.selectedProducts = [];
-      }
+  // Inline editing methods for table
+  onRowEditInit(product: Product): void {
+    this.clonedProducts[product.id] = { ...product };
+  }
+
+  onRowEditSave(product: Product): void {
+    delete this.clonedProducts[product.id];
+    this.eventService.saveProduct(product);
+    this.messageService.add({
+      severity: 'success',
+      summary: 'הצלחה',
+      detail: 'המוצר עודכן בהצלחה',
+      life: 3000
     });
   }
 
-  onRowEditInit(product: Product) {
-    this.clonedProducts[product.name] = { ...product };
+  onRowEditCancel(product: Product, index: number): void {
+    this.filteredProducts[index] = this.clonedProducts[product.id];
+    delete this.clonedProducts[product.id];
   }
 
-  onRowEditSave(product: Product) {
-    if (product.name && product.name.trim()) {
-      delete this.clonedProducts[product.name];
-      const index = this.products.findIndex(p => p.name === product.name);
-      if (index !== -1) {
-        this.products[index] = product;
-        this.filteredProducts = [...this.products];
-      }
-      this.messageService.add({
-        severity: 'success',
-        summary: 'הצלחה',
-        detail: 'המוצר עודכן בהצלחה'
-      });
-    } else {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'שגיאה',
-        detail: 'שם המוצר נדרש'
-      });
+  getStatusSeverity(status: string): 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast' | undefined {
+    switch (status) {
+      case 'במלאי': return 'success';
+      case 'מלאי-נמוך': return 'warn';
+      case 'אזל': return 'danger';
+      default: return 'info';
     }
   }
 
-  onRowEditCancel(product: Product, index: number) {
-    this.filteredProducts[index] = this.clonedProducts[product.name];
-    delete this.clonedProducts[product.name];
-  }
-  filterByInventoryStatus(status: string) {
-    if(!status) {
-      this.filteredProducts = [...this.products];
-      return;
+  getStatusIcon(status: string): string {
+    switch (status) {
+      case 'במלאי': return 'pi pi-check-circle';
+      case 'מלאי-נמוך': return 'pi pi-exclamation-circle';
+      case 'אזל': return 'pi pi-times-circle';
+      default: return 'pi pi-info-circle';
     }
-    this.filteredProducts = this.products.filter(product => product.inventoryStatus === status);
+  }
+
+  trackByProduct(index: number, product: Product): string {
+    return product.id;
+  }
+
+  private getEmptyProduct(): Product {
+    return {
+      id: Date.now().toString(),
+      name: '',
+      inventoryStatus: 'במלאי',
+      brand: '',
+      packageQuantity: 1,
+      estimatedPrice: 0,
+      category: '',
+      supplier: ''
+    };
   }
 }

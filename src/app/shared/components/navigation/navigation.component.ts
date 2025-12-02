@@ -112,7 +112,8 @@ import { EVENT_TYPES, KOSHER_TYPES } from '../../../core/constants/app.constants
       [(visible)]="showEventDialog"
       [modal]="true"
       [rtl]="true"
-      [style]="{width: '500px'}"
+      [style]="{width: '600px', minHeight: '500px'}"
+      [contentStyle]="{overflow: 'visible'}"
       header="צור אירוע חדש"
       [draggable]="false">
       

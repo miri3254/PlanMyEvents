@@ -87,9 +87,16 @@ export class DishesComponent implements OnInit {
   eventSelectionDialog: boolean = false;
   shoppingListDialog: boolean = false;
   dishIngredientsDialog: boolean = false;
+  ingredientSelectionDialog: boolean = false;
   
   // Current dish for ingredients editing
   currentDishForIngredients: Dish | null = null;
+  
+  // Ingredient selection
+  ingredientSearchQuery: string = '';
+  filteredProducts: Product[] = [];
+  newIngredient: DishIngredient = { productName: '', quantity: 1, unit: 'גרם' };
+  selectedProduct: Product | null = null;
   
   // Form data
   dish: Dish = this.createEmptyDish();
@@ -146,6 +153,7 @@ export class DishesComponent implements OnInit {
 
   loadCurrentEvent(): void {
     this.currentEvent = this.eventService.getCurrentEvent();
+    console.log('Loaded current event:', this.currentEvent);
     if (this.currentEvent) {
       this.currentView = 'event-selection';
     }
@@ -154,6 +162,7 @@ export class DishesComponent implements OnInit {
   loadCart(): void {
     this.eventService.cart$.subscribe(cart => {
       this.cartItems = this.eventService.getCartForCurrentEvent();
+      console.log('Loaded cart items for current event:', this.cartItems);
     });
   }
 
@@ -452,7 +461,12 @@ export class DishesComponent implements OnInit {
 
   // Ingredient management
   addIngredient(): void {
-    this.dish.ingredients.push({ productName: '', quantity: 1, unit: 'גרם' });
+    // Open ingredient selection dialog for main dish dialog
+    this.newIngredient = { productName: '', quantity: 1, unit: 'גרם' };
+    this.selectedProduct = null;
+    this.ingredientSearchQuery = '';
+    this.filteredProducts = [...this.availableProducts];
+    this.ingredientSelectionDialog = true;
   }
 
   removeIngredient(index: number): void {
@@ -485,7 +499,10 @@ export class DishesComponent implements OnInit {
 
   // Event selection methods
   addToEvent(dish: Dish): void {
+    console.log('addToEvent called with dish:', dish);
+    
     if (!this.currentEvent) {
+      console.warn('No current event selected');
       this.messageService.add({
         severity: 'warn',
         summary: 'שגיאה',
@@ -494,14 +511,37 @@ export class DishesComponent implements OnInit {
       return;
     }
 
+    console.log('Current event:', this.currentEvent);
+
+    // Check if already in event
+    if (this.isDishInEvent(dish.id!)) {
+      console.log('Dish already in event');
+      this.messageService.add({
+        severity: 'info',
+        summary: 'כבר קיים',
+        detail: `${dish.name} כבר נמצא בתפריט האירוע`
+      });
+      return;
+    }
+
     try {
-      this.eventService.addDishToCart(dish.id!, dish.name, 1);
+      // Pass dish's servingSize as peopleCount
+      console.log('Calling addDishToCart with:', {
+        dishId: dish.id,
+        dishName: dish.name,
+        servingSize: dish.servingSize
+      });
+      
+      this.eventService.addDishToCart(dish.id!, dish.name, dish.servingSize);
+      
+      console.log('Dish added successfully to cart');
       this.messageService.add({
         severity: 'success',
         summary: 'נוסף בהצלחה',
         detail: `${dish.name} נוסף לתפריט האירוע`
       });
     } catch (error) {
+      console.error('Error adding dish to cart:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'שגיאה',
@@ -519,23 +559,26 @@ export class DishesComponent implements OnInit {
     });
   }
 
-  updateCartQuantity(dishId: string, quantity: number): void {
-    this.eventService.updateCartItemQuantity(dishId, quantity);
-  }
-
   toggleCart(): void {
     this.showCart = !this.showCart;
   }
 
   getCartTotal(): number {
+    // Calculate total price - each dish added once with its base price
     return this.cartItems.reduce((total, item) => {
       const dish = this.dishes.find(d => d.id === item.dishId);
-      return total + (dish?.estimatedPrice || 0) * item.quantity;
+      return total + (dish?.estimatedPrice || 0);
     }, 0);
   }
 
   getCartItemsCount(): number {
-    return this.cartItems.reduce((total, item) => total + item.quantity, 0);
+    // Count number of unique dishes (single-selection model)
+    return this.cartItems.length;
+  }
+
+  getTotalPeopleCount(): number {
+    // Calculate total people covered by all dishes in cart
+    return this.cartItems.reduce((total, item) => total + item.peopleCount, 0);
   }
 
   clearCart(): void {
@@ -556,33 +599,20 @@ export class DishesComponent implements OnInit {
     });
   }
 
-  getDishFromCart(dishId: string): { dish: Dish, quantity: number } | null {
-    const cartItem = this.cartItems.find(item => item.dishId === dishId);
-    if (!cartItem) return null;
-    
+  // Check if dish is in current event
+  isDishInEvent(dishId: string): boolean {
+    return this.eventService.isDishInCurrentEvent(dishId);
+  }
+
+  // Get dish details from cart
+  getCartItem(dishId: string): CartItem | undefined {
+    return this.cartItems.find(item => item.dishId === dishId);
+  }
+
+  // Get dish price (no quantity multiplier)
+  getDishPrice(dishId: string): number {
     const dish = this.dishes.find(d => d.id === dishId);
-    if (!dish) return null;
-    
-    return { dish, quantity: cartItem.quantity };
-  }
-
-  // Legacy methods for backward compatibility with template
-  updateEventDishQuantity(selection: any): void {
-    // This method is kept for template compatibility but uses cart system
-    if (selection && selection.dish && selection.quantity) {
-      this.updateCartQuantity(selection.dish.id, selection.quantity);
-    }
-  }
-
-  removeFromEvent(dishId: string): void {
-    // This method is kept for template compatibility but uses cart system
-    this.removeFromCart(dishId);
-  }
-
-  // Helper method for template calculations
-  getCartItemTotal(dishId: string, quantity: number): number {
-    const dish = this.dishes.find(d => d.id === dishId);
-    return (dish?.estimatedPrice || 0) * quantity;
+    return dish?.estimatedPrice || 0;
   }
 
   generateShoppingList(): void {
@@ -695,13 +725,66 @@ export class DishesComponent implements OnInit {
   }
 
   addDishIngredient(): void {
-    if (this.currentDishForIngredients) {
-      this.currentDishForIngredients.ingredients.push({ 
-        productName: '', 
-        quantity: 1, 
-        unit: 'גרם' 
-      });
+    // Open ingredient selection dialog
+    this.newIngredient = { productName: '', quantity: 1, unit: 'גרם' };
+    this.selectedProduct = null;
+    this.ingredientSearchQuery = '';
+    this.filteredProducts = [...this.availableProducts];
+    this.ingredientSelectionDialog = true;
+  }
+  
+  searchIngredients(): void {
+    const query = this.ingredientSearchQuery.toLowerCase().trim();
+    if (query) {
+      this.filteredProducts = this.availableProducts.filter(product =>
+        product.name.toLowerCase().includes(query) ||
+        product.category?.toLowerCase().includes(query) ||
+        product.brand?.toLowerCase().includes(query)
+      );
+    } else {
+      this.filteredProducts = [...this.availableProducts];
     }
+  }
+  
+  selectProduct(product: Product): void {
+    this.selectedProduct = product;
+    this.newIngredient.productName = product.name;
+  }
+  
+  saveNewIngredient(): void {
+    if (!this.newIngredient.productName || !this.newIngredient.quantity || !this.newIngredient.unit) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'שגיאה',
+        detail: 'אנא מלא את כל השדות'
+      });
+      return;
+    }
+    
+    // Check which dish we're editing
+    if (this.currentDishForIngredients && this.dishIngredientsDialog) {
+      // Add to the TOP of the ingredients list for ingredients management dialog
+      this.currentDishForIngredients.ingredients.unshift({ ...this.newIngredient });
+    } else {
+      // Add to main dish dialog
+      this.dish.ingredients.unshift({ ...this.newIngredient });
+    }
+    
+    this.messageService.add({
+      severity: 'success',
+      summary: 'הצלחה',
+      detail: 'המרכיב נוסף בהצלחה'
+    });
+    
+    this.closeIngredientSelectionDialog();
+  }
+  
+  closeIngredientSelectionDialog(): void {
+    this.ingredientSelectionDialog = false;
+    this.newIngredient = { productName: '', quantity: 1, unit: 'גרם' };
+    this.selectedProduct = null;
+    this.ingredientSearchQuery = '';
+    this.filteredProducts = [];
   }
 
   removeDishIngredient(index: number): void {

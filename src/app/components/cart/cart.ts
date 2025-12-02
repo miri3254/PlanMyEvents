@@ -67,12 +67,15 @@ export class CartComponent implements OnInit {
     this.loadMockDishes();
     
     // Load events and cart items
-    this.eventService.events$.subscribe(events => {
-      this.events = events;
+    this.eventService.events$.subscribe(() => {
+      // Use the service's sorting method for consistent behavior
+      this.events = this.eventService.getEventsSorted();
+      console.log('Loaded and sorted events:', this.events);
     });
 
     this.eventService.cart$.subscribe(cart => {
       this.cartItems = cart;
+      console.log('Loaded cart items:', cart);
     });
   }
 
@@ -162,15 +165,19 @@ export class CartComponent implements OnInit {
 
   getEventTotal(eventId: string): number {
     const eventCartItems = this.getCartItemsForEvent(eventId);
-    return eventCartItems.reduce((total, item) => {
+    const total = eventCartItems.reduce((total, item) => {
       const dish = this.getDishById(item.dishId);
-      return total + (dish?.estimatedPrice || 0) * item.quantity;
+      // Single-selection model: each dish added once with base price
+      return total + (dish?.estimatedPrice || 0);
     }, 0);
+    console.log(`Event ${eventId} total:`, total);
+    return total;
   }
 
   getTotalCartItems(eventId: string): number {
+    // Count number of unique dishes (single-selection model)
     const eventCartItems = this.getCartItemsForEvent(eventId);
-    return eventCartItems.reduce((total, item) => total + item.quantity, 0);
+    return eventCartItems.length;
   }
 
   getGrandTotal(): number {
@@ -182,21 +189,16 @@ export class CartComponent implements OnInit {
   }
 
   getTotalDishes(): number {
-    return this.cartItems.reduce((total, item) => total + item.quantity, 0);
+    // Count total unique dishes across all events
+    return this.cartItems.length;
   }
 
-  updateCartItemQuantity(item: CartItem, newQuantity: number): void {
-    if (newQuantity <= 0) {
-      this.removeCartItem(item);
-    } else {
-      this.eventService.updateCartItemQuantity(item.dishId, newQuantity);
-      this.messageService.add({
-        severity: 'success',
-        summary: 'עודכן',
-        detail: 'הכמות עודכנה בהצלחה'
-      });
-    }
+  getTotalPeopleCount(): number {
+    // Calculate total people covered by all dishes in cart
+    return this.cartItems.reduce((total, item) => total + item.peopleCount, 0);
   }
+
+  // Quantity updates removed - single-selection model with fixed peopleCount
 
   removeCartItem(item: CartItem): void {
     this.confirmationService.confirm({
