@@ -57,16 +57,6 @@
       </div>
       
       <p-select
-        [options]="categoryOptions"
-        [(ngModel)]="filterCategory"
-        (onChange)="onFilterChange()"
-        placeholder="כל הקטגוריות"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="filter-select">
-      </p-select>
-
-      <p-select
         [options]="kosherOptions"
         [(ngModel)]="filterKosher"
         (onChange)="onFilterChange()"
@@ -76,16 +66,42 @@
         styleClass="filter-select">
       </p-select>
 
-      <p-selectButton 
-        *ngIf="!isEventMode"
-        [options]="viewOptions" 
-        [(ngModel)]="viewMode"
-        optionLabel="icon"
-        optionValue="value">
-        <ng-template let-item>
-          <i [class]="item.icon"></i>
-        </ng-template>
-      </p-selectButton>
+      <div class="view-toggle-group">
+        <button
+          type="button"
+          class="view-toggle-btn"
+          [class.active]="viewMode === 'grid'"
+          aria-label="תצוגת רשת"
+          (click)="setViewMode('grid')">
+          <i class="pi pi-th-large"></i>
+        </button>
+        <button
+          type="button"
+          class="view-toggle-btn"
+          [class.active]="viewMode === 'table'"
+          aria-label="תצוגת טבלה"
+          (click)="setViewMode('table')">
+          <i class="pi pi-list"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="category-filter-row">
+      <button
+        type="button"
+        class="category-pill"
+        [class.active]="filterCategory === 'הכל'"
+        (click)="setCategoryFilter('הכל')">
+        כל הקטגוריות
+      </button>
+      <button
+        type="button"
+        class="category-pill"
+        *ngFor="let category of categories"
+        [class.active]="filterCategory === category"
+        (click)="setCategoryFilter(category)">
+        {{ category }}
+      </button>
     </div>
   </p-card>
 
@@ -137,17 +153,31 @@
           <p-divider></p-divider>
 
           <div class="dish-card-footer">
-            <p-button 
-              *ngIf="isEventMode"
-              [label]="isDishSelected(dish.id) ? 'נבחר' : 'הוסף לתפריט'"
-              [icon]="isDishSelected(dish.id) ? 'pi pi-check' : 'pi pi-plus'"
-              (onClick)="handleAddToCart(dish)"
-              styleClass="flex-1"
-              [disabled]="isDishSelected(dish.id)"
-              [severity]="isDishSelected(dish.id) ? 'success' : null">
-            </p-button>
-            
-            <ng-container *ngIf="!isEventMode">
+            <ng-container *ngIf="isEventMode; else manageDishActions">
+              <div class="event-actions">
+                <span 
+                  *ngIf="isDishSelected(dish.id)"
+                  class="selected-text">
+                  נוסף לאירוע
+                </span>
+                <p-button 
+                  *ngIf="!isDishSelected(dish.id)"
+                  label="בחירה"
+                  icon="pi pi-plus"
+                  (onClick)="handleAddToCart(dish)"
+                  styleClass="flex-1">
+                </p-button>
+                <p-button
+                  *ngIf="isDishSelected(dish.id)"
+                  label="הסר"
+                  icon="pi pi-times"
+                  severity="danger"
+                  (onClick)="removeFromCart(dish.id)"
+                  styleClass="flex-1">
+                </p-button>
+              </div>
+            </ng-container>
+            <ng-template #manageDishActions>
               <p-button 
                 label="ערוך"
                 icon="pi pi-pencil"
@@ -160,7 +190,7 @@
                 (onClick)="confirmDelete(dish.id)"
                 severity="danger">
               </p-button>
-            </ng-container>
+            </ng-template>
           </div>
         </div>
 
@@ -171,19 +201,48 @@
 
       <!-- Table View -->
       <p-card *ngIf="viewMode === 'table'">
-        <p-table [value]="(filteredDishes$ | async) || []">
+        <p-table
+          [value]="(filteredDishes$ | async) || []"
+          sortMode="single"
+          [(sortField)]="sortField"
+          [(sortOrder)]="sortOrder">
           <ng-template pTemplate="header">
             <tr>
-              <th>שם המנה</th>
-              <th>קטגוריה</th>
-              <th>כשרות</th>
-              <th>מחיר</th>
-              <th>מס סועדים במנה</th>
+              <th pSortableColumn="name">
+                <span class="sortable-column">
+                  שם המנה
+                  <p-sortIcon field="name"></p-sortIcon>
+                </span>
+              </th>
+              <th pSortableColumn="category">
+                <span class="sortable-column">
+                  קטגוריה
+                  <p-sortIcon field="category"></p-sortIcon>
+                </span>
+              </th>
+              <th pSortableColumn="kosherType">
+                <span class="sortable-column">
+                  כשרות
+                  <p-sortIcon field="kosherType"></p-sortIcon>
+                </span>
+              </th>
+              <th pSortableColumn="estimatedPrice">
+                <span class="sortable-column">
+                  מחיר
+                  <p-sortIcon field="estimatedPrice"></p-sortIcon>
+                </span>
+              </th>
+              <th pSortableColumn="servingSize">
+                <span class="sortable-column">
+                  מס סועדים במנה
+                  <p-sortIcon field="servingSize"></p-sortIcon>
+                </span>
+              </th>
               <th>פעולות</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-dish>
-            <tr>
+            <tr [ngClass]="{'selected-row': isEventMode && isDishSelected(dish.id)}">
               <td>{{ dish.name }}</td>
               <td>
                 <p-tag [value]="dish.category" severity="secondary"></p-tag>
@@ -197,14 +256,26 @@
               <td>₪{{ dish.estimatedPrice }}</td>
               <td>{{ dish.servingSize }}</td>
               <td>
-                <div class="action-buttons">
+                <div class="action-buttons" *ngIf="isEventMode; else manageDishActions">
+                  <span *ngIf="isDishSelected(dish.id)" class="selected-text">נוסף לאירוע</span>
                   <p-button 
-                    *ngIf="isEventMode"
+                    *ngIf="!isDishSelected(dish.id)"
+                    label="בחירה"
                     icon="pi pi-plus"
                     (onClick)="handleAddToCart(dish)"
                     size="small">
                   </p-button>
-                  <ng-container *ngIf="!isEventMode">
+                  <p-button
+                    *ngIf="isDishSelected(dish.id)"
+                    label="הסר"
+                    icon="pi pi-times"
+                    severity="danger"
+                    size="small"
+                    (onClick)="removeFromCart(dish.id)">
+                  </p-button>
+                </div>
+                <ng-template #manageDishActions>
+                  <div class="action-buttons">
                     <p-button 
                       icon="pi pi-pencil"
                       (onClick)="handleEditDish(dish)"
@@ -217,8 +288,8 @@
                       severity="danger"
                       size="small">
                     </p-button>
-                  </ng-container>
-                </div>
+                  </div>
+                </ng-template>
               </td>
             </tr>
           </ng-template>

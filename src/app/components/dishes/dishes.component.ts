@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Observable, Subject, combineLatest } from 'rxjs';
 import { map, takeUntil } from 'rxjs/operators';
 import { EventService } from '../../core/services/event.service';
+import { LookupService } from '../../core/services/lookup.service';
 import { Dish, DishIngredient, DishEquipment, Product, Event } from '../../core/models';
-import { CATEGORIES, KOSHER_TYPES, UNITS } from '../../core/constants/app.constants';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -17,7 +17,6 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
-import { SelectButtonModule } from 'primeng/selectbutton';
 import { Tabs, TabPanel, TabList, TabPanels, Tab } from 'primeng/tabs';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DividerModule } from 'primeng/divider';
@@ -39,7 +38,6 @@ import { ScrollPanelModule } from 'primeng/scrollpanel';
     ToastModule,
     SelectModule,
     TableModule,
-    SelectButtonModule,
     Tabs,
     TabPanel,
     TabList,
@@ -62,7 +60,9 @@ export class DishesComponent implements OnInit, OnDestroy {
   filteredDishes$!: Observable<Dish[]>;
   currentCart$!: Observable<any[]>;
 
-  viewMode: 'table' | 'grid' = 'grid';
+  viewMode: 'table' | 'grid' = 'table';
+  sortField: string = '';
+  sortOrder: number = 1;
   searchQuery: string = '';
   filterCategory: string = 'הכל';
   filterKosher: string = 'הכל';
@@ -83,24 +83,17 @@ export class DishesComponent implements OnInit, OnDestroy {
     { icon: 'pi pi-list', value: 'table' }
   ];
 
-  categoryOptions = [
-    { label: 'כל הקטגוריות', value: 'הכל' },
-    ...CATEGORIES.map(cat => ({ label: cat, value: cat }))
-  ];
+  kosherOptions = [{ label: 'כל סוגי הכשרות', value: 'הכל' }];
 
-  kosherOptions = [
-    { label: 'כל סוגי הכשרות', value: 'הכל' },
-    ...KOSHER_TYPES.map(type => ({ label: type, value: type }))
-  ];
-
-  categories = [...CATEGORIES];
-  kosherTypes = [...KOSHER_TYPES];
-  units = [...UNITS];
+  categories: string[] = [];
+  kosherTypes: string[] = [];
+  units: string[] = [];
 
   constructor(
     private eventService: EventService,
     private confirmationService: ConfirmationService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private lookupService: LookupService
   ) {}
 
   ngOnInit(): void {
@@ -108,6 +101,47 @@ export class DishesComponent implements OnInit, OnDestroy {
     this.products$ = this.eventService.products$;
     this.currentEvent$ = this.eventService.currentEvent$;
     this.currentCart$ = this.eventService.currentCart$;
+
+    this.lookupService.lookup$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(data => {
+        this.categories = [...data.dishCategories];
+        this.kosherTypes = [...data.kosherTypes];
+        this.units = [...data.measurementUnits];
+        this.kosherOptions = [
+          { label: 'כל סוגי הכשרות', value: 'הכל' },
+          ...this.kosherTypes.map(type => ({ label: type, value: type }))
+        ];
+
+        if (
+          this.filterCategory !== 'הכל' &&
+          !this.categories.includes(this.filterCategory)
+        ) {
+          this.filterCategory = 'הכל';
+        }
+
+        if (
+          this.filterKosher !== 'הכל' &&
+          !this.kosherTypes.includes(this.filterKosher)
+        ) {
+          this.filterKosher = 'הכל';
+        }
+
+        if (this.editingDish) {
+          if (!this.categories.includes(this.editingDish.category)) {
+            this.editingDish.category = this.categories[0] || this.editingDish.category;
+          }
+          if (!this.kosherTypes.includes(this.editingDish.kosherType)) {
+            this.editingDish.kosherType = this.kosherTypes[0] || this.editingDish.kosherType;
+          }
+          this.editingDish.ingredients = this.editingDish.ingredients.map(ingredient => {
+            const unit = this.units.includes(ingredient.unit)
+              ? ingredient.unit
+              : this.units[0] || ingredient.unit;
+            return { ...ingredient, unit };
+          });
+        }
+      });
 
     // Subscribe to products
     this.products$.pipe(takeUntil(this.destroy$)).subscribe(products => {
@@ -169,14 +203,27 @@ export class DishesComponent implements OnInit, OnDestroy {
     this.setupFilteredDishes();
   }
 
+  setCategoryFilter(category: string): void {
+    this.filterCategory = category;
+    this.onFilterChange();
+  }
+
+  setViewMode(mode: 'grid' | 'table'): void {
+    this.viewMode = mode;
+  }
+
   handleCreateDish(): void {
+    const defaultCategories = this.lookupService.getList('dishCategories');
+    const defaultKosherTypes = this.lookupService.getList('kosherTypes');
+    const defaultUnits = this.lookupService.getList('measurementUnits');
+
     this.editingDish = {
       id: Date.now().toString(),
       name: '',
       description: '',
       estimatedPrice: 0,
-      category: 'עיקרית',
-      kosherType: 'פרווה',
+      category: defaultCategories[0] || 'עיקרית',
+      kosherType: defaultKosherTypes[0] || 'פרווה',
       servingSize: 1,
       ingredients: [],
       equipment: [],
@@ -184,6 +231,12 @@ export class DishesComponent implements OnInit, OnDestroy {
       createdDate: new Date(),
       lastModified: new Date()
     };
+
+    const defaultUnit = defaultUnits[0] || 'יחידות';
+    this.editingDish.ingredients = this.editingDish.ingredients.map(ingredient => ({
+      ...ingredient,
+      unit: ingredient.unit || defaultUnit
+    }));
     this.isDialogOpen = true;
   }
 
@@ -287,10 +340,11 @@ export class DishesComponent implements OnInit, OnDestroy {
   // Ingredient management
   handleAddIngredient(): void {
     if (!this.editingDish) return;
+    const defaultUnit = this.units[0] || 'יחידות';
     this.editingDish.ingredients.push({
       productName: '',
       quantity: 0,
-      unit: 'גרם'
+      unit: defaultUnit
     });
   }
 
