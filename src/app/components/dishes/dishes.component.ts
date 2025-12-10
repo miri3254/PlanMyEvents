@@ -237,7 +237,10 @@ export class DishesComponent implements OnInit, OnDestroy {
   }
 
   handleAddToCart(dish: Dish): void {
+    console.log('handleAddToCart called with dish:', dish);
+    
     if (!this.isEventMode) {
+      console.warn('Not in event mode');
       this.messageService.add({
         severity: 'warn',
         summary: 'שים לב',
@@ -246,12 +249,30 @@ export class DishesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.eventService.addDishToCart(dish.id, dish.name, 1, dish.estimatedPrice);
-    this.messageService.add({
-      severity: 'success',
-      summary: 'נוסף לתפריט',
-      detail: `${dish.name} נוסף לעגלה`
-    });
+    try {
+      // Use dish.servingSize as peopleCount, with fallback to 1
+      const servingSize = dish.servingSize || 1;
+      console.log('Calling addDishToCart with:', {
+        dishId: dish.id,
+        dishName: dish.name,
+        servingSize
+      });
+      
+      this.eventService.addDishToCart(dish.id, dish.name, servingSize);
+      
+      this.messageService.add({
+        severity: 'success',
+        summary: 'נוסף לתפריט',
+        detail: `${dish.name} נוסף לעגלה`
+      });
+    } catch (error) {
+      console.error('Error in handleAddToCart:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'שגיאה',
+        detail: 'אירעה שגיאה בהוספת המנה'
+      });
+    }
   }
 
   // Ingredient management
@@ -300,8 +321,8 @@ export class DishesComponent implements OnInit, OnDestroy {
   }
 
   // Cart management
-  updateCartQuantity(dishId: string, quantity: number): void {
-    this.eventService.updateCartItemQuantity(dishId, quantity);
+  updateCartPeopleCount(dishId: string, peopleCount: number): void {
+    this.eventService.updateCartItemPeopleCount(dishId, peopleCount);
   }
 
   removeFromCart(dishId: string): void {

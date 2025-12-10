@@ -1,30 +1,13 @@
 <div class="cart-container p-4">
   <div class="header-section mb-4">
-    <div class="flex align-items-center justify-content-between">
-      <div class="flex align-items-center gap-3">
-        <h1 class="text-3xl font-bold text-900">עגלת קניות</h1>
-        <p-badge 
-          [value]="getTotalEvents()" 
-          severity="info" 
-          *ngIf="getTotalEvents() > 0">
-        </p-badge>
-      </div>
-
-      <div class="flex align-items-center gap-3">
-        <div class="stats-container flex gap-4">
-          <div class="stat-item text-center">
-            <div class="text-2xl font-bold text-primary">{{ getTotalEvents() }}</div>
-            <div class="text-sm text-600">אירועים</div>
-          </div>
-          <div class="stat-item text-center">
-            <div class="text-2xl font-bold text-success">{{ getTotalDishes() }}</div>
-            <div class="text-sm text-600">מנות</div>
-          </div>
-          <div class="stat-item text-center">
-            <div class="text-2xl font-bold text-orange-500">₪{{ getGrandTotal() }}</div>
-            <div class="text-sm text-600">סה"כ</div>
-          </div>
-        </div>
+    <h1 class="text-4xl font-bold text-900 mb-2">עגלת קניות</h1>
+    <p class="text-600" *ngIf="getTotalEvents() > 0">{{ getTotalEvents() }} אירועים | {{ getTotalDishes() }} מנות | סה"כ: ₪{{ getGrandTotal() }}</p>
+    
+    <!-- No Active Event Warning -->
+    <div *ngIf="events.length > 0 && !getCurrentEvent()" class="p-3 mt-3 bg-yellow-50 border-round border-1 border-yellow-200">
+      <div class="flex align-items-center gap-2">
+        <i class="pi pi-exclamation-triangle text-yellow-600"></i>
+        <span class="text-yellow-800">אין אירוע פעיל כרגע. בחר אירוע כדי להוסיף מנות.</span>
       </div>
     </div>
   </div>
@@ -183,23 +166,19 @@
 
                     <div class="flex align-items-center gap-3">
 
-                      <div class="quantity-controls flex align-items-center gap-2">
-                        <span class="text-sm">כמות:</span>
-
-                        <p-inputNumber
-                          [(ngModel)]="item.quantity"
-                          [min]="0"
-                          [max]="100"
-                          size="small"
-                          [style]="{'width': '80px'}"
-                          (onInput)="updateCartItemQuantity(item, item.quantity)">
-                        </p-inputNumber>
+                      <div class="people-count-info flex align-items-center gap-2">
+                        <p-tag severity="info" size="small">
+                          <ng-template pTemplate="default">
+                            <i class="pi pi-users text-xs mr-1"></i>
+                            {{ item.peopleCount }} מנות
+                          </ng-template>
+                        </p-tag>
                       </div>
 
                       <div class="price-info text-center">
                         <ng-container *ngIf="getDishById(item.dishId) as dish">
-                          <div class="font-bold">₪{{ dish.estimatedPrice * item.quantity }}</div>
-                          <div class="text-sm text-600">סה"כ</div>
+                          <div class="font-bold">₪{{ dish.estimatedPrice }}</div>
+                          <div class="text-sm text-600">מחיר</div>
                         </ng-container>
                       </div>
 
@@ -249,32 +228,7 @@
     </div>
   </div>
 
-  <!-- Grand Total -->
-  <div *ngIf="events.length > 0 && getTotalDishes() > 0" 
-       class="grand-total mt-4 p-4 bg-primary-50 border-round">
-
-    <div class="flex align-items-center justify-content-between">
-      <div class="text-lg font-bold">סה"כ כללי:</div>
-
-      <div class="flex align-items-center gap-4">
-        <div class="text-center">
-          <div class="text-sm text-600">אירועים</div>
-          <div class="font-bold">{{ getTotalEvents() }}</div>
-        </div>
-
-        <div class="text-center">
-          <div class="text-sm text-600">מנות</div>
-          <div class="font-bold">{{ getTotalDishes() }}</div>
-        </div>
-
-        <div class="text-center">
-          <div class="text-sm text-600">סכום</div>
-          <div class="text-2xl font-bold text-primary">₪{{ getGrandTotal() }}</div>
-        </div>
-      </div>
-
-    </div>
-  </div>
+  
 
 </div> <!-- cart-container end -->
 
@@ -328,9 +282,8 @@
               <th>שם המנה</th>
               <th>קטגוריה</th>
               <th>כשרות</th>
-              <th>מחיר ליחידה</th>
-              <th>כמות</th>
-              <th>סה"כ</th>
+              <th>מנות</th>
+              <th>מחיר</th>
             </tr>
           </ng-template>
 
@@ -365,16 +318,15 @@
               </td>
 
               <td>
-                <ng-container *ngIf="getDishById(item.dishId) as dish">
-                  ₪{{ dish.estimatedPrice }}
-                </ng-container>
+                <p-tag severity="info" size="small">
+                  <i class="pi pi-users text-xs mr-1"></i>
+                  {{ item.peopleCount }} מנות
+                </p-tag>
               </td>
-
-              <td>{{ item.quantity }}</td>
 
               <td>
                 <ng-container *ngIf="getDishById(item.dishId) as dish">
-                  <strong>₪{{ dish.estimatedPrice * item.quantity }}</strong>
+                  <strong>₪{{ dish.estimatedPrice }}</strong>
                 </ng-container>
               </td>
 

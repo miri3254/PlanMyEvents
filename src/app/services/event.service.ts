@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { StorageService } from '../core/services/storage.service';
 
 export interface Event {
   id: string;
@@ -9,12 +10,13 @@ export interface Event {
   foodType: string;
   dishes: any[];
   createdAt: Date;
+  eventDate: Date | string;  // Actual date of the event
 }
 
 export interface CartItem {
   dishId: string;
   dishName: string;
-  quantity: number;
+  peopleCount: number;  // Number of people this dish serves
   eventId: string;
 }
 
@@ -30,34 +32,56 @@ export class EventService {
   public cart$ = this.cartSubject.asObservable();
   public currentEvent$ = this.currentEventSubject.asObservable();
 
-  constructor() {
+  constructor(private storageService: StorageService) {
     this.loadFromStorage();
   }
 
   private loadFromStorage(): void {
-    const events = JSON.parse(localStorage.getItem('events') || '[]');
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const currentEventId = localStorage.getItem('currentEventId');
+    const events = this.storageService.get<Event[]>('events') || [];
+    let cart = this.storageService.get<CartItem[]>('cart') || [];
+    const currentEventId = this.storageService.get<string>('currentEventId');
+
+    // Migrate old cart data: convert quantity to peopleCount if needed
+    cart = cart.map((item: any) => {
+      if ('quantity' in item && !('peopleCount' in item)) {
+        // Old format - migrate to new format
+        return {
+          dishId: item.dishId,
+          dishName: item.dishName,
+          peopleCount: item.quantity || 1,
+          eventId: item.eventId
+        };
+      }
+      // Ensure all required fields exist
+      return {
+        dishId: item.dishId,
+        dishName: item.dishName,
+        peopleCount: item.peopleCount || 1,
+        eventId: item.eventId
+      };
+    });
 
     this.eventsSubject.next(events);
     this.cartSubject.next(cart);
-    this.currentEventSubject.next(currentEventId);
+    this.currentEventSubject.next(currentEventId || null);
+    
+    // Save migrated data
+    this.saveToStorage();
   }
 
   private saveToStorage(): void {
-    localStorage.setItem('events', JSON.stringify(this.eventsSubject.value));
-    localStorage.setItem('cart', JSON.stringify(this.cartSubject.value));
-    if (this.currentEventSubject.value) {
-      localStorage.setItem('currentEventId', this.currentEventSubject.value);
-    }
+    this.storageService.set('events', this.eventsSubject.value);
+    this.storageService.set('cart', this.cartSubject.value);
+    this.storageService.set('currentEventId', this.currentEventSubject.value);
   }
 
-  createEvent(event: Omit<Event, 'id' | 'createdAt' | 'dishes'>): string {
+  createEvent(event: Omit<Event, 'id' | 'createdAt' | 'dishes' | 'eventDate'> & { eventDate?: Date | string }): string {
     const newEvent: Event = {
       id: Date.now().toString(),
       ...event,
       dishes: [],
-      createdAt: new Date()
+      createdAt: new Date(),
+      eventDate: event.eventDate || new Date()  // Use provided date or current date
     };
 
     const events = [...this.eventsSubject.value, newEvent];
@@ -80,27 +104,41 @@ export class EventService {
     this.saveToStorage();
   }
 
-  addDishToCart(dishId: string, dishName: string, quantity: number = 1): void {
+  addDishToCart(dishId: string, dishName: string, peopleCount: number): void {
     const currentEventId = this.currentEventSubject.value;
     if (!currentEventId) {
+      console.error('No current event selected');
       throw new Error('No current event selected');
     }
 
+    if (!dishId || !dishName) {
+      console.error('Invalid dish data:', { dishId, dishName });
+      throw new Error('Invalid dish data');
+    }
+
     const cart = [...this.cartSubject.value];
+    
+    // Check if dish already exists in current event's cart
     const existingItem = cart.find(item => 
       item.dishId === dishId && item.eventId === currentEventId
     );
 
+    // Prevent duplicates - dish can only be added once per event
     if (existingItem) {
-      existingItem.quantity += quantity;
-    } else {
-      cart.push({
-        dishId,
-        dishName,
-        quantity,
-        eventId: currentEventId
-      });
+      console.log('Dish already in cart:', dishId);
+      return; // Dish already in cart, do nothing
     }
+
+    // Add dish with its fixed peopleCount (serving size)
+    const newItem: CartItem = {
+      dishId,
+      dishName,
+      peopleCount: peopleCount || 1,
+      eventId: currentEventId
+    };
+    
+    cart.push(newItem);
+    console.log('Added to cart:', newItem);
 
     this.cartSubject.next(cart);
     this.saveToStorage();
@@ -108,35 +146,24 @@ export class EventService {
 
   removeDishFromCart(dishId: string): void {
     const currentEventId = this.currentEventSubject.value;
-    if (!currentEventId) return;
+    if (!currentEventId) {
+      console.warn('No current event selected for removal');
+      return;
+    }
 
+    console.log('Removing dish from cart:', { dishId, eventId: currentEventId });
+
+    // Remove dish from current event's cart
     const cart = this.cartSubject.value.filter(item => 
       !(item.dishId === dishId && item.eventId === currentEventId)
     );
 
+    console.log('Cart after removal:', cart);
     this.cartSubject.next(cart);
     this.saveToStorage();
   }
 
-  updateCartItemQuantity(dishId: string, quantity: number): void {
-    const currentEventId = this.currentEventSubject.value;
-    if (!currentEventId) return;
-
-    const cart = [...this.cartSubject.value];
-    const item = cart.find(item => 
-      item.dishId === dishId && item.eventId === currentEventId
-    );
-
-    if (item) {
-      if (quantity <= 0) {
-        this.removeDishFromCart(dishId);
-      } else {
-        item.quantity = quantity;
-        this.cartSubject.next(cart);
-        this.saveToStorage();
-      }
-    }
-  }
+  // Quantity updates removed - single-selection model with fixed peopleCount
 
   getCartForCurrentEvent(): CartItem[] {
     const currentEventId = this.currentEventSubject.value;
@@ -145,17 +172,57 @@ export class EventService {
     return this.cartSubject.value.filter(item => item.eventId === currentEventId);
   }
 
+  isDishInCurrentEvent(dishId: string): boolean {
+    const currentEventId = this.currentEventSubject.value;
+    if (!currentEventId) return false;
+
+    return this.cartSubject.value.some(item => 
+      item.dishId === dishId && item.eventId === currentEventId
+    );
+  }
+
   clearCart(): void {
     const currentEventId = this.currentEventSubject.value;
-    if (!currentEventId) return;
+    if (!currentEventId) {
+      console.warn('No current event selected for clearing cart');
+      return;
+    }
 
+    console.log('Clearing cart for event:', currentEventId);
+
+    // Remove all dishes from current event's cart
     const cart = this.cartSubject.value.filter(item => item.eventId !== currentEventId);
+    
+    console.log('Cart after clearing:', cart);
     this.cartSubject.next(cart);
     this.saveToStorage();
   }
 
   getAllEvents(): Event[] {
     return this.eventsSubject.value;
+  }
+
+  getEventsSorted(): Event[] {
+    const currentId = this.currentEventSubject.value;
+    const events = [...this.eventsSubject.value];
+    
+    if (!currentId) {
+      // No active event - sort by creation date (newest first)
+      return events.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+    }
+    
+    // Active event exists - put it first, then sort rest by creation date
+    return events.sort((a, b) => {
+      if (a.id === currentId) return -1;
+      if (b.id === currentId) return 1;
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
   }
 
   getEvent(id: string): Event | undefined {

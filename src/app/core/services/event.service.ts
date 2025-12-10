@@ -75,12 +75,13 @@ export class EventService {
   }
 
   // Event Management
-  createEvent(eventData: Omit<Event, 'id' | 'createdAt' | 'dishes'>): string {
+  createEvent(eventData: Omit<Event, 'id' | 'createdAt' | 'dishes' | 'eventDate'> & { eventDate?: Date | string }): string {
     const newEvent: Event = {
       ...eventData,
       id: Date.now().toString(),
       dishes: [],
-      createdAt: new Date()
+      createdAt: new Date(),
+      eventDate: eventData.eventDate || new Date() // Use provided date or current date
     };
     
     const events = [...this.eventsSubject.value, newEvent];
@@ -119,28 +120,43 @@ export class EventService {
   }
 
   // Cart Management
-  addDishToCart(dishId: string, dishName: string, quantity: number, price: number): void {
+  addDishToCart(dishId: string, dishName: string, peopleCount: number): void {
     const currentEventId = this.currentEventIdSubject.value;
-    if (!currentEventId) return;
+    if (!currentEventId) {
+      console.error('No current event selected');
+      throw new Error('No current event selected');
+    }
 
-    const cart = this.cartSubject.value;
-    const existingIndex = cart.findIndex(
+    if (!dishId || !dishName) {
+      console.error('Invalid dish data:', { dishId, dishName });
+      throw new Error('Invalid dish data');
+    }
+
+    const cart = [...this.cartSubject.value];
+    
+    // Check if dish already exists in current event's cart
+    const existingItem = cart.find(
       item => item.dishId === dishId && item.eventId === currentEventId
     );
 
-    if (existingIndex >= 0) {
-      cart[existingIndex].quantity += quantity;
-    } else {
-      cart.push({
-        dishId,
-        dishName,
-        quantity,
-        eventId: currentEventId,
-        estimatedPrice: price
-      });
+    // Prevent duplicates - dish can only be added once per event
+    if (existingItem) {
+      console.log('Dish already in cart:', dishId);
+      return;
     }
 
-    this.cartSubject.next([...cart]);
+    // Add dish with its fixed peopleCount (serving size)
+    const newItem: CartItem = {
+      dishId,
+      dishName,
+      peopleCount: peopleCount || 1,
+      eventId: currentEventId
+    };
+    
+    cart.push(newItem);
+    console.log('Added to cart:', newItem);
+
+    this.cartSubject.next(cart);
     this.storage.set('cart', cart);
   }
 
@@ -155,18 +171,18 @@ export class EventService {
     this.storage.set('cart', cart);
   }
 
-  updateCartItemQuantity(dishId: string, quantity: number): void {
+  updateCartItemPeopleCount(dishId: string, peopleCount: number): void {
     const currentEventId = this.currentEventIdSubject.value;
     if (!currentEventId) return;
 
-    if (quantity <= 0) {
+    if (peopleCount <= 0) {
       this.removeDishFromCart(dishId);
       return;
     }
 
     const cart = this.cartSubject.value.map(item =>
       item.dishId === dishId && item.eventId === currentEventId
-        ? { ...item, quantity }
+        ? { ...item, peopleCount }
         : item
     );
     this.cartSubject.next(cart);
@@ -188,13 +204,25 @@ export class EventService {
 
     return this.cartSubject.value
       .filter(item => item.eventId === currentEventId)
-      .reduce((sum, item) => sum + (item.estimatedPrice * item.quantity), 0);
+      .reduce((sum, item) => {
+        const dish = this.getDishById(item.dishId);
+        return sum + (dish?.estimatedPrice || 0);
+      }, 0);
   }
 
   getCartForCurrentEvent(): CartItem[] {
     const currentEventId = this.currentEventIdSubject.value;
     if (!currentEventId) return [];
     return this.cartSubject.value.filter(item => item.eventId === currentEventId);
+  }
+
+  isDishInCurrentEvent(dishId: string): boolean {
+    const currentEventId = this.currentEventIdSubject.value;
+    if (!currentEventId) return false;
+
+    return this.cartSubject.value.some(item => 
+      item.dishId === dishId && item.eventId === currentEventId
+    );
   }
 
   // Dish Management
@@ -271,7 +299,8 @@ export class EventService {
         const existing = shoppingMap.get(key);
 
         if (existing) {
-          existing.totalQuantity += ingredient.quantity * cartItem.quantity;
+          // Use peopleCount for calculation
+          existing.totalQuantity += ingredient.quantity * (cartItem.peopleCount || 1);
           if (!existing.dishes.includes(dish.name)) {
             existing.dishes.push(dish.name);
           }
@@ -279,7 +308,7 @@ export class EventService {
           const product = products.find(p => p.name === ingredient.productName);
           shoppingMap.set(key, {
             productName: ingredient.productName,
-            totalQuantity: ingredient.quantity * cartItem.quantity,
+            totalQuantity: ingredient.quantity * (cartItem.peopleCount || 1),
             unit: ingredient.unit,
             estimatedPrice: product?.estimatedPrice || 0,
             dishes: [dish.name]
@@ -289,6 +318,30 @@ export class EventService {
     });
 
     return Array.from(shoppingMap.values());
+  }
+
+  // Helper to get events sorted with active event first
+  getEventsSorted(): Event[] {
+    const currentId = this.currentEventIdSubject.value;
+    const events = [...this.eventsSubject.value];
+    
+    if (!currentId) {
+      // No active event - sort by creation date (newest first)
+      return events.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+    }
+    
+    // Active event exists - put it first, then sort rest by creation date
+    return events.sort((a, b) => {
+      if (a.id === currentId) return -1;
+      if (b.id === currentId) return 1;
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
   }
 
   // Demo Data Generators

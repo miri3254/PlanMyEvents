@@ -400,8 +400,18 @@
           
           <!-- Available dishes list -->
           <div class="dishes-list" style="height: calc(100% - 120px); overflow-y: auto;">
-            <div class="dish-item p-3 border-1 border-200 border-round mb-2" 
+            <div class="dish-item p-3 border-round mb-2 position-relative" 
+                 [class.dish-in-event]="isDishInEvent(dish.id!)"
+                 [class.border-1]="!isDishInEvent(dish.id!)"
+                 [class.border-200]="!isDishInEvent(dish.id!)"
                  *ngFor="let dish of filteredDishes">
+              
+              <!-- Added to Event Label -->
+              <div *ngIf="isDishInEvent(dish.id!)" class="added-label">
+                <i class="pi pi-check-circle"></i>
+                <span>נוסף לאירוע</span>
+              </div>
+              
               <div class="flex align-items-center justify-content-between">
                 <div class="flex-1">
                   <div class="flex align-items-center gap-3">
@@ -421,24 +431,23 @@
                   </div>
                 </div>
                 <div class="flex align-items-center gap-2">
-                  <!-- Show quantity if already in cart -->
-                  <div *ngIf="getDishFromCart(dish.id!) as cartDish" class="flex align-items-center gap-2">
-                    <p-inputNumber
-                      [(ngModel)]="cartDish.quantity"
-                      [min]="0"
-                      [max]="100"
-                      size="small"
-                      [style]="{'width': '80px'}"
-                      (onInput)="updateCartQuantity(dish.id!, cartDish.quantity)">
-                    </p-inputNumber>
-                    <span class="text-sm text-500">בעגלה</span>
-                  </div>
+                  <!-- Toggle button based on state -->
                   <p-button 
-                    [label]="getDishFromCart(dish.id!) ? 'הוסף עוד' : 'הוסף לתפריט'"
-                    [icon]="getDishFromCart(dish.id!) ? 'pi pi-plus' : 'pi pi-shopping-cart'"
+                    *ngIf="!isDishInEvent(dish.id!)"
+                    label="הוסף לתפריט"
+                    icon="pi pi-plus"
                     size="small"
-                    [severity]="getDishFromCart(dish.id!) ? 'secondary' : 'primary'"
+                    severity="primary"
                     (onClick)="addToEvent(dish)">
+                  </p-button>
+                  <p-button 
+                    *ngIf="isDishInEvent(dish.id!)"
+                    label="הסר מהתפריט"
+                    icon="pi pi-times"
+                    size="small"
+                    severity="danger"
+                    [outlined]="true"
+                    (onClick)="removeFromCart(dish.id!)">
                   </p-button>
                 </div>
               </div>
@@ -473,21 +482,21 @@
           <!-- Cart items list -->
           <div class="cart-items-list" style="height: calc(100% - 150px); overflow-y: auto;">
             <div class="cart-item p-2 bg-white border-1 border-200 border-round mb-2" 
-                 *ngFor="let item of cartItems">
+                 *ngFor="let item of cartItems; let i = index">
               <div class="flex align-items-center justify-content-between">
                 <div class="flex-1">
-                  <h5 class="m-0 mb-1">{{ item.dishName }}</h5>
+                  <div class="flex align-items-center gap-2 mb-2">
+                    <span class="cart-item-number">{{ i + 1 }}</span>
+                    <h5 class="m-0">{{ item.dishName }}</h5>
+                  </div>
                   <div class="flex align-items-center gap-2">
-                    <span class="text-sm">כמות:</span>
-                    <p-inputNumber 
-                      [(ngModel)]="item.quantity" 
-                      [min]="0" 
-                      [max]="100"
-                      size="small"
-                      [style]="{'width': '80px'}"
-                      (onInput)="updateCartQuantity(item.dishId, item.quantity)">
-                    </p-inputNumber>
-                    <span class="text-sm font-bold">₪{{ getCartItemTotal(item.dishId, item.quantity) }}</span>
+                    <p-tag [value]="item.peopleCount + ' מנות'" severity="info" size="small">
+                      <ng-template pTemplate="default">
+                        <i class="pi pi-users text-xs mr-1"></i>
+                        {{ item.peopleCount }} מנות
+                      </ng-template>
+                    </p-tag>
+                    <span class="text-sm font-bold text-primary">₪{{ getDishPrice(item.dishId) }}</span>
                   </div>
                 </div>
                 <p-button 
@@ -509,9 +518,14 @@
           
           <!-- Cart total and actions -->
           <div class="cart-footer border-top-1 border-200 pt-3 mt-3" *ngIf="cartItems.length > 0">
-            <div class="flex align-items-center justify-content-between mb-3">
-              <span class="text-lg font-bold">סך הכל: ₪{{ getCartTotal() }}</span>
-              <span class="text-sm text-600">{{ getCartItemsCount() }} פריטים</span>
+            <div class="mb-3">
+              <div class="flex align-items-center justify-content-between mb-2">
+                <span class="text-lg font-bold">סך הכל: ₪{{ getCartTotal() }}</span>
+              </div>
+              <div class="flex align-items-center justify-content-between text-sm text-600">
+                <span><i class="pi pi-list mr-1"></i>{{ getCartItemsCount() }} מנות</span>
+                <span><i class="pi pi-users mr-1"></i>סה"כ {{ getTotalPeopleCount() }} אנשים</span>
+              </div>
             </div>
             <div class="flex gap-2">
               <p-button 
@@ -961,6 +975,157 @@
           (onClick)="saveDishIngredients()">
         </p-button>
       </div>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Ingredient Selection Dialog -->
+<p-dialog 
+  header="הוספת מרכיב חדש"
+  [(visible)]="ingredientSelectionDialog" 
+  [style]="{width: '50vw'}"
+  [modal]="true"
+  [closable]="true"
+  [maximizable]="false"
+  styleClass="ingredient-selection-dialog">
+  
+  <ng-template pTemplate="content">
+    <div class="ingredient-selection-content">
+      
+      <!-- Step 1: Search and Select Product -->
+      <div class="mb-4">
+        <h4 class="text-900 mb-3">בחר מוצר</h4>
+        
+        <!-- Search Input -->
+        <div class="mb-3">
+          <span class="p-input-icon-left w-full">
+            <i class="pi pi-search"></i>
+            <input 
+              pInputText 
+              [(ngModel)]="ingredientSearchQuery"
+              (input)="searchIngredients()"
+              placeholder="חפש מוצר לפי שם, קטגוריה או מותג..."
+              class="w-full"
+              autofocus />
+          </span>
+        </div>
+        
+        <!-- Products List -->
+        <div class="products-list border-1 surface-border border-round p-2" style="max-height: 300px; overflow-y: auto;">
+          <div *ngIf="filteredProducts.length === 0" class="text-center p-4 text-500">
+            <i class="pi pi-inbox text-3xl mb-2"></i>
+            <p>לא נמצאו מוצרים</p>
+          </div>
+          
+          <div 
+            *ngFor="let product of filteredProducts"
+            class="product-item p-3 border-round mb-2 cursor-pointer transition-colors transition-duration-150"
+            [class.surface-100]="selectedProduct?.name === product.name"
+            [class.border-2]="selectedProduct?.name === product.name"
+            [class.border-primary]="selectedProduct?.name === product.name"
+            (click)="selectProduct(product)">
+            
+            <div class="flex align-items-center justify-content-between">
+              <div class="flex-1">
+                <div class="font-semibold text-900">{{ product.name }}</div>
+                <div class="flex align-items-center gap-2 mt-1">
+                  <span class="text-sm text-600" *ngIf="product.brand">
+                    <i class="pi pi-tag text-xs"></i> {{ product.brand }}
+                  </span>
+                  <span class="text-sm text-600" *ngIf="product.category">
+                    <i class="pi pi-box text-xs"></i> {{ product.category }}
+                  </span>
+                  <span class="text-sm text-600" *ngIf="product.estimatedPrice">
+                    <i class="pi pi-shekel-sign text-xs"></i> {{ product.estimatedPrice }}
+                  </span>
+                </div>
+              </div>
+              <div *ngIf="selectedProduct?.name === product.name">
+                <i class="pi pi-check-circle text-2xl text-primary"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <p-divider></p-divider>
+      
+      <!-- Step 2: Enter Quantity and Unit -->
+      <div class="mb-3">
+        <h4 class="text-900 mb-3">הגדר כמות ויחידה</h4>
+        
+        <div class="grid">
+          <!-- Selected Product Display -->
+          <div class="col-12 mb-3" *ngIf="selectedProduct">
+            <div class="p-3 surface-100 border-round">
+              <div class="flex align-items-center gap-2">
+                <i class="pi pi-check-circle text-primary"></i>
+                <span class="font-semibold">מוצר נבחר:</span>
+                <span class="text-primary font-bold">{{ selectedProduct.name }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Quantity Input -->
+          <div class="col-12 md:col-6">
+            <p-floatlabel>
+              <p-inputNumber 
+                [(ngModel)]="newIngredient.quantity"
+                [min]="0.1"
+                [step]="0.1"
+                [maxFractionDigits]="2"
+                class="w-full"
+                id="new-ingredient-qty"
+                [disabled]="!selectedProduct">
+              </p-inputNumber>
+              <label for="new-ingredient-qty">כמות *</label>
+            </p-floatlabel>
+          </div>
+          
+          <!-- Unit Select -->
+          <div class="col-12 md:col-6">
+            <p-floatlabel>
+              <p-select 
+                [(ngModel)]="newIngredient.unit"
+                [options]="units"
+                optionLabel="label"
+                optionValue="value"
+                class="w-full"
+                id="new-ingredient-unit"
+                [disabled]="!selectedProduct">
+              </p-select>
+              <label for="new-ingredient-unit">יחידת מידה *</label>
+            </p-floatlabel>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Validation Message -->
+      <div *ngIf="!selectedProduct" class="p-3 surface-50 border-round">
+        <div class="flex align-items-center gap-2 text-600">
+          <i class="pi pi-info-circle"></i>
+          <span class="text-sm">בחר מוצר מהרשימה כדי להמשיך</span>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <div class="flex gap-2">
+      <p-button 
+        label="ביטול" 
+        icon="pi pi-times" 
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="closeIngredientSelectionDialog()">
+      </p-button>
+      <p-button 
+        label="שמור" 
+        icon="pi pi-check" 
+        severity="success"
+        [disabled]="!selectedProduct || !newIngredient.quantity || !newIngredient.unit"
+        (onClick)="saveNewIngredient()">
+      </p-button>
     </div>
   </ng-template>
 </p-dialog>

@@ -46,14 +46,15 @@ export interface Event {
   foodType: string; // חלבי/בשרי/פרווה/כל הסוגים
   dishes: { dishId: string; quantity: number }[];
   createdAt: Date;
+  eventDate: Date | string;  // Actual date of the event
 }
 
 export interface CartItem {
   dishId: string;
   dishName: string;
-  quantity: number;
+  peopleCount: number;  // Number of people this dish serves
   eventId: string;
-  estimatedPrice: number;
+  estimatedPrice?: number;  // Optional - can be calculated from dish
 }
 
 export interface ShoppingListItem {

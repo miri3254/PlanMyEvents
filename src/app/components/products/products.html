@@ -1,267 +1,342 @@
-<div class="products-container">
-    <!-- כותרת וכפתורים -->
-    <div class="grid mb-4">
-        <div class="col-12 flex justify-content-between align-items-center">
-            <h2 class="m-0">מוצרי קייטרינג</h2>
-            <div class="flex gap-2">
+<div class="products-container p-6">
+    <!-- כותרת -->
+    <div class="header-section flex justify-content-between align-items-center mb-5">
+        <div class="header-content">
+            <div class="gradient-background"></div>
+            <h1 class="gradient-title mb-2">ניהול מוצרים</h1>
+            <p class="text-muted">מאגר מוצרים ומרכיבים למנות</p>
+        </div>
+        <p-button 
+            label="מוצר חדש" 
+            icon="pi pi-plus" 
+            (onClick)="openNew()"
+            styleClass="gradient-button shadow-glow">
+        </p-button>
+    </div>
+
+    <!-- חיפוש וסינון -->
+    <p-card class="mb-4">
+        <div class="flex flex-wrap gap-2 align-items-center">
+            <span class="p-input-icon-right search-input-wrapper">
+                <i class="pi pi-search"></i>
+                <input 
+                    pInputText 
+                    [(ngModel)]="searchValue" 
+                    placeholder="חיפוש מוצרים, מותגים או ספקים..."
+                    (input)="onSearch()"
+                    class="w-full">
+            </span>
+            
+            <!-- Status Filter Buttons -->
+            <div class="filter-stat-card filter-stat-success" 
+                 (click)="filterByInventoryStatus('במלאי')" 
+                 [class.active]="filterInventoryStatus === 'במלאי'">
+                <i class="pi pi-check-circle"></i>
+                <span>במלאי</span>
+                <span class="stat-number">{{inventoryStats.inStock}}</span>
+            </div>
+            
+            <div class="filter-stat-card filter-stat-warning" 
+                 (click)="filterByInventoryStatus('מלאי-נמוך')"
+                 [class.active]="filterInventoryStatus === 'מלאי-נמוך'">
+                <i class="pi pi-exclamation-circle"></i>
+                <span>מלאי נמוך</span>
+                <span class="stat-number">{{inventoryStats.lowStock}}</span>
+            </div>
+            
+            <div class="filter-stat-card filter-stat-danger" 
+                 (click)="filterByInventoryStatus('אזל')"
+                 [class.active]="filterInventoryStatus === 'אזל'">
+                <i class="pi pi-times-circle"></i>
+                <span>אזל</span>
+                <span class="stat-number">{{inventoryStats.outOfStock}}</span>
+            </div>
+
+            <p-button 
+                label="ניקוי סינונים"
+                icon="pi pi-filter-slash"
+                [outlined]="true"
+                size="small"
+                (onClick)="clearFilters()">
+            </p-button>
+
+            <div class="view-toggle-group flex gap-1 border-1 border-round p-1">
                 <p-button 
-                    *ngIf="selectedProducts.length > 0" 
-                    label="מחק נבחרים ({{selectedProducts.length}})" 
-                    icon="pi pi-trash" 
-                    severity="danger"
-                    (onClick)="deleteSelectedProducts()"></p-button>
-                <p-button label="הוסף מוצר חדש" icon="pi pi-plus" (onClick)="openNew()"></p-button>
+                    icon="pi pi-list" 
+                    [outlined]="viewMode !== 'table'"
+                    [text]="viewMode !== 'table'"
+                    size="small"
+                    (onClick)="setViewMode('table')">
+                </p-button>
+                <p-button 
+                    icon="pi pi-th-large" 
+                    [outlined]="viewMode !== 'grid'"
+                    [text]="viewMode !== 'grid'"
+                    size="small"
+                    (onClick)="setViewMode('grid')">
+                </p-button>
             </div>
         </div>
-    </div>
-
-    <p-divider />
-
-    <!-- שורת חיפוש וסינון -->
-    <div class="col-12 mb-4 flex gap-2 align-items-center"> 
-         שורת חיפוש וסינון
-
-        <!-- חיפוש -->
-         
-
-        <span class="p-input-icon-left flex-1">
-            <i class="pi pi-search"></i>
-            <input pInputText [(ngModel)]="searchValue" placeholder="חיפוש מוצרים..."
-                   (input)="onSearch()" class="w-full"/>
-        </span>
-        <p-button *ngIf="searchValue" label="נקה חיפוש" icon="pi pi-times" severity="secondary"
-                  (onClick)="clearSearch()"></p-button>
-
-        <!-- כפתורי סינון -->
-        <p-button label="במלאי" variant="outlined" severity="success" 
-                  (onClick)="filterByInventoryStatus('במלאי')" />
-        <p-button label="מלאי נמוך" variant="outlined" severity="warn" 
-                  (onClick)="filterByInventoryStatus('מלאי-נמוך')" />
-        <p-button label="אזל" variant="outlined" severity="danger" 
-                  (onClick)="filterByInventoryStatus('אזל')"/>
-        <p-button label="נקה סינון" icon="pi pi-filter-slash" severity="secondary"
-                  (onClick)="filterByInventoryStatus('')"></p-button>
-
-        <!-- כפתור תצוגה -->
-        <p-button label="{{viewMode === 'table' ? 'תצוגת כרטיסים' : 'תצוגת טבלה'}}"
-                  icon="pi pi-{{viewMode === 'table' ? 'th-large' : 'table'}}" 
-                  (onClick)="toggleView()"></p-button>
-    </div>
-
-    <p-divider />
+    </p-card>
 
 
-    <!-- Table View -->
-    <div *ngIf="viewMode === 'table'" class="col-12">
-        <p-table [value]="filteredProducts" [(selection)]="selectedProducts" dataKey="name" editMode="row" [tableStyle]="{'min-width': '50rem'}">
-            
-            <ng-template pTemplate="emptymessage">                                                                   
-                <tr>
-                    <td [attr.colspan]="7" class="text-center" style="color: red;">לא נמצאו מוצרים</td>
-                </tr>
-            </ng-template>
-            
+
+    <!-- תצוגת טבלה -->
+    <p-card *ngIf="viewMode === 'table'">
+        <p-table [value]="filteredProducts" [tableStyle]="{'min-width': '60rem'}">
             <ng-template pTemplate="header">
                 <tr>
-                    <th style="width:3rem">
-                        <p-checkbox 
-                            (onChange)="onSelectAllChange($event)"
-                            [ngModel]="selectedProducts.length === filteredProducts.length && filteredProducts.length > 0"
-                            [binary]="true">
-                        </p-checkbox>
+                    <th class="sortable-header" (click)="sortBy('name')">
+                        <div class="flex align-items-center gap-2">
+                            <span>מוצר</span>
+                            <i [class]="getSortIcon('name')"></i>
+                        </div>
                     </th>
-                    <th style="width:23%">שם מוצר</th>
-                    <th style="width:18%">חברה/מותג</th>
-                    <th style="width:14%">סטטוס מלאי</th>
-                    <th style="width:14%">מחיר (₪)</th>
-                    <th style="width:14%">קטגוריה</th>
-                    <th style="width:10%"></th>
+                    <th class="sortable-header" (click)="sortBy('brand')">
+                        <div class="flex align-items-center gap-2">
+                            <span>מותג</span>
+                            <i [class]="getSortIcon('brand')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('supplier')">
+                        <div class="flex align-items-center gap-2">
+                            <span>ספק</span>
+                            <i [class]="getSortIcon('supplier')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('category')">
+                        <div class="flex align-items-center gap-2">
+                            <span>קטגוריה</span>
+                            <i [class]="getSortIcon('category')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('packageQuantity')">
+                        <div class="flex align-items-center gap-2">
+                            <span>כמות באריזה</span>
+                            <i [class]="getSortIcon('packageQuantity')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('estimatedPrice')">
+                        <div class="flex align-items-center gap-2">
+                            <span>מחיר משוער</span>
+                            <i [class]="getSortIcon('estimatedPrice')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('inventoryStatus')">
+                        <div class="flex align-items-center gap-2">
+                            <span>סטטוס</span>
+                            <i [class]="getSortIcon('inventoryStatus')"></i>
+                        </div>
+                    </th>
+                    <th>פעולות</th>
                 </tr>
             </ng-template>
-            <ng-template pTemplate="body" let-product let-editing="editing" let-ri="rowIndex">
-                <tr [pEditableRow]="product">
+            <ng-template pTemplate="body" let-product>
+                <tr>
+                    <td><h3>{{product.name}}</h3></td>
+                    <td>{{product.brand}}</td>
+                    <td>{{product.supplier}}</td>
                     <td>
-                        <p-checkbox 
-                            [(ngModel)]="selectedProducts" 
-                            [value]="product"
-                            [binary]="false">
-                        </p-checkbox>
+                        <p-tag [value]="product.category" severity="secondary"></p-tag>
+                    </td>
+                    <td>{{product.packageQuantity}}</td>
+                    <td>₪{{product.estimatedPrice}}</td>
+                    <td>
+                        <p-tag 
+                            [value]="product.inventoryStatus" 
+                            [severity]="getStatusSeverity(product.inventoryStatus)"
+                            [icon]="getStatusIcon(product.inventoryStatus)">
+                        </p-tag>
                     </td>
                     <td>
-                        <p-cellEditor>
-                            <ng-template pTemplate="input">
-                                <input pInputText type="text" [(ngModel)]="product.name" required />
-                            </ng-template>
-                            <ng-template pTemplate="output">
-                                {{product.name}}
-                            </ng-template>
-                        </p-cellEditor>
-                    </td>
-                    <td>
-                        <p-cellEditor>
-                            <ng-template pTemplate="input">
-                                <input pInputText type="text" [(ngModel)]="product.brand" />
-                            </ng-template>
-                            <ng-template pTemplate="output">
-                                {{product.brand}}
-                            </ng-template>
-                        </p-cellEditor>
-                    </td>
-                    <td>
-                        <p-cellEditor>
-                            <ng-template pTemplate="input">
-                                <p-select [options]="inventoryStatuses" appendTo="body" 
-                                          [(ngModel)]="product.inventoryStatus" 
-                                          optionLabel="label" optionValue="value"
-                                          [style]="{'width':'100%'}" />
-                            </ng-template>
-                            <ng-template pTemplate="output">
-                                <p-tag [value]="product.inventoryStatus" 
-                                       [severity]="getStatusSeverity(product.inventoryStatus)" />
-                            </ng-template>
-                        </p-cellEditor>
-                    </td>
-                    <td>
-                        <p-cellEditor>
-                            <ng-template pTemplate="input">
-                                <p-inputNumber [(ngModel)]="product.estimatedPrice" 
-                                               mode="currency" currency="ILS" locale="he-IL"
-                                               [style]="{'width':'100%'}" />
-                            </ng-template>
-                            <ng-template pTemplate="output">
-                                {{product.estimatedPrice | currency:'ILS':'symbol':'1.0-0'}}
-                            </ng-template>
-                        </p-cellEditor>
-                    </td>
-                    <td>
-                        <p-cellEditor>
-                            <ng-template pTemplate="input">
-                                <p-select [options]="categories" appendTo="body" 
-                                          [(ngModel)]="product.category"
-                                          optionLabel="label" optionValue="value"
-                                          [style]="{'width':'100%'}" />
-                            </ng-template>
-                            <ng-template pTemplate="output">
-                                {{product.category}}
-                            </ng-template>
-                        </p-cellEditor>
-                    </td>
-                    <td>
-                        <div class="flex align-items-center justify-content-center gap-2">
-                            <p-button *ngIf="!editing" 
-                                      icon="pi pi-pencil"
-                                      (onClick)="onRowEditInit(product)"
-                                      [text]="true"
-                                      [rounded]="true"
-                                      severity="secondary"
-                                      pTooltip="ערוך"
-                                      size="small"></p-button>
-                            <p-button *ngIf="editing" 
-                                      icon="pi pi-check"
-                                      (onClick)="onRowEditSave(product)"
-                                      [text]="true"
-                                      [rounded]="true"
-                                      severity="success"
-                                      pTooltip="שמור"
-                                      size="small"></p-button>
-                            <p-button *ngIf="editing" 
-                                      icon="pi pi-times"
-                                      (onClick)="onRowEditCancel(product, ri)"
-                                      [text]="true"
-                                      [rounded]="true"
-                                      severity="danger"
-                                      pTooltip="ביטול"
-                                      size="small"></p-button>
-                            <p-button *ngIf="!editing" 
-                                      icon="pi pi-trash"
-                                      (onClick)="deleteProduct(product)"
-                                      [text]="true"
-                                      [rounded]="true"
-                                      severity="danger"
-                                      pTooltip="מחק"
-                                      size="small"></p-button>
+                        <div class="flex gap-2">
+                            <p-button 
+                                icon="pi pi-pencil" 
+                                [outlined]="true"
+                                size="small"
+                                (onClick)="editProduct(product)">
+                            </p-button>
+                            <p-button 
+                                icon="pi pi-trash" 
+                                severity="danger"
+                                [outlined]="true"
+                                size="small"
+                                (onClick)="deleteProduct(product)">
+                            </p-button>
                         </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="8" class="text-center py-6">
+                        <p class="text-muted">לא נמצאו מוצרים</p>
                     </td>
                 </tr>
             </ng-template>
         </p-table>
-    </div>
+    </p-card>
 
-    <!-- Card View -->
-    <div *ngIf="viewMode === 'cards'" class="col-12">
-        <div class="grid">
-            <div class="col-12 md:col-6 lg:col-4 xl:col-3" *ngFor="let product of filteredProducts; trackBy: trackByProduct">
-                <p-card class="product-card">
-                    <ng-template pTemplate="header">
-                        <div class="flex justify-content-between align-items-center">
-                            <h3 class="m-0">{{product.name}}</h3>
-                            <div class="flex gap-1">
-                                <p-button icon="pi pi-pencil" severity="info" text rounded
-                                          (onClick)="editProduct(product)" pTooltip="ערוך"></p-button>
-                                <p-button icon="pi pi-trash" severity="danger" text rounded
-                                          (onClick)="deleteProduct(product)" pTooltip="מחק"></p-button>
-                            </div>
-                        </div>
-                    </ng-template>
-                    <div class="product-details mt-2">
-                        <div class="flex justify-content-between mb-1">
-                            <span>סטטוס מלאי:</span>
-                            <p-tag [value]="product.inventoryStatus" [severity]="getStatusSeverity(product.inventoryStatus)"></p-tag>
-                        </div>
-                        <div class="flex justify-content-between mb-1"><span>חברה/מותג:</span> <span>{{product.brand}}</span></div>
-                        <div class="flex justify-content-between mb-1"><span>כמות באריזה:</span> <span>{{product.packageQuantity}}</span></div>
-                        <div class="flex justify-content-between mb-1"><span>מחיר משוער:</span> <span>₪{{product.estimatedPrice}}</span></div>
-                        <div class="flex justify-content-between mb-1"><span>קטגוריה:</span> <span>{{product.category}}</span></div>
-                        <div class="flex justify-content-between"><span>ספק:</span> <span>{{product.supplier}}</span></div>
+    <!-- תצוגת גריד -->
+    <div *ngIf="viewMode === 'grid'" class="products-grid">
+        <div class="product-card-wrapper" *ngFor="let product of filteredProducts; trackBy: trackByProduct">
+            <p-card styleClass="product-card hover-card h-full">
+                <ng-template pTemplate="header">
+                    <div class="card-header-wrapper">
+                        <h1 class="card-title">{{product.name}}</h1>
+                        <p-tag 
+                            class="card-status"
+                            [value]="product.inventoryStatus"
+                            [severity]="getStatusSeverity(product.inventoryStatus)"
+                            [icon]="getStatusIcon(product.inventoryStatus)">
+                        </p-tag>
                     </div>
-                </p-card>
-            </div>
+                    <!-- <p class="card-brand">{{product.brand}}</p> -->
+                </ng-template>
+                <div class="product-details">
+                    <div class="detail-row">
+                        <span class="text-muted">ספק:</span>
+                        <span>{{product.supplier}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="text-muted">קטגוריה:</span>
+                        <p-tag [value]="product.category" severity="secondary"></p-tag>
+                    </div>
+                    <div class="detail-row">
+                        <span class="text-muted">כמות באריזה:</span>
+                        <span>{{product.packageQuantity}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="text-muted">מחיר:</span>
+                        <span>₪{{product.estimatedPrice}}</span>
+                    </div>
+                </div>
+                <ng-template pTemplate="footer">
+                    <div class="flex gap-2">
+                        <p-button 
+                            label="ערוך"
+                            icon="pi pi-pencil" 
+                            [outlined]="true"
+                            class="flex-1"
+                            (onClick)="editProduct(product)">
+                        </p-button>
+                        <p-button 
+                            icon="pi pi-trash" 
+                            severity="danger"
+                            [outlined]="true"
+                            (onClick)="deleteProduct(product)">
+                        </p-button>
+                    </div>
+                </ng-template>
+            </p-card>
         </div>
+
     </div>
 
-    <!-- Product Dialog -->
-    <p-dialog [(visible)]="productDialog" [modal]="true" [style]="{width: '500px'}"
-              [header]="product.name ? 'עריכת מוצר' : 'הוספת מוצר חדש'"
-              [draggable]="false" [resizable]="false">
-        <div class="grid formgrid">
-            <div class="col-12 mb-4">
-                <label for="name" class="block mb-2">שם המוצר *</label>
-                <input pInputText id="name" [(ngModel)]="product.name" required
-                       [class.ng-invalid]="submitted && !product.name" placeholder="הכנס שם מוצר" class="w-full"/>
-                <small class="p-error block mt-1" *ngIf="submitted && !product.name">שם המוצר נדרש</small>
+    <p-card *ngIf="viewMode === 'grid' && filteredProducts.length === 0">
+        <div class="text-center py-6">
+            <p class="text-muted">לא נמצאו מוצרים</p>
+        </div>
+    </p-card>
+
+    <!-- דיאלוג עריכת מוצר -->
+    <p-dialog 
+        [(visible)]="productDialog" 
+        [modal]="true" 
+        [style]="{width: '50rem', maxHeight: '90vh'}"
+        [contentStyle]="{overflow: 'visible'}"
+        [header]="product.id ? 'עריכת ' + product.name : 'מוצר חדש'"
+        [draggable]="false" 
+        [resizable]="false">
+        
+        <div class="grid formgrid p-fluid">
+            <div class="col-12 md:col-6 mb-3">
+                <label for="name" class="block mb-2 font-semibold">שם המוצר *</label>
+                <input 
+                    pInputText 
+                    id="name" 
+                    [(ngModel)]="product.name"
+                    placeholder="הזן שם מוצר"
+                    [class.ng-invalid]="submitted && !product.name">
             </div>
-            <div class="col-12 md:col-6 mb-4">
-                <label for="brand" class="block mb-2">חברה/מותג</label>
-                <input pInputText id="brand" [(ngModel)]="product.brand" placeholder="הכנס חברה/מותג" class="w-full"/>
+
+            <div class="col-12 md:col-6 mb-3">
+                <label for="brand" class="block mb-2 font-semibold">מותג</label>
+                <input 
+                    pInputText 
+                    id="brand" 
+                    [(ngModel)]="product.brand"
+                    placeholder="שם המותג">
             </div>
-            <div class="col-12 md:col-6 mb-4">
-                <label for="supplier" class="block mb-2">ספק</label>
-                <input pInputText id="supplier" [(ngModel)]="product.supplier" placeholder="הכנס ספק" class="w-full"/>
+
+            <div class="col-12 md:col-6 mb-3">
+                <label for="supplier" class="block mb-2 font-semibold">ספק</label>
+                <input 
+                    pInputText 
+                    id="supplier" 
+                    [(ngModel)]="product.supplier"
+                    placeholder="שם הספק">
             </div>
-            <div class="col-12 md:col-6 mb-4">
-                <label for="category" class="block mb-2">קטגוריה</label>
-                <p-select id="category" [options]="categories" [(ngModel)]="product.category"
-                          placeholder="בחר קטגוריה" optionLabel="label" optionValue="value" class="w-full"></p-select>
+
+            <div class="col-12 md:col-6 mb-3">
+                <label for="category" class="block mb-2 font-semibold">קטגוריה</label>
+                <p-select 
+                    id="category"
+                    [options]="categories" 
+                    [(ngModel)]="product.category"
+                    placeholder="בחר קטגוריה"
+                    optionLabel="label"
+                    optionValue="value">
+                </p-select>
             </div>
-            <div class="col-12 md:col-6 mb-4">
-                <label for="inventoryStatus" class="block mb-2">סטטוס מלאי</label>
-                <p-select id="inventoryStatus" [options]="inventoryStatuses" [(ngModel)]="product.inventoryStatus"
-                          placeholder="בחר סטטוס" optionLabel="label" optionValue="value" class="w-full"></p-select>
+
+            <div class="col-12 md:col-6 mb-3">
+                <label for="packageQuantity" class="block mb-2 font-semibold">כמות באריזה</label>
+                <p-inputNumber 
+                    id="packageQuantity"
+                    [(ngModel)]="product.packageQuantity"
+                    [min]="1"
+                    placeholder="1">
+                </p-inputNumber>
             </div>
-            <div class="col-12 md:col-6 mb-4">
-                <label for="packageQuantity" class="block mb-2">כמות באריזה</label>
-                <p-inputNumber id="packageQuantity" [(ngModel)]="product.packageQuantity"
-                               [min]="1" [max]="1000" suffix=" יחידות" class="w-full"></p-inputNumber>
+
+            <div class="col-12 md:col-6 mb-3">
+                <label for="estimatedPrice" class="block mb-2 font-semibold">מחיר משוער (₪)</label>
+                <p-inputNumber 
+                    id="estimatedPrice"
+                    [(ngModel)]="product.estimatedPrice"
+                    [min]="0"
+                    mode="currency"
+                    currency="ILS"
+                    locale="he-IL">
+                </p-inputNumber>
             </div>
-            <div class="col-12 md:col-6 mb-4">
-                <label for="estimatedPrice" class="block mb-2">מחיר משוער (₪)</label>
-                <p-inputNumber id="estimatedPrice" [(ngModel)]="product.estimatedPrice" [min]="0" [max]="10000"
-                                mode="currency" currency="ILS" locale="he-IL" class="w-full"></p-inputNumber>
+
+            <div class="col-12 mb-3">
+                <label for="inventoryStatus" class="block mb-2 font-semibold">סטטוס מלאי</label>
+                <p-select 
+                    id="inventoryStatus"
+                    [options]="inventoryStatuses" 
+                    [(ngModel)]="product.inventoryStatus"
+                    placeholder="בחר סטטוס"
+                    optionLabel="label"
+                    optionValue="value">
+                </p-select>
             </div>
         </div>
+
         <ng-template pTemplate="footer">
-            <p-button label="ביטול" icon="pi pi-times" severity="secondary" (onClick)="hideDialog()"></p-button>
-            <p-button label="שמור" icon="pi pi-check" (onClick)="saveProduct()"></p-button>
+            <p-button 
+                label="ביטול" 
+                icon="pi pi-times" 
+                [outlined]="true"
+                (onClick)="hideDialog()">
+            </p-button>
+            <p-button 
+                label="שמור מוצר" 
+                icon="pi pi-check" 
+                (onClick)="saveProduct()">
+            </p-button>
         </ng-template>
     </p-dialog>
 
