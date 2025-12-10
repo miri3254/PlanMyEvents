@@ -160,12 +160,12 @@ export class EventService {
     this.storage.set('cart', cart);
   }
 
-  removeDishFromCart(dishId: string): void {
-    const currentEventId = this.currentEventIdSubject.value;
-    if (!currentEventId) return;
+  removeDishFromCart(dishId: string, eventId?: string): void {
+    const targetEventId = eventId ?? this.currentEventIdSubject.value;
+    if (!targetEventId) return;
 
     const cart = this.cartSubject.value.filter(
-      item => !(item.dishId === dishId && item.eventId === currentEventId)
+      item => !(item.dishId === dishId && item.eventId === targetEventId)
     );
     this.cartSubject.next(cart);
     this.storage.set('cart', cart);
@@ -189,11 +189,11 @@ export class EventService {
     this.storage.set('cart', cart);
   }
 
-  clearCart(): void {
-    const currentEventId = this.currentEventIdSubject.value;
-    if (!currentEventId) return;
+  clearCart(eventId?: string): void {
+    const targetEventId = eventId ?? this.currentEventIdSubject.value;
+    if (!targetEventId) return;
 
-    const cart = this.cartSubject.value.filter(item => item.eventId !== currentEventId);
+    const cart = this.cartSubject.value.filter(item => item.eventId !== targetEventId);
     this.cartSubject.next(cart);
     this.storage.set('cart', cart);
   }

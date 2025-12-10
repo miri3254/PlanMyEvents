@@ -95,7 +95,15 @@
     <div class="dishes-section">
       <!-- Grid View -->
       <div *ngIf="viewMode === 'grid'" class="dishes-grid">
-        <div class="dish-card" *ngFor="let dish of filteredDishes$ | async">
+        <div 
+          class="dish-card" 
+          *ngFor="let dish of filteredDishes$ | async"
+          [ngClass]="{'selected-dish': isEventMode && isDishSelected(dish.id)}">
+          <span 
+            *ngIf="isEventMode && isDishSelected(dish.id)"
+            class="selected-label">
+            נבחר לאירוע
+          </span>
           <div class="dish-card-header">
             <div>
               <h3 class="dish-name">{{ dish.name }}</h3>
@@ -117,7 +125,7 @@
               <span>₪{{ dish.estimatedPrice }}</span>
             </div>
             <div class="dish-detail">
-              <span class="detail-label">מנות להכנה:</span>
+              <span class="detail-label">מס סועדים למנה:</span>
               <span>{{ dish.servingSize }}</span>
             </div>
             <div class="dish-detail">
@@ -131,10 +139,12 @@
           <div class="dish-card-footer">
             <p-button 
               *ngIf="isEventMode"
-              label="הוסף לתפריט"
-              icon="pi pi-plus"
+              [label]="isDishSelected(dish.id) ? 'נבחר' : 'הוסף לתפריט'"
+              [icon]="isDishSelected(dish.id) ? 'pi pi-check' : 'pi pi-plus'"
               (onClick)="handleAddToCart(dish)"
-              styleClass="flex-1">
+              styleClass="flex-1"
+              [disabled]="isDishSelected(dish.id)"
+              [severity]="isDishSelected(dish.id) ? 'success' : null">
             </p-button>
             
             <ng-container *ngIf="!isEventMode">
@@ -168,7 +178,7 @@
               <th>קטגוריה</th>
               <th>כשרות</th>
               <th>מחיר</th>
-              <th>מנות</th>
+              <th>מס סועדים במנה</th>
               <th>פעולות</th>
             </tr>
           </ng-template>
@@ -251,27 +261,27 @@
             <div class="quantity-controls">
               <p-button 
                 icon="pi pi-minus"
-                (onClick)="updateCartQuantity(item.dishId, item.quantity - 1)"
+                (onClick)="updateCartPeopleCount(item.dishId, item.peopleCount - 1)"
                 [outlined]="true"
                 size="small">
               </p-button>
               <p-inputnumber 
-                [(ngModel)]="item.quantity"
-                (ngModelChange)="updateCartQuantity(item.dishId, item.quantity)"
+                [(ngModel)]="item.peopleCount"
+                (ngModelChange)="updateCartPeopleCount(item.dishId, item.peopleCount)"
                 [min]="0"
                 [showButtons]="false"
                 styleClass="quantity-input">
               </p-inputnumber>
               <p-button 
                 icon="pi pi-plus"
-                (onClick)="updateCartQuantity(item.dishId, item.quantity + 1)"
+                (onClick)="updateCartPeopleCount(item.dishId, item.peopleCount + 1)"
                 [outlined]="true"
                 size="small">
               </p-button>
             </div>
 
             <p class="cart-item-price">
-              ₪{{ item.estimatedPrice }} × {{ item.quantity }} = ₪{{ item.estimatedPrice * item.quantity }}
+              ₪{{ item.estimatedPrice || 0 }} × {{ item.peopleCount }} = ₪{{ (item.estimatedPrice || 0) * item.peopleCount }}
             </p>
           </div>
         </div>

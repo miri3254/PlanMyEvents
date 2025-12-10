@@ -249,6 +249,15 @@ export class DishesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.isDishSelected(dish.id)) {
+      this.messageService.add({
+        severity: 'info',
+        summary: 'כבר נוסף',
+        detail: `${dish.name} כבר בתפריט`
+      });
+      return;
+    }
+
     try {
       // Use dish.servingSize as peopleCount, with fallback to 1
       const servingSize = dish.servingSize || 1;
@@ -375,5 +384,12 @@ export class DishesComponent implements OnInit, OnDestroy {
       case 'פרווה': return 'pi pi-circle';
       default: return '';
     }
+  }
+
+  isDishSelected(dishId: string): boolean {
+    if (!this.isEventMode) {
+      return false;
+    }
+    return this.eventService.isDishInCurrentEvent(dishId);
   }
 }

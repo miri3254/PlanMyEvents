@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { EventService, Event, CartItem } from '../../services/event.service';
-import { Dish } from '../../models/dish.model';
+import { EventService } from '../../core/services/event.service';
+import { Event, CartItem, Dish } from '../../core/models';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
@@ -45,7 +45,7 @@ import { DialogModule } from 'primeng/dialog';
 export class CartComponent implements OnInit {
   events: Event[] = [];
   cartItems: CartItem[] = [];
-  mockDishes: Dish[] = []; // Mock dishes for now
+  dishes: Dish[] = [];
   
   // Dialog states
   showEventDetails: boolean = false;
@@ -63,96 +63,24 @@ export class CartComponent implements OnInit {
   }
 
   loadData(): void {
-    // Load mock dishes
-    this.loadMockDishes();
-    
     // Load events and cart items
-    this.eventService.events$.subscribe(() => {
-      // Use the service's sorting method for consistent behavior
+    const refreshEvents = () => {
       this.events = this.eventService.getEventsSorted();
       console.log('Loaded and sorted events:', this.events);
-    });
+    };
+
+    this.eventService.events$.subscribe(() => refreshEvents());
+    this.eventService.currentEvent$.subscribe(() => refreshEvents());
 
     this.eventService.cart$.subscribe(cart => {
       this.cartItems = cart;
       console.log('Loaded cart items:', cart);
     });
-  }
-
-  loadMockDishes(): void {
-    // Mock dishes data - in real app this would come from a dishes service
-    this.mockDishes = [
-      {
-        id: '1',
-        name: 'פנקייק קלאסי',
-        description: 'פנקייק רך וטעים לארוחת בוקר',
-        estimatedPrice: 25,
-        category: 'מנה ראשונה',
-        kosherType: 'חלבי',
-        servingSize: 4,
-        ingredients: [],
-        equipment: [],
-        isActive: true,
-        createdDate: new Date(),
-        lastModified: new Date()
-      },
-      {
-        id: '2',
-        name: 'טוסט פרנצ׳',
-        description: 'טוסט מטוגן בביצה וחלב',
-        estimatedPrice: 18,
-        category: 'מנה ראשונה',
-        kosherType: 'חלבי',
-        servingSize: 2,
-        ingredients: [],
-        equipment: [],
-        isActive: true,
-        createdDate: new Date(),
-        lastModified: new Date()
-      },
-      {
-        id: '3',
-        name: 'שניצל עוף',
-        description: 'שניצל עוף פריך וטעים',
-        estimatedPrice: 35,
-        category: 'מנה עיקרית',
-        kosherType: 'בשרי',
-        servingSize: 4,
-        ingredients: [],
-        equipment: [],
-        isActive: true,
-        createdDate: new Date(),
-        lastModified: new Date()
-      },
-      {
-        id: '4',
-        name: 'סלט ירקות',
-        description: 'סלט ירקות טריים וצבעוניים',
-        estimatedPrice: 12,
-        category: 'תוספת',
-        kosherType: 'פרווה',
-        servingSize: 6,
-        ingredients: [],
-        equipment: [],
-        isActive: true,
-        createdDate: new Date(),
-        lastModified: new Date()
-      },
-      {
-        id: '5',
-        name: 'עוגת שוקולד',
-        description: 'עוגת שוקולד עשירה וטעימה',
-        estimatedPrice: 40,
-        category: 'קינוח',
-        kosherType: 'חלבי',
-        servingSize: 8,
-        ingredients: [],
-        equipment: [],
-        isActive: true,
-        createdDate: new Date(),
-        lastModified: new Date()
-      }
-    ];
+    
+    this.eventService.dishes$.subscribe(dishes => {
+      this.dishes = dishes;
+      console.log('Loaded dishes:', dishes);
+    });
   }
 
   getCartItemsForEvent(eventId: string): CartItem[] {
@@ -160,7 +88,11 @@ export class CartComponent implements OnInit {
   }
 
   getDishById(dishId: string): Dish | null {
-    return this.mockDishes.find(dish => dish.id === dishId) || null;
+    const fromCache = this.dishes.find(dish => dish.id === dishId);
+    if (fromCache) {
+      return fromCache;
+    }
+    return this.eventService.getDishById(dishId) || null;
   }
 
   getEventTotal(eventId: string): number {
@@ -208,7 +140,7 @@ export class CartComponent implements OnInit {
       acceptLabel: 'כן',
       rejectLabel: 'לא',
       accept: () => {
-        this.eventService.removeDishFromCart(item.dishId);
+        this.eventService.removeDishFromCart(item.dishId, item.eventId);
         this.messageService.add({
           severity: 'success',
           summary: 'הוסר',
@@ -229,12 +161,7 @@ export class CartComponent implements OnInit {
       acceptLabel: 'כן',
       rejectLabel: 'לא',
       accept: () => {
-        const currentEventId = this.eventService.getCurrentEvent()?.id;
-        this.eventService.setCurrentEvent(eventId);
-        this.eventService.clearCart();
-        if (currentEventId) {
-          this.eventService.setCurrentEvent(currentEventId);
-        }
+        this.eventService.clearCart(eventId);
         this.messageService.add({
           severity: 'success',
           summary: 'נוקה',

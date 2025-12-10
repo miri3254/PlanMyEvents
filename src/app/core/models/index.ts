@@ -25,6 +25,7 @@ export interface Dish {
   isActive: boolean;
   createdDate: Date;
   lastModified: Date;
+  servingSizeServings?: number; // Optional - number of people this dish serves
 }
 
 export interface Product {
@@ -46,7 +47,8 @@ export interface Event {
   foodType: string; // חלבי/בשרי/פרווה/כל הסוגים
   dishes: { dishId: string; quantity: number }[];
   createdAt: Date;
-  eventDate: Date | string;  // Actual date of the event
+  eventDate: String | Date;
+  notes?: string;
 }
 
 export interface CartItem {
