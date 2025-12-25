@@ -39,6 +39,19 @@ export interface Product {
   supplier: string;
 }
 
+export type EventStatus =
+  | 'בהמתנה לאישור'
+  | 'אושר'
+  | 'עבר'
+  | 'התבטל'
+  | 'הסתיים';
+
+export interface HebrewDateParts {
+  day: number;
+  month: number;
+  year: number;
+}
+
 export interface Event {
   id: string;
   name: string;
@@ -47,8 +60,21 @@ export interface Event {
   foodType: string; // חלבי/בשרי/פרווה/כל הסוגים
   dishes: { dishId: string; quantity: number }[];
   createdAt: Date;
-  eventDate: String | Date;
+  eventDate: Date | string;
+  hebrewDate?: string;
+  status: EventStatus;
   notes?: string;
+}
+
+export interface CalendarDay {
+  date: Date;
+  hebrewDateLabel: string;
+  hebrewDay: number;
+  hebrewMonth: number;
+  hebrewYear: number;
+  isToday: boolean;
+  isPast: boolean;
+  events: Event[];
 }
 
 export interface CartItem {

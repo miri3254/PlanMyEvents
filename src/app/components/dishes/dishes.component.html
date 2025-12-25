@@ -203,9 +203,7 @@
       <p-card *ngIf="viewMode === 'table'">
         <p-table
           [value]="(filteredDishes$ | async) || []"
-          sortMode="single"
-          [(sortField)]="sortField"
-          [(sortOrder)]="sortOrder">
+          sortMode="single">
           <ng-template pTemplate="header">
             <tr>
               <th pSortableColumn="name">

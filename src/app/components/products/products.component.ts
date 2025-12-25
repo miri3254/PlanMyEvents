@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { EventService } from '../../core/services/event.service';
+import { LookupService } from '../../core/services/lookup.service';
 import { Product } from '../../core/models';
-import { INVENTORY_STATUS, CATEGORIES } from '../../core/constants/app.constants';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -45,11 +47,13 @@ import { TooltipModule } from 'primeng/tooltip';
   styleUrls: ['./products.scss'],
   providers: [ConfirmationService, MessageService]
 })
-export class ProductsComponent implements OnInit {
+export class ProductsComponent implements OnInit, OnDestroy {
   // Data properties
   products: Product[] = [];
   filteredProducts: Product[] = [];
   selectedProducts: Product[] = [];
+
+  private readonly destroy$ = new Subject<void>();
   
   // UI state
   viewMode: 'table' | 'grid' = 'table';
@@ -63,30 +67,23 @@ export class ProductsComponent implements OnInit {
   sortOrder: 'asc' | 'desc' | '' = '';
   
   // Current product being edited/created
-  product: Product = this.getEmptyProduct();
+  product!: Product;
   
-  // Statistics
-  inventoryStats = {
-    inStock: 0,
-    lowStock: 0,
-    outOfStock: 0
-  };
+  inventorySummary: Array<{
+    value: string;
+    label: string;
+    count: number;
+    severity: 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast' | undefined;
+    icon: string;
+    badgeClass: string;
+  }> = [];
   
   // Dropdown options
-  inventoryStatuses = INVENTORY_STATUS.map(status => ({ 
-    label: status, 
-    value: status 
-  }));
-  
-  categories = CATEGORIES.map(category => ({ 
-    label: category, 
-    value: category 
-  }));
+  inventoryStatuses: { label: string; value: string }[] = [];
 
-  statusOptions = [
-    { label: 'כל הסטטוסים', value: '' },
-    ...INVENTORY_STATUS.map(status => ({ label: status, value: status }))
-  ];
+  categories: { label: string; value: string }[] = [];
+
+  statusOptions = [{ label: 'כל הסטטוסים', value: '' }];
   
   // For inline editing in table
   clonedProducts: { [s: string]: Product } = {};
@@ -94,27 +91,66 @@ export class ProductsComponent implements OnInit {
   constructor(
     private eventService: EventService,
     private confirmationService: ConfirmationService,
-    private messageService: MessageService
-  ) {}
+    private messageService: MessageService,
+    private lookupService: LookupService
+  ) {
+    this.product = this.getEmptyProduct();
+  }
 
   ngOnInit(): void {
-    this.loadProducts();
+    this.subscribeToProducts();
+    this.lookupService.lookup$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(data => {
+        this.inventoryStatuses = data.inventoryStatuses.map(status => ({
+          label: status,
+          value: status
+        }));
+
+        this.categories = data.productCategories.map(category => ({
+          label: category,
+          value: category
+        }));
+
+        this.statusOptions = [
+          { label: 'כל הסטטוסים', value: '' },
+          ...data.inventoryStatuses.map(status => ({ label: status, value: status }))
+        ];
+
+        if (
+          this.filterInventoryStatus &&
+          !data.inventoryStatuses.includes(this.filterInventoryStatus)
+        ) {
+          this.filterInventoryStatus = '';
+          this.applyFilters();
+        }
+
+        if (
+          this.productDialog &&
+          this.product.category &&
+          data.productCategories.length &&
+          !data.productCategories.includes(this.product.category)
+        ) {
+          this.product.category = data.productCategories[0];
+        }
+
+        this.updateInventorySummary();
+      });
   }
 
-  loadProducts(): void {
-    this.eventService.products$.subscribe(products => {
-      this.products = products;
-      this.calculateStats();
-      this.applyFilters();
-    });
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  calculateStats(): void {
-    this.inventoryStats = {
-      inStock: this.products.filter(p => p.inventoryStatus === 'במלאי').length,
-      lowStock: this.products.filter(p => p.inventoryStatus === 'מלאי-נמוך').length,
-      outOfStock: this.products.filter(p => p.inventoryStatus === 'אזל').length
-    };
+  private subscribeToProducts(): void {
+    this.eventService.products$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(products => {
+        this.products = products;
+        this.applyFilters();
+        this.updateInventorySummary();
+      });
   }
 
   setViewMode(mode: 'table' | 'grid'): void {
@@ -266,10 +302,7 @@ export class ProductsComponent implements OnInit {
       detail: 'המוצר נשמר בהצלחה',
       life: 3000
     });
-    
-    // Reload to show new product at top
-    this.loadProducts();
-    
+
     this.productDialog = false;
     this.product = this.getEmptyProduct();
   }
@@ -330,21 +363,31 @@ export class ProductsComponent implements OnInit {
   }
 
   getStatusSeverity(status: string): 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast' | undefined {
-    switch (status) {
-      case 'במלאי': return 'success';
-      case 'מלאי-נמוך': return 'warn';
-      case 'אזל': return 'danger';
-      default: return 'info';
+    const normalized = status.toLowerCase();
+    if (normalized.includes('אזל') || normalized.includes('חסר') || normalized.includes('empty') || normalized.includes('out')) {
+      return 'danger';
     }
+    if (normalized.includes('נמוך') || normalized.includes('קריטי') || normalized.includes('low')) {
+      return 'warn';
+    }
+    if (normalized.includes('במלאי') || normalized.includes('available') || normalized.includes('stock')) {
+      return 'success';
+    }
+    return 'info';
   }
 
   getStatusIcon(status: string): string {
-    switch (status) {
-      case 'במלאי': return 'pi pi-check-circle';
-      case 'מלאי-נמוך': return 'pi pi-exclamation-circle';
-      case 'אזל': return 'pi pi-times-circle';
-      default: return 'pi pi-info-circle';
+    const normalized = status.toLowerCase();
+    if (normalized.includes('אזל') || normalized.includes('חסר') || normalized.includes('empty') || normalized.includes('out')) {
+      return 'pi pi-times-circle';
     }
+    if (normalized.includes('נמוך') || normalized.includes('קריטי') || normalized.includes('low')) {
+      return 'pi pi-exclamation-circle';
+    }
+    if (normalized.includes('במלאי') || normalized.includes('available') || normalized.includes('stock')) {
+      return 'pi pi-check-circle';
+    }
+    return 'pi pi-info-circle';
   }
 
   trackByProduct(index: number, product: Product): string {
@@ -352,15 +395,53 @@ export class ProductsComponent implements OnInit {
   }
 
   private getEmptyProduct(): Product {
+    const defaultStatus = this.lookupService.getList('inventoryStatuses')[0] || 'במלאי';
+    const defaultCategory = this.lookupService.getList('productCategories')[0] || '';
+
     return {
       id: Date.now().toString(),
       name: '',
-      inventoryStatus: 'במלאי',
+      inventoryStatus: defaultStatus,
       brand: '',
       packageQuantity: 1,
       estimatedPrice: 0,
-      category: '',
+      category: defaultCategory,
       supplier: ''
     };
+  }
+
+  private updateInventorySummary(): void {
+    if (!this.inventoryStatuses.length) {
+      this.inventorySummary = [];
+      return;
+    }
+
+    this.inventorySummary = this.inventoryStatuses.map(option => {
+      const count = this.products.filter(product => product.inventoryStatus === option.value).length;
+      const severity = this.getStatusSeverity(option.value);
+      return {
+        value: option.value,
+        label: option.label,
+        count,
+        severity,
+        icon: this.getStatusIcon(option.value),
+        badgeClass: this.getFilterBadgeClass(severity)
+      };
+    });
+  }
+
+  private getFilterBadgeClass(
+    severity: 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast' | undefined
+  ): string {
+    switch (severity) {
+      case 'success':
+        return 'filter-stat-success';
+      case 'warn':
+        return 'filter-stat-warning';
+      case 'danger':
+        return 'filter-stat-danger';
+      default:
+        return 'filter-stat-neutral';
+    }
   }
 }

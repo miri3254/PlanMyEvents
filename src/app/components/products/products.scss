@@ -89,6 +89,23 @@
                 &.bg-yellow {
                     background: linear-gradient(135deg, #eab308, #ca8a04);
                 }
+        
+            &.filter-stat-neutral {
+                background: linear-gradient(135deg, #ffffff, rgba(96, 125, 139, 0.05));
+                border-color: rgba(96, 125, 139, 0.2);
+                color: #546e7a;
+
+                i {
+                    color: #546e7a;
+                }
+
+                &:hover, &.active {
+                    border-color: #607d8b;
+                    background: linear-gradient(135deg, #ffffff, rgba(96, 125, 139, 0.15));
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(96, 125, 139, 0.2);
+                }
+            }
 
                 &.bg-red {
                     background: linear-gradient(135deg, #ef4444, #dc2626);

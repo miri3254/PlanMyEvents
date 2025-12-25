@@ -76,6 +76,81 @@
     }
   }
 
+  .dictionary-card,
+  .dashboard-card {
+    margin-bottom: 1.5rem;
+  }
+
+  .lookup-section {
+    border: 1px solid var(--surface-200, #e9ecef);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: var(--surface-0, #ffffff);
+  }
+
+  .lookup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .lookup-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .lookup-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .lookup-row input {
+    flex: 1;
+  }
+
+  .lookup-add {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .lookup-add input {
+    flex: 1;
+  }
+
+  .dashboard-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--surface-200, #e9ecef);
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    background: var(--surface-50, #f8f9fa);
+  }
+
+  .dashboard-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .dashboard-add {
+    border-top: 1px dashed var(--surface-200, #e9ecef);
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+  }
+
+  .dashboard-add .p-button {
+    flex: 1;
+  }
+
   // Responsive design
   @media (max-width: 768px) {
     padding: 1rem;
@@ -99,6 +174,16 @@
 
     .grid .col-12.md\\:col-6 {
       padding: 0.5rem;
+    }
+
+    .dashboard-item {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .dashboard-controls {
+      flex-direction: row;
+      justify-content: space-between;
     }
   }
 

@@ -148,6 +148,10 @@ export class LookupService {
   }
 
   private loadInitialData(): LookupData {
+    if (!this.storage) {
+      return this.cloneData(DEFAULT_LOOKUP_DATA);
+    }
+
     const stored = this.storage.get<LookupData>(this.storageKey);
     return this.mergeLookupData(stored ?? undefined);
   }
@@ -239,6 +243,10 @@ export class LookupService {
 
   private persist(data: LookupData): void {
     const cloned = this.cloneData(data);
+    if (!this.storage) {
+      return;
+    }
+
     this.storage.set(this.storageKey, cloned);
     this.dataSubject.next(cloned);
   }

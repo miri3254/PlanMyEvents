@@ -1,4 +1,5 @@
 // Application constants and default lookup configuration for PlanMyEvents
+import { EventStatus } from '../models';
 
 export interface DashboardWidgetConfig {
   id: string;
@@ -154,3 +155,58 @@ export type KosherType = (typeof DEFAULT_KOSHER_TYPES)[number];
 export type EventType = (typeof DEFAULT_EVENT_TYPES)[number];
 export type Unit = (typeof DEFAULT_MEASUREMENT_UNITS)[number];
 export type InventoryStatus = (typeof DEFAULT_INVENTORY_STATUSES)[number];
+
+export type StatusSeverity = 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast';
+
+export interface EventStatusDisplay {
+  value: EventStatus;
+  label: string;
+  severity: StatusSeverity;
+  icon: string;
+}
+
+export const EVENT_STATUS_ORDER: EventStatus[] = [
+  'בהמתנה לאישור',
+  'אושר',
+  'עבר',
+  'התבטל',
+  'הסתיים'
+];
+
+export const EVENT_STATUS_DISPLAY: Record<EventStatus, EventStatusDisplay> = {
+  'בהמתנה לאישור': {
+    value: 'בהמתנה לאישור',
+    label: 'בהמתנה לאישור',
+    severity: 'warning',
+    icon: 'pi pi-clock'
+  },
+  'אושר': {
+    value: 'אושר',
+    label: 'אושר',
+    severity: 'success',
+    icon: 'pi pi-check-circle'
+  },
+  'עבר': {
+    value: 'עבר',
+    label: 'עבר',
+    severity: 'info',
+    icon: 'pi pi-flag'
+  },
+  'התבטל': {
+    value: 'התבטל',
+    label: 'התבטל',
+    severity: 'danger',
+    icon: 'pi pi-times-circle'
+  },
+  'הסתיים': {
+    value: 'הסתיים',
+    label: 'הסתיים',
+    severity: 'secondary',
+    icon: 'pi pi-calendar-times'
+  }
+};
+
+export const EVENT_STATUS_OPTIONS = EVENT_STATUS_ORDER.map(status => ({
+  label: EVENT_STATUS_DISPLAY[status].label,
+  value: status
+}));

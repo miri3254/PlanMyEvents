@@ -18,7 +18,7 @@ export const routes: Routes = [
   {
     path: 'products',
     loadComponent: () => 
-      import('./components/products/products')
+      import('./components/products/products.component')
         .then(m => m.ProductsComponent),
     title: 'מוצרים - PlanMyEvents'
   },
@@ -28,6 +28,20 @@ export const routes: Routes = [
       import('./components/cart/cart')
         .then(m => m.CartComponent),
     title: 'עגלה - PlanMyEvents'
+  },
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./components/settings/settings')
+        .then(m => m.SettingsComponent),
+    title: 'הגדרות - PlanMyEvents'
+  },
+  {
+    path: 'events',
+    loadComponent: () =>
+      import('./components/events/events.component')
+        .then(m => m.EventsComponent),
+    title: 'אירועים - PlanMyEvents'
   },
   {
     path: '**',

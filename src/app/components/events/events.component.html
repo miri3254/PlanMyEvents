@@ -1,0 +1,429 @@
+<div class="events-page" dir="rtl">
+  <div class="page-header">
+    <div class="page-title">
+      <h1>אירועים</h1>
+      <p>לוח שנה דואלי עם ניהול אירועים מלא.</p>
+    </div>
+    <div class="header-actions">
+      <p-button
+        label="אירוע חדש"
+        icon="pi pi-plus"
+        severity="primary"
+        size="small"
+        (onClick)="openCreateForm()">
+      </p-button>
+      <div class="view-toggle">
+        <label>מצב תצוגה</label>
+        <p-selectButton
+          [options]="viewModeOptions"
+          [(ngModel)]="viewMode"
+          optionLabel="label"
+          optionValue="value"
+          (ngModelChange)="onViewModeChange($event)">
+        </p-selectButton>
+      </div>
+      <div class="month-controls">
+        <p-button
+          icon="pi pi-chevron-right"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="changeMonth(-1)"
+          pTooltip="קודם">
+        </p-button>
+        <span class="month-label">{{ calendarTitle }}</span>
+        <p-button
+          icon="pi pi-chevron-left"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="changeMonth(1)"
+          pTooltip="הבא">
+        </p-button>
+      </div>
+    </div>
+  </div>
+
+  <p-panel styleClass="events-panel">
+    <ng-template pTemplate="header">
+      <div class="panel-header">
+        <div>
+          <span class="panel-title">לוח חודשי</span>
+          <small>{{ calendarTitle }}</small>
+        </div>
+        <p-badge [value]="calendarEvents.length" severity="info"></p-badge>
+      </div>
+    </ng-template>
+
+    <div *ngIf="loadingCalendar" class="calendar-loading">
+      <p-skeleton width="100%" height="320px"></p-skeleton>
+    </div>
+
+    <ng-container *ngIf="!loadingCalendar">
+      <div class="calendar-weekdays">
+        <span *ngFor="let day of weekDays">{{ day }}</span>
+      </div>
+
+      <div class="calendar-grid" [class.calendar-empty]="calendarEvents.length === 0">
+        <div
+          class="calendar-cell"
+          *ngFor="let cell of calendarCells; trackBy: trackCell"
+          [class.empty]="!cell"
+          [class.today]="cell?.isToday"
+          [class.past]="cell?.isPast">
+          <ng-container *ngIf="cell as day">
+            <div class="day-heading">
+              <span class="gregorian" [class.secondary]="viewMode === 'hebrew'">
+                {{ day.date | date:'d MMM' }}
+              </span>
+              <span class="hebrew" [class.secondary]="viewMode === 'gregorian'">
+                {{ day.hebrewDateLabel }}
+              </span>
+              <button
+                type="button"
+                pButton
+                icon="pi pi-plus"
+                severity="secondary"
+                [text]="true"
+                [rounded]="true"
+                class="add-event-btn"
+                (click)="startCreateEventForDate(day.date, $event)">
+              </button>
+            </div>
+
+            <div class="day-events" *ngIf="day.events.length > 0; else emptyDay">
+              <div
+                class="calendar-event"
+                *ngFor="let event of day.events"
+                [ngClass]="getStatusClass(event.status)"
+                pTooltip="{{ event.name }} · {{ event.status }}"
+                tooltipPosition="top"
+                (click)="openEventDetails(event)">
+                <i *ngIf="event.status === 'אושר'" class="pi pi-check-circle"></i>
+                <span>{{ event.name }}</span>
+              </div>
+            </div>
+            <ng-template #emptyDay>
+              <span class="placeholder">אין אירועים</span>
+            </ng-template>
+          </ng-container>
+        </div>
+      </div>
+
+      <div class="calendar-empty-state" *ngIf="calendarEvents.length === 0">
+        <i class="pi pi-calendar-times"></i>
+        <p>אין אירועים בטווח הנבחר</p>
+      </div>
+    </ng-container>
+  </p-panel>
+
+  <p-panel header="רשימת אירועים" styleClass="events-panel">
+    <div class="filter-row">
+      <p-button
+        *ngFor="let filter of filterButtons"
+        [label]="filter.label"
+        size="small"
+        [severity]="selectedFilter === filter.key ? 'primary' : 'secondary'"
+        [outlined]="selectedFilter !== filter.key"
+        (onClick)="setFilter(filter.key)">
+      </p-button>
+    </div>
+
+    <p-table
+      [value]="filteredEvents"
+      [loading]="loadingList"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-sm themed-table">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>שם האירוע</th>
+          <th>תאריך לועזי</th>
+          <th>תאריך עברי</th>
+          <th>סטטוס</th>
+          <th>משתתפים</th>
+          <th class="text-center">פעולות</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-event>
+        <tr>
+          <td>
+            <div class="event-name">
+              <span>{{ event.name }}</span>
+              <small>{{ event.eventType }} · {{ event.foodType }}</small>
+            </div>
+          </td>
+          <td>{{ event.eventDate | date:'d MMMM yyyy' }}</td>
+          <td>{{ event.hebrewDate || '—' }}</td>
+          <td>
+            <p-tag
+              [value]="event.status"
+              [icon]="getStatusIcon(event.status)"
+              [severity]="getStatusSeverity(event.status)">
+            </p-tag>
+          </td>
+          <td>
+            <p-badge [value]="event.participants" severity="info"></p-badge>
+          </td>
+          <td class="text-center">
+            <p-button
+              label="פרטים"
+              icon="pi pi-eye"
+              size="small"
+              [text]="true"
+              (onClick)="openEventDetails(event)">
+            </p-button>
+            <p-button
+              icon="pi pi-pencil"
+              size="small"
+              [text]="true"
+              (onClick)="openEditForm(event)">
+            </p-button>
+            <p-button
+              icon="pi pi-trash"
+              severity="danger"
+              size="small"
+              [text]="true"
+              (onClick)="deleteEvent(event, 'list')">
+            </p-button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="empty-message">
+            <i class="pi pi-inbox"></i>
+            <p>אין אירועים להצגה תחת המסנן הנוכחי</p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-panel>
+
+  <p-dialog
+    [(visible)]="detailVisible"
+    [modal]="true"
+    [style]="{ width: '65vw', maxWidth: '900px' }"
+    [draggable]="false"
+    [dismissableMask]="true"
+    [blockScroll]="true"
+    [rtl]="true"
+    (onHide)="closeDialog()"
+    [header]="selectedEvent ? 'פרטי אירוע - ' + selectedEvent.name : 'פרטי אירוע'">
+
+    <ng-container *ngIf="selectedEvent">
+      <div class="dialog-content">
+        <div class="dialog-column">
+          <h3>מידע כללי</h3>
+          <div class="info-row">
+            <span class="label">שם האירוע</span>
+            <span class="value">{{ selectedEvent.name }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">תאריך לועזי</span>
+            <span class="value">{{ selectedEvent.eventDate | date:'EEEE, d MMMM yyyy' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">תאריך עברי</span>
+            <span class="value">{{ selectedEvent.hebrewDate || '—' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">סוג האירוע</span>
+            <span class="value">{{ selectedEvent.eventType }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">סוג התפריט</span>
+            <span class="value">{{ selectedEvent.foodType }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">משתתפים</span>
+            <span class="value">{{ selectedEvent.participants }} אורחים</span>
+          </div>
+          <div class="info-row">
+            <span class="label">מנות מתוכננות</span>
+            <span class="value">{{ selectedEvent.dishes.length || 0 }}</span>
+          </div>
+        </div>
+
+        <div class="dialog-column status-column">
+          <h3>סטטוס האירוע</h3>
+          <p-tag
+            [value]="selectedEvent.status"
+            [icon]="getStatusIcon(selectedEvent.status)"
+            [severity]="getStatusSeverity(selectedEvent.status)"
+            styleClass="mb-3">
+          </p-tag>
+
+          <p-select
+            [options]="statusOptions"
+            [(ngModel)]="selectedStatus"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="בחר סטטוס"
+            class="w-full"
+            [disabled]="statusLocked">
+          </p-select>
+
+          <small class="status-hint" *ngIf="statusLocked">
+            אירוע עבר או בוטל לא מאפשר שינוי סטטוס.
+          </small>
+
+          <div class="dialog-actions">
+            <p-button
+              label="עדכן סטטוס"
+              icon="pi pi-refresh"
+              [disabled]="!isStatusChanged() || statusLocked || statusUpdating"
+              (onClick)="confirmStatusChange()"
+              severity="primary">
+            </p-button>
+            <p-button
+              label="עריכת אירוע"
+              icon="pi pi-pencil"
+              severity="secondary"
+              (onClick)="openEditForm(selectedEvent)">
+            </p-button>
+            <p-button
+              label="מחיקה"
+              icon="pi pi-trash"
+              severity="danger"
+              [outlined]="true"
+              (onClick)="deleteEvent(selectedEvent, 'details')">
+            </p-button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </p-dialog>
+
+  <p-dialog
+    [(visible)]="eventFormVisible"
+    [modal]="true"
+    [style]="{ width: '70vw', maxWidth: '960px' }"
+    [rtl]="true"
+    [blockScroll]="true"
+    [dismissableMask]="false"
+    [draggable]="false"
+    [header]="eventFormMode === 'create' ? 'אירוע חדש' : 'עריכת אירוע'"
+    (onHide)="closeEventForm()">
+
+    <div class="event-form" *ngIf="eventForm">
+      <div class="form-grid">
+        <label>שם האירוע</label>
+        <input pInputText [(ngModel)]="eventForm.name" />
+
+        <label>מספר משתתפים</label>
+        <p-inputnumber [(ngModel)]="eventForm.participants" [min]="1" mode="decimal"></p-inputnumber>
+
+        <label>סוג האירוע</label>
+        <p-select
+          [options]="eventTypeSelectItems"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="eventForm.eventType"
+          [showClear]="false">
+        </p-select>
+
+        <label>אופי התפריט</label>
+        <p-select
+          [options]="kosherSelectItems"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="eventForm.foodType"
+          [showClear]="false">
+        </p-select>
+
+        <label>סטטוס</label>
+        <p-select
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="eventForm.status"
+          [disabled]="isStatusFieldDisabled()">
+        </p-select>
+
+        <label>הערות</label>
+        <textarea
+          rows="3"
+          class="p-inputtext p-inputtextarea"
+          [(ngModel)]="eventForm.notes"
+          placeholder="הוסיפי הערות חשובות לאירוע"></textarea>
+      </div>
+
+      <div class="date-mode-toggle">
+        <span>אופן הזנת התאריך</span>
+        <p-selectButton
+          [options]="dateModeOptions"
+          [(ngModel)]="dateInputMode">
+        </p-selectButton>
+      </div>
+
+      <div class="date-grid">
+        <div class="date-card">
+          <h4>תאריך לועזי</h4>
+          <p-datepicker
+            [(ngModel)]="eventForm.eventDate"
+            (ngModelChange)="onGregorianDateChange($event)"
+            [showIcon]="true"
+            [disabled]="dateInputMode !== 'gregorian'">
+          </p-datepicker>
+        </div>
+
+        <div class="date-card">
+          <h4>תאריך עברי</h4>
+          <div class="hebrew-date-inputs">
+            <div class="hebrew-day">
+              <label>יום</label>
+              <p-inputnumber
+                [(ngModel)]="eventForm.hebrewParts.day"
+                [min]="1"
+                [max]="30"
+                [disabled]="dateInputMode !== 'hebrew'"
+                (ngModelChange)="onHebrewPartChange()">
+              </p-inputnumber>
+            </div>
+            <div class="hebrew-month">
+              <label>חודש</label>
+              <p-select
+                [options]="hebrewMonthOptions"
+                optionLabel="label"
+                optionValue="value"
+                [(ngModel)]="eventForm.hebrewParts.month"
+                [disabled]="dateInputMode !== 'hebrew'"
+                (onChange)="onHebrewPartChange()">
+              </p-select>
+            </div>
+            <div class="hebrew-year">
+              <label>שנה</label>
+              <p-select
+                [options]="hebrewYearOptions"
+                optionLabel="label"
+                optionValue="value"
+                [(ngModel)]="eventForm.hebrewParts.year"
+                [disabled]="dateInputMode !== 'hebrew'"
+                (onChange)="onHebrewPartChange()">
+              </p-select>
+            </div>
+          </div>
+          <small class="hebrew-preview">{{ eventForm.hebrewLabel }}</small>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <p-button
+          label="ביטול"
+          severity="secondary"
+          [text]="true"
+          (onClick)="closeEventForm()">
+        </p-button>
+        <p-button
+          label="שמירת אירוע"
+          icon="pi pi-save"
+          severity="primary"
+          [loading]="eventFormSubmitting"
+          [disabled]="!isFormValid()"
+          (onClick)="submitEventForm()">
+        </p-button>
+      </div>
+    </div>
+  </p-dialog>
+
+  <p-toast position="top-right"></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+</div>

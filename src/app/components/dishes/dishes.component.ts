@@ -61,8 +61,6 @@ export class DishesComponent implements OnInit, OnDestroy {
   currentCart$!: Observable<any[]>;
 
   viewMode: 'table' | 'grid' = 'table';
-  sortField: string = '';
-  sortOrder: number = 1;
   searchQuery: string = '';
   filterCategory: string = 'הכל';
   filterKosher: string = 'הכל';
@@ -141,6 +139,8 @@ export class DishesComponent implements OnInit, OnDestroy {
             return { ...ingredient, unit };
           });
         }
+
+        this.onFilterChange();
       });
 
     // Subscribe to products

@@ -1,15 +1,39 @@
 // Main Event Service - Complete state management with LocalStorage
 
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { delay, map } from 'rxjs/operators';
 import { StorageService } from './storage.service';
-import { Event, CartItem, Dish, Product, ShoppingListItem } from '../models';
+import { Event, CartItem, Dish, Product, ShoppingListItem, EventStatus, HebrewDateParts } from '../models';
+import {
+  hebrewPartsToGregorian,
+  renderHebrewLabelFromDate,
+  renderHebrewLabelFromParts,
+  sanitizeHebrewParts
+} from '../utils/hebrew-date.util';
+
+type EventDatePayload = {
+  eventDate?: Date | string;
+  hebrewDate?: string;
+  hebrewParts?: HebrewDateParts;
+};
+
+type CreateEventPayload = {
+  name: string;
+  participants: number;
+  eventType: string;
+  foodType: string;
+  notes?: string;
+  status?: EventStatus;
+} & EventDatePayload;
+
+type UpdateEventPayload = Partial<CreateEventPayload>;
 
 @Injectable({
   providedIn: 'root'
 })
 export class EventService {
+  private readonly calendarFetchDelay = 350;
   // State as BehaviorSubjects
   private eventsSubject = new BehaviorSubject<Event[]>([]);
   private currentEventIdSubject = new BehaviorSubject<string | null>(null);
@@ -43,7 +67,7 @@ export class EventService {
   private loadFromStorage(): void {
     // Load events
     const events = this.storage.get<Event[]>('events') || [];
-    this.eventsSubject.next(events);
+    this.persistEvents(events);
 
     // Load current event
     const currentEventId = this.storage.get<string>('currentEvent');
@@ -75,18 +99,24 @@ export class EventService {
   }
 
   // Event Management
-  createEvent(eventData: Omit<Event, 'id' | 'createdAt' | 'dishes' | 'eventDate'> & { eventDate?: Date | string }): string {
+  createEvent(eventData: CreateEventPayload): string {
+    const { eventDate, hebrewDate } = this.resolveEventDates(eventData);
     const newEvent: Event = {
-      ...eventData,
       id: Date.now().toString(),
+      name: eventData.name,
+      participants: eventData.participants,
+      eventType: eventData.eventType,
+      foodType: eventData.foodType,
       dishes: [],
       createdAt: new Date(),
-      eventDate: eventData.eventDate || new Date() // Use provided date or current date
+      eventDate,
+      hebrewDate,
+      status: eventData.status ?? 'בהמתנה לאישור',
+      notes: eventData.notes
     };
-    
+
     const events = [...this.eventsSubject.value, newEvent];
-    this.eventsSubject.next(events);
-    this.storage.set('events', events);
+    this.persistEvents(events);
     return newEvent.id;
   }
 
@@ -101,8 +131,7 @@ export class EventService {
 
   deleteEvent(id: string): void {
     const events = this.eventsSubject.value.filter(e => e.id !== id);
-    this.eventsSubject.next(events);
-    this.storage.set('events', events);
+    this.persistEvents(events);
 
     // Remove cart items for this event
     const cart = this.cartSubject.value.filter(item => item.eventId !== id);
@@ -117,6 +146,88 @@ export class EventService {
   getCurrentEvent(): Event | null {
     const currentId = this.currentEventIdSubject.value;
     return currentId ? this.eventsSubject.value.find(e => e.id === currentId) || null : null;
+  }
+
+  getEventById(eventId: string): Event | undefined {
+    return this.eventsSubject.value.find(event => event.id === eventId);
+  }
+
+  fetchEventsForMonth(referenceDate: Date): Observable<Event[]> {
+    const { start, end } = this.buildMonthlyRange(referenceDate);
+    return this.fetchEventsByRange(start, end);
+  }
+
+  fetchEventsByRange(start: Date, end: Date): Observable<Event[]> {
+    const rangeStart = this.startOfDay(start);
+    const rangeEnd = this.endOfDay(end);
+    const events = this.eventsSubject.value.filter(event => {
+      const eventDate = this.startOfDay(this.toDate(event.eventDate));
+      return eventDate >= rangeStart && eventDate <= rangeEnd;
+    });
+
+    return of(events).pipe(delay(this.calendarFetchDelay));
+  }
+
+  updateEventStatus(eventId: string, nextStatus: EventStatus): Observable<Event> {
+    const events = [...this.eventsSubject.value];
+    const eventIndex = events.findIndex(event => event.id === eventId);
+    if (eventIndex === -1) {
+      return throwError(() => new Error('האירוע לא נמצא'));
+    }
+
+    const target = events[eventIndex];
+    if (!this.canModifyStatus(target)) {
+      return throwError(() => new Error('לא ניתן לעדכן אירוע שהסתיים או בוטל לאחר שעבר התאריך.'));
+    }
+
+    const updated: Event = this.normalizeEvent({ ...target, status: nextStatus });
+    events[eventIndex] = updated;
+    this.persistEvents(events);
+    return of(updated).pipe(delay(this.calendarFetchDelay));
+  }
+
+  updateEventDetails(eventId: string, changes: UpdateEventPayload): Observable<Event> {
+    const events = [...this.eventsSubject.value];
+    const eventIndex = events.findIndex(event => event.id === eventId);
+    if (eventIndex === -1) {
+      return throwError(() => new Error('האירוע לא נמצא'));
+    }
+
+    const target = events[eventIndex];
+    const { eventDate, hebrewDate } = this.resolveEventDates({
+      eventDate: changes.eventDate ?? target.eventDate,
+      hebrewDate: changes.hebrewDate ?? target.hebrewDate,
+      hebrewParts: changes.hebrewParts
+    });
+
+    const updated: Event = this.normalizeEvent({
+      ...target,
+      ...changes,
+      eventDate,
+      hebrewDate,
+      notes: changes.notes ?? target.notes
+    });
+
+    events[eventIndex] = updated;
+    this.persistEvents(events);
+    return of(updated).pipe(delay(this.calendarFetchDelay));
+  }
+
+  canModifyStatus(event: Event | null | undefined): boolean {
+    if (!event) {
+      return false;
+    }
+
+    const isPast = this.isPastDate(event.eventDate);
+    const immutableStatuses: EventStatus[] = ['הסתיים', 'התבטל'];
+    return !(isPast && immutableStatuses.includes(event.status));
+  }
+
+  isPastEvent(event: Event | null | undefined): boolean {
+    if (!event) {
+      return false;
+    }
+    return this.isPastDate(event.eventDate);
   }
 
   // Cart Management
@@ -342,6 +453,106 @@ export class EventService {
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dateB - dateA;
     });
+  }
+
+  private persistEvents(events: readonly Event[]): void {
+    const normalized = events.map(event => this.normalizeEvent(event));
+    this.writeEvents(normalized);
+  }
+
+  private writeEvents(events: Event[]): void {
+    this.eventsSubject.next(events);
+    this.storage.set('events', events);
+  }
+
+  private normalizeEvent(event: Event): Event {
+    const createdAt = this.toDate(event.createdAt);
+    const eventDate = this.toDate(event.eventDate);
+
+    const normalized: Event = {
+      ...event,
+      dishes: event.dishes || [],
+      createdAt,
+      eventDate,
+      hebrewDate: event.hebrewDate || renderHebrewLabelFromDate(eventDate),
+      status: event.status ?? 'בהמתנה לאישור'
+    };
+
+    return this.applyAutomaticStatus(normalized);
+  }
+
+  private applyAutomaticStatus(event: Event): Event {
+    if (this.isPastDate(event.eventDate) && event.status !== 'התבטל') {
+      return { ...event, status: 'הסתיים' };
+    }
+    return event;
+  }
+
+  private toDate(value: Date | string | undefined): Date {
+    if (value instanceof Date) {
+      return new Date(value.getTime());
+    }
+
+    if (typeof value === 'string') {
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+
+    return new Date();
+  }
+
+  private isPastDate(value: Date | string): boolean {
+    const eventDate = this.startOfDay(this.toDate(value));
+    return eventDate.getTime() < this.startOfDay(new Date()).getTime();
+  }
+
+  private startOfDay(date: Date): Date {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  }
+
+  private buildMonthlyRange(reference: Date): { start: Date; end: Date } {
+    const start = new Date(reference.getFullYear(), reference.getMonth(), 1);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(reference.getFullYear(), reference.getMonth() + 1, 0);
+    end.setHours(23, 59, 59, 999);
+
+    return { start, end };
+  }
+
+  private resolveEventDates(payload: EventDatePayload): { eventDate: Date; hebrewDate: string } {
+    if (payload.eventDate) {
+      const eventDate = this.toDate(payload.eventDate);
+      return {
+        eventDate,
+        hebrewDate: payload.hebrewDate || renderHebrewLabelFromDate(eventDate)
+      };
+    }
+
+    if (payload.hebrewParts) {
+      const sanitized = sanitizeHebrewParts(payload.hebrewParts, new Date().getFullYear());
+      const eventDate = hebrewPartsToGregorian(sanitized);
+      return {
+        eventDate,
+        hebrewDate: payload.hebrewDate || renderHebrewLabelFromParts(sanitized)
+      };
+    }
+
+    const fallback = new Date();
+    return {
+      eventDate: fallback,
+      hebrewDate: payload.hebrewDate || renderHebrewLabelFromDate(fallback)
+    };
+  }
+
+  private endOfDay(date: Date): Date {
+    const normalized = new Date(date);
+    normalized.setHours(23, 59, 59, 999);
+    return normalized;
   }
 
   // Demo Data Generators
