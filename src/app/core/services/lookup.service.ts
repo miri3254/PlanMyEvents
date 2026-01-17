@@ -181,6 +181,8 @@ export class LookupService {
         defaults.inventoryStatuses
       ),
       eventTypes: this.normalizeList(stored.eventTypes, defaults.eventTypes),
+      toolCategories: this.normalizeList(stored.toolCategories, defaults.toolCategories),
+      toolSubCategories: this.normalizeList(stored.toolSubCategories, defaults.toolSubCategories),
       dashboardSections: this.mergeWidgetCollection(
         stored.dashboardSections,
         DEFAULT_DASHBOARD_SECTIONS
@@ -259,6 +261,8 @@ export class LookupService {
       productCategories: [...data.productCategories],
       inventoryStatuses: [...data.inventoryStatuses],
       eventTypes: [...data.eventTypes],
+      toolCategories: [...data.toolCategories],
+      toolSubCategories: [...data.toolSubCategories],
       dashboardSections: data.dashboardSections.map(widget => ({ ...widget })),
       dashboardMetrics: data.dashboardMetrics.map(widget => ({ ...widget }))
     };

@@ -11,6 +11,12 @@ export interface DishEquipment {
   required: boolean;
 }
 
+export interface ServingDish {
+  name: string;          // שם הכלי להגשה
+  quantity: number;      // כמות
+  category: string;      // קטגוריה
+}
+
 export interface Dish {
   id: string;
   name: string;
@@ -26,6 +32,11 @@ export interface Dish {
   createdDate: Date;
   lastModified: Date;
   servingSizeServings?: number; // Optional - number of people this dish serves
+  // Serving fields
+  servingDescription?: string;      // תיאור צורת הגשה
+  servingIngredients?: DishIngredient[]; // רכיבים להגשה
+  servingDishes?: ServingDish[];    // כלים להגשה
+  waiterNotes?: string;             // הערות למלצר
 }
 
 export interface Product {
@@ -37,6 +48,19 @@ export interface Product {
   estimatedPrice: number;
   category: string;
   supplier: string;
+}
+
+export interface Tool {
+  id: string;
+  name: string;                    // שם הכלי
+  brand: string;                   // מותג
+  category: string;                // קטגוריה (מפות, כלי הגשה, וכולי)
+  subCategory: string;             // תת קטגוריה (חד"פ / אמיתי)
+  inventoryStatus: string;         // סטטוס (במלאי / כמות נמוכה / אזל)
+  estimatedPrice: number;          // מחיר משוער
+  description?: string;            // תיאור / הערות
+  notes?: string;                  // הערות נוספות
+  quantity?: number;               // כמות במלאי
 }
 
 export type EventStatus =
@@ -75,20 +99,4 @@ export interface CalendarDay {
   isToday: boolean;
   isPast: boolean;
   events: Event[];
-}
-
-export interface CartItem {
-  dishId: string;
-  dishName: string;
-  peopleCount: number;  // Number of people this dish serves
-  eventId: string;
-  estimatedPrice?: number;  // Optional - can be calculated from dish
-}
-
-export interface ShoppingListItem {
-  productName: string;
-  totalQuantity: number;
-  unit: string;
-  estimatedPrice: number;
-  dishes: string[];
 }

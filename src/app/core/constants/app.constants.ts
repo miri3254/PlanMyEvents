@@ -18,6 +18,8 @@ export interface LookupData {
   productCategories: string[];
   inventoryStatuses: string[];
   eventTypes: string[];
+  toolCategories: string[];
+  toolSubCategories: string[];
   dashboardSections: DashboardWidgetConfig[];
   dashboardMetrics: DashboardWidgetConfig[];
 }
@@ -28,7 +30,9 @@ export type LookupListKey = keyof Pick<LookupData,
   'measurementUnits' |
   'productCategories' |
   'inventoryStatuses' |
-  'eventTypes'
+  'eventTypes' |
+  'toolCategories' |
+  'toolSubCategories'
 >;
 
 export const DEFAULT_DISH_CATEGORIES = [
@@ -75,6 +79,22 @@ export const DEFAULT_PRODUCT_CATEGORIES = [
   'משקאות',
   'חטיפים',
   'מוצרי חלב'
+] as const;
+
+export const DEFAULT_TOOL_CATEGORIES = [
+  'מפות',
+  'כלי הגשה',
+  'צלחות',
+  'סכו"ם',
+  'כוסות',
+  'קערות',
+  'מגשים',
+  'אחר'
+] as const;
+
+export const DEFAULT_TOOL_SUB_CATEGORIES = [
+  'חד"פ',
+  'אמיתי'
 ] as const;
 
 export const DEFAULT_DASHBOARD_SECTIONS: DashboardWidgetConfig[] = [
@@ -139,6 +159,8 @@ export const DEFAULT_LOOKUP_DATA: LookupData = {
   productCategories: [...DEFAULT_PRODUCT_CATEGORIES],
   inventoryStatuses: [...DEFAULT_INVENTORY_STATUSES],
   eventTypes: [...DEFAULT_EVENT_TYPES],
+  toolCategories: [...DEFAULT_TOOL_CATEGORIES],
+  toolSubCategories: [...DEFAULT_TOOL_SUB_CATEGORIES],
   dashboardSections: DEFAULT_DASHBOARD_SECTIONS.map(section => ({ ...section })),
   dashboardMetrics: DEFAULT_DASHBOARD_METRICS.map(metric => ({ ...metric }))
 };

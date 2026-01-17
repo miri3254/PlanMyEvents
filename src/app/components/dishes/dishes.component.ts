@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable, Subject, combineLatest } from 'rxjs';
 import { map, takeUntil } from 'rxjs/operators';
-import { EventService } from '../../core/services/event.service';
+import { EventService } from '../../services/event.service';
 import { LookupService } from '../../core/services/lookup.service';
-import { Dish, DishIngredient, DishEquipment, Product, Event } from '../../core/models';
+import { Event } from '../../core/models';
+import { Dish, DishIngredient, DishEquipment, Product } from '../../core/models';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -58,7 +59,6 @@ export class DishesComponent implements OnInit, OnDestroy {
   products$!: Observable<Product[]>;
   currentEvent$!: Observable<Event | null>;
   filteredDishes$!: Observable<Dish[]>;
-  currentCart$!: Observable<any[]>;
 
   viewMode: 'table' | 'grid' = 'table';
   searchQuery: string = '';
@@ -67,14 +67,11 @@ export class DishesComponent implements OnInit, OnDestroy {
   editingDish: Dish | null = null;
   isDialogOpen: boolean = false;
   showShoppingList: boolean = false;
-  showCart: boolean = false;
 
   currentEvent: Event | null = null;
   isEventMode: boolean = false;
   products: Product[] = [];
-  cartItems: any[] = [];
   shoppingList: any[] = [];
-  totalPrice: number = 0;
 
   viewOptions = [
     { icon: 'pi pi-th-large', value: 'grid' },
@@ -98,7 +95,6 @@ export class DishesComponent implements OnInit, OnDestroy {
     this.dishes$ = this.eventService.dishes$;
     this.products$ = this.eventService.products$;
     this.currentEvent$ = this.eventService.currentEvent$;
-    this.currentCart$ = this.eventService.currentCart$;
 
     this.lookupService.lookup$
       .pipe(takeUntil(this.destroy$))
@@ -154,12 +150,6 @@ export class DishesComponent implements OnInit, OnDestroy {
       this.isEventMode = !!event;
     });
 
-    // Subscribe to cart
-    this.currentCart$.pipe(takeUntil(this.destroy$)).subscribe(cart => {
-      this.cartItems = cart;
-      this.totalPrice = this.eventService.getTotalCartPrice();
-    });
-
     // Setup filtered dishes
     this.setupFilteredDishes();
   }
@@ -208,6 +198,13 @@ export class DishesComponent implements OnInit, OnDestroy {
     this.onFilterChange();
   }
 
+  clearAllFilters(): void {
+    this.searchQuery = '';
+    this.filterCategory = 'הכל';
+    this.filterKosher = 'הכל';
+    this.onFilterChange();
+  }
+
   setViewMode(mode: 'grid' | 'table'): void {
     this.viewMode = mode;
   }
@@ -229,7 +226,11 @@ export class DishesComponent implements OnInit, OnDestroy {
       equipment: [],
       isActive: true,
       createdDate: new Date(),
-      lastModified: new Date()
+      lastModified: new Date(),
+      servingDescription: '',
+      servingIngredients: [],
+      servingDishes: [],
+      waiterNotes: ''
     };
 
     const defaultUnit = defaultUnits[0] || 'יחידות';
@@ -289,59 +290,11 @@ export class DishesComponent implements OnInit, OnDestroy {
     });
   }
 
-  handleAddToCart(dish: Dish): void {
-    console.log('handleAddToCart called with dish:', dish);
-    
-    if (!this.isEventMode) {
-      console.warn('Not in event mode');
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'שים לב',
-        detail: 'יש לבחור אירוע תחילה'
-      });
-      return;
-    }
-
-    if (this.isDishSelected(dish.id)) {
-      this.messageService.add({
-        severity: 'info',
-        summary: 'כבר נוסף',
-        detail: `${dish.name} כבר בתפריט`
-      });
-      return;
-    }
-
-    try {
-      // Use dish.servingSize as peopleCount, with fallback to 1
-      const servingSize = dish.servingSize || 1;
-      console.log('Calling addDishToCart with:', {
-        dishId: dish.id,
-        dishName: dish.name,
-        servingSize
-      });
-      
-      this.eventService.addDishToCart(dish.id, dish.name, servingSize);
-      
-      this.messageService.add({
-        severity: 'success',
-        summary: 'נוסף לתפריט',
-        detail: `${dish.name} נוסף לעגלה`
-      });
-    } catch (error) {
-      console.error('Error in handleAddToCart:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'שגיאה',
-        detail: 'אירעה שגיאה בהוספת המנה'
-      });
-    }
-  }
-
   // Ingredient management
   handleAddIngredient(): void {
     if (!this.editingDish) return;
     const defaultUnit = this.units[0] || 'יחידות';
-    this.editingDish.ingredients.push({
+    this.editingDish.ingredients.unshift({
       productName: '',
       quantity: 0,
       unit: defaultUnit
@@ -383,44 +336,60 @@ export class DishesComponent implements OnInit, OnDestroy {
     this.editingDish.equipment.splice(index, 1);
   }
 
-  // Cart management
-  updateCartPeopleCount(dishId: string, peopleCount: number): void {
-    this.eventService.updateCartItemPeopleCount(dishId, peopleCount);
-  }
-
-  removeFromCart(dishId: string): void {
-    this.eventService.removeDishFromCart(dishId);
-  }
-
-  clearCart(): void {
-    this.confirmationService.confirm({
-      message: 'האם לנקות את כל העגלה?',
-      header: 'אישור',
-      icon: 'pi pi-question-circle',
-      acceptLabel: 'כן',
-      rejectLabel: 'לא',
-      accept: () => {
-        this.eventService.clearCart();
-        this.messageService.add({
-          severity: 'success',
-          summary: 'הצלחה',
-          detail: 'העגלה נוקתה'
-        });
-      }
+  // Serving ingredients management
+  handleAddServingIngredient(): void {
+    if (!this.editingDish) return;
+    if (!this.editingDish.servingIngredients) {
+      this.editingDish.servingIngredients = [];
+    }
+    const defaultUnit = this.units[0] || 'יחידות';
+    this.editingDish.servingIngredients.unshift({
+      productName: '',
+      quantity: 0,
+      unit: defaultUnit
     });
   }
 
-  openShoppingList(): void {
-    this.shoppingList = this.eventService.getShoppingList();
-    this.showShoppingList = true;
+  handleUpdateServingIngredient(index: number, field: string, value: any): void {
+    if (!this.editingDish || !this.editingDish.servingIngredients) return;
+    this.editingDish.servingIngredients[index] = {
+      ...this.editingDish.servingIngredients[index],
+      [field]: value
+    };
   }
 
-  getShoppingListTotal(): number {
-    return this.shoppingList.reduce((sum, item) => 
-      sum + (item.estimatedPrice * item.totalQuantity), 0
-    );
+  handleRemoveServingIngredient(index: number): void {
+    if (!this.editingDish || !this.editingDish.servingIngredients) return;
+    this.editingDish.servingIngredients.splice(index, 1);
   }
 
+  // Serving dishes management
+  handleAddServingDish(): void {
+    if (!this.editingDish) return;
+    if (!this.editingDish.servingDishes) {
+      this.editingDish.servingDishes = [];
+    }
+    this.editingDish.servingDishes.unshift({
+      name: '',
+      quantity: 1,
+      category: ''
+    });
+  }
+
+  handleUpdateServingDish(index: number, field: string, value: any): void {
+    if (!this.editingDish || !this.editingDish.servingDishes) return;
+    this.editingDish.servingDishes[index] = {
+      ...this.editingDish.servingDishes[index],
+      [field]: value
+    };
+  }
+
+  handleRemoveServingDish(index: number): void {
+    if (!this.editingDish || !this.editingDish.servingDishes) return;
+    this.editingDish.servingDishes.splice(index, 1);
+  }
+
+  // Cart management
   // Helper methods
   getKosherClass(type: string): string {
     switch (type) {
@@ -440,10 +409,8 @@ export class DishesComponent implements OnInit, OnDestroy {
     }
   }
 
-  isDishSelected(dishId: string): boolean {
-    if (!this.isEventMode) {
-      return false;
-    }
-    return this.eventService.isDishInCurrentEvent(dishId);
+  // TrackBy function to prevent re-rendering of list items
+  trackByIndex(index: number, item: any): number {
+    return index;
   }
 }

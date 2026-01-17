@@ -126,7 +126,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     'measurementUnits',
     'productCategories',
     'inventoryStatuses',
-    'eventTypes'
+    'eventTypes',
+    'toolCategories',
+    'toolSubCategories'
   ];
 
   listDrafts: Record<LookupListKey, string> = {
@@ -135,7 +137,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     measurementUnits: '',
     productCategories: '',
     inventoryStatuses: '',
-    eventTypes: ''
+    eventTypes: '',
+    toolCategories: '',
+    toolSubCategories: ''
   };
 
   editableLists: Record<LookupListKey, string[]> = {
@@ -144,7 +148,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     measurementUnits: [],
     productCategories: [],
     inventoryStatuses: [],
-    eventTypes: []
+    eventTypes: [],
+    toolCategories: [],
+    toolSubCategories: []
   };
 
   listGroups = [
@@ -187,6 +193,24 @@ export class SettingsComponent implements OnInit, OnDestroy {
           label: 'סטטוס מלאי',
           placeholder: 'הוסף סטטוס מלאי',
           icon: 'pi pi-chart-line'
+        }
+      ]
+    },
+    {
+      title: 'ניהול כלים',
+      description: 'התאם קטגוריות כלים וסוגים (חד"פ / אמיתי) לניהול הציוד שלך.',
+      lists: [
+        {
+          key: 'toolCategories' as LookupListKey,
+          label: 'קטגוריות כלים',
+          placeholder: 'הוסף קטגוריה חדשה',
+          icon: 'pi pi-th-large'
+        },
+        {
+          key: 'toolSubCategories' as LookupListKey,
+          label: 'תת קטגוריות כלים',
+          placeholder: 'הוסף תת קטגוריה',
+          icon: 'pi pi-tags'
         }
       ]
     },

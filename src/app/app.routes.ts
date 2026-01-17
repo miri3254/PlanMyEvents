@@ -23,11 +23,11 @@ export const routes: Routes = [
     title: 'מוצרים - PlanMyEvents'
   },
   {
-    path: 'cart',
+    path: 'tools',
     loadComponent: () => 
-      import('./components/cart/cart')
-        .then(m => m.CartComponent),
-    title: 'עגלה - PlanMyEvents'
+      import('./components/tools/tools.component')
+        .then(m => m.ToolsComponent),
+    title: 'כלים - PlanMyEvents'
   },
   {
     path: 'settings',

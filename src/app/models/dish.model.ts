@@ -9,6 +9,12 @@ export interface DishEquipment {
     required: boolean;     // האם נדרש
 }
 
+export interface ServingDish {
+    name: string;          // שם הכלי להגשה
+    quantity: number;      // כמות
+    category: string;      // קטגוריה
+}
+
 export interface Dish {
     id?: string;           // מזהה ייחודי
     name: string;          // שם המנה
@@ -23,6 +29,11 @@ export interface Dish {
     isActive: boolean;     // האם המנה פעילה
     createdDate?: Date;    // תאריך יצירה
     lastModified?: Date;   // תאריך עדכון אחרון
+    // Serving fields
+    servingDescription?: string;      // תיאור צורת הגשה
+    servingIngredients?: DishIngredient[]; // רכיבים להגשה
+    servingDishes?: ServingDish[];    // כלים להגשה
+    waiterNotes?: string;             // הערות למלצר
 }
 
 export interface EventDishSelection {

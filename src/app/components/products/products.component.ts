@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { EventService } from '../../core/services/event.service';
+import { EventService } from '../../services/event.service';
 import { LookupService } from '../../core/services/lookup.service';
 import { Product } from '../../core/models';
 import { ButtonModule } from 'primeng/button';

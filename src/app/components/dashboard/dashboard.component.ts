@@ -6,7 +6,7 @@ import { ChartModule } from 'primeng/chart';
 import { ButtonModule } from 'primeng/button';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { EventService } from '../../core/services/event.service';
+import { EventService } from '../../services/event.service';
 import { Event, Dish, Product } from '../../core/models';
 
 @Component({
@@ -58,11 +58,11 @@ import { Event, Dish, Product } from '../../core/models';
         <div class="stat-card gradient-card">
           <div class="stat-content">
             <div class="stat-icon">
-              <i class="pi pi-shopping-bag"></i>
+              <i class="pi pi-calendar"></i>
             </div>
             <div class="stat-details">
-              <h3>{{ cartItemsCount$ | async }}</h3>
-              <p>פריטים בעגלה</p>
+              <h3>{{ (events$ | async)?.length || 0 }}</h3>
+              <p>אירועים פעילים</p>
             </div>
           </div>
         </div>
@@ -319,7 +319,6 @@ export class DashboardComponent implements OnInit {
   currentEvent$!: Observable<Event | null>;
   activeDishesCount$!: Observable<number>;
   productsInStockCount$!: Observable<number>;
-  cartItemsCount$!: Observable<number>;
 
   dishCategoryData: any;
   kosherTypeData: any;
@@ -337,10 +336,6 @@ export class DashboardComponent implements OnInit {
 
     this.productsInStockCount$ = this.eventService.products$.pipe(
       map(products => products.filter(p => p.inventoryStatus === 'במלאי').length)
-    );
-
-    this.cartItemsCount$ = this.eventService.currentCart$.pipe(
-      map(cart => cart.length)
     );
 
     // Initialize charts

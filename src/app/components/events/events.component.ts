@@ -19,7 +19,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { Subject } from 'rxjs';
 import { take, takeUntil } from 'rxjs/operators';
-import { EventService } from '../../core/services/event.service';
+import { EventService } from '../../services/event.service';
 import { CalendarDay, Event, EventStatus, HebrewDateParts } from '../../core/models';
 import { EVENT_STATUS_DISPLAY, EVENT_STATUS_OPTIONS } from '../../core/constants/app.constants';
 import { LookupService } from '../../core/services/lookup.service';
@@ -674,6 +674,9 @@ export class EventsComponent implements OnInit, OnDestroy {
       return false;
     }
     const matchingEvent = this.events.find(event => event.id === this.eventForm.id);
+    if (!matchingEvent) {
+      return true;
+    }
     return !this.eventService.canModifyStatus(matchingEvent);
   }
 

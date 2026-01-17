@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Observable, Subject, takeUntil, map } from 'rxjs';
 import { MenubarModule } from 'primeng/menubar';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -9,9 +10,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
-import { Observable, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { EventService } from '../../../core/services/event.service';
+import { EventService } from '../../../services/event.service';
 import { Event } from '../../../core/models';
 import { LookupService } from '../../../core/services/lookup.service';
 
@@ -77,6 +76,12 @@ type EventFormState = {
              class="menu-item">
             <i class="pi pi-shopping-cart"></i>
             <span>מוצרים</span>
+          </a>
+          <a routerLink="/tools" 
+             routerLinkActive="active"
+             class="menu-item">
+            <i class="pi pi-box"></i>
+            <span>כלים</span>
           </a>
           <a routerLink="/cart" 
              routerLinkActive="active"
@@ -436,7 +441,6 @@ type EventFormState = {
 })
 export class NavigationComponent implements OnInit, OnDestroy {
   events$!: Observable<Event[]>;
-  currentEventId$!: Observable<string | null>;
   currentEvent$!: Observable<Event | null>;
 
   eventOptions: any[] = [];
@@ -459,7 +463,6 @@ export class NavigationComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.events$ = this.eventService.events$;
-    this.currentEventId$ = this.eventService.currentEventId$;
     this.currentEvent$ = this.eventService.currentEvent$;
 
     // Subscribe to events to build options
@@ -476,10 +479,10 @@ export class NavigationComponent implements OnInit, OnDestroy {
     });
 
     // Subscribe to current event
-    this.currentEventId$
+    this.currentEvent$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(id => {
-        this.selectedEventId = id;
+      .subscribe(event => {
+        this.selectedEventId = event?.id || null;
       });
 
     this.lookupService.lookup$
@@ -517,7 +520,9 @@ export class NavigationComponent implements OnInit, OnDestroy {
   }
 
   onEventChange(event: any): void {
-    this.eventService.setCurrentEvent(this.selectedEventId);
+    if (this.selectedEventId) {
+      this.eventService.setCurrentEvent(this.selectedEventId);
+    }
   }
 
   closeEventDialog(): void {
