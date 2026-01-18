@@ -1,11 +1,16 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { EventService } from '../../services/event.service';
-import { LookupService } from '../../core/services/lookup.service';
+import { Subject, EMPTY, forkJoin, of } from 'rxjs';
+import { catchError, map, takeUntil } from 'rxjs/operators';
 import { Tool } from '../../core/models';
+import { ApiToolService } from '../../services/api-tool.service';
+import { ApiLookupService } from '../../services/api-lookup.service';
+import { ApiTool, ToolCreate, ToolUpdate, LookupValue } from '../../core/models/api.models';
+
+const FALLBACK_INVENTORY_STATUSES = ['במלאי', 'מלאי נמוך', 'אזל'];
+const FALLBACK_TOOL_CATEGORIES = ['מפות', 'כלי הגשה', 'צלחות', 'סכו"ם', 'כוסות', 'קערות', 'מגשים', 'אחר'];
+const FALLBACK_TOOL_SUB_CATEGORIES = ['חד"פ', 'אמיתי'];
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -68,18 +73,7 @@ export class ToolsComponent implements OnInit, OnDestroy {
   sortField: string = '';
   sortOrder: 'asc' | 'desc' | '' = '';
   
-  tool: Tool = {
-    id: '',
-    name: '',
-    inventoryStatus: 'במלאי',
-    brand: '',
-    estimatedPrice: 0,
-    category: '',
-    subCategory: '',
-    description: '',
-    notes: '',
-    quantity: 0
-  };
+  tool!: Tool;
   selectedTool: Tool | null = null;
   
   inventorySummary: Array<{
@@ -100,67 +94,22 @@ export class ToolsComponent implements OnInit, OnDestroy {
   
   clonedTools: { [s: string]: Tool } = {};
 
+  private inventoryStatusValues: string[] = [...FALLBACK_INVENTORY_STATUSES];
+  private categoryValues: string[] = [...FALLBACK_TOOL_CATEGORIES];
+  private subCategoryValues: string[] = [...FALLBACK_TOOL_SUB_CATEGORIES];
+
   constructor(
-    private eventService: EventService,
+    private toolService: ApiToolService,
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
-    private lookupService: LookupService
-  ) {}
+    private lookupService: ApiLookupService
+  ) {
+    this.tool = this.getEmptyTool();
+  }
 
   ngOnInit(): void {
-    this.subscribeToTools();
-    this.lookupService.lookup$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(data => {
-        this.inventoryStatuses = data.inventoryStatuses.map(status => ({
-          label: status,
-          value: status
-        }));
-
-        this.categories = data.toolCategories.map(category => ({
-          label: category,
-          value: category
-        }));
-
-        this.subCategories = data.toolSubCategories.map(subCategory => ({
-          label: subCategory,
-          value: subCategory
-        }));
-
-        this.statusOptions = [
-          { label: 'כל הסטטוסים', value: '' },
-          ...data.inventoryStatuses.map(status => ({ label: status, value: status }))
-        ];
-
-        this.categoryOptions = [
-          { label: 'כל הקטגוריות', value: '' },
-          ...data.toolCategories.map(category => ({ label: category, value: category }))
-        ];
-
-        this.subCategoryOptions = [
-          { label: 'כל התת-קטגוריות', value: '' },
-          ...data.toolSubCategories.map(subCategory => ({ label: subCategory, value: subCategory }))
-        ];
-
-        if (
-          this.filterInventoryStatus &&
-          !data.inventoryStatuses.includes(this.filterInventoryStatus)
-        ) {
-          this.filterInventoryStatus = '';
-          this.applyFilters();
-        }
-
-        if (
-          this.toolDialog &&
-          this.tool.category &&
-          data.toolCategories.length &&
-          !data.toolCategories.includes(this.tool.category)
-        ) {
-          this.tool.category = data.toolCategories[0];
-        }
-
-        this.updateInventorySummary();
-      });
+    this.loadTools();
+    this.loadLookupData();
   }
 
   ngOnDestroy(): void {
@@ -168,14 +117,116 @@ export class ToolsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private subscribeToTools(): void {
-    this.eventService.tools$
-      .pipe(takeUntil(this.destroy$))
+  private loadTools(): void {
+    this.toolService.getTools()
+      .pipe(
+        takeUntil(this.destroy$),
+        map(response => (response.items || []).map(tool => this.mapApiToolToTool(tool))),
+        catchError(error => {
+          console.error('Error loading tools:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'שגיאה',
+            detail: 'טעינת הכלים נכשלה'
+          });
+          return EMPTY;
+        })
+      )
       .subscribe(tools => {
         this.tools = tools;
         this.applyFilters();
         this.updateInventorySummary();
       });
+  }
+
+  private loadLookupData(): void {
+    forkJoin({
+      statuses: this.lookupService.getLookupCategory('inventory_statuses')
+        .pipe(catchError(() => of<LookupValue[]>([]))),
+      categories: this.lookupService.getLookupCategory('tool_categories')
+        .pipe(catchError(() => of<LookupValue[]>([]))),
+      subCategories: this.lookupService.getLookupCategory('tool_sub_categories')
+        .pipe(catchError(() => of<LookupValue[]>([])))
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(({ statuses, categories, subCategories }) => {
+        this.inventoryStatusValues = this.toDisplayList(statuses, FALLBACK_INVENTORY_STATUSES);
+        this.categoryValues = this.toDisplayList(categories, FALLBACK_TOOL_CATEGORIES);
+        this.subCategoryValues = this.toDisplayList(subCategories, FALLBACK_TOOL_SUB_CATEGORIES);
+
+        this.inventoryStatuses = this.inventoryStatusValues.map(value => ({ label: value, value }));
+        this.categories = this.categoryValues.map(value => ({ label: value, value }));
+        this.subCategories = this.subCategoryValues.map(value => ({ label: value, value }));
+
+        this.statusOptions = [{ label: 'כל הסטטוסים', value: '' }, ...this.inventoryStatuses];
+        this.categoryOptions = [{ label: 'כל הקטגוריות', value: '' }, ...this.categories];
+        this.subCategoryOptions = [{ label: 'כל התת-קטגוריות', value: '' }, ...this.subCategories];
+
+        if (this.filterInventoryStatus && !this.inventoryStatusValues.includes(this.filterInventoryStatus)) {
+          this.filterInventoryStatus = '';
+        }
+
+        if (this.filterCategory && !this.categoryValues.includes(this.filterCategory)) {
+          this.filterCategory = '';
+        }
+
+        if (this.filterSubCategory && !this.subCategoryValues.includes(this.filterSubCategory)) {
+          this.filterSubCategory = '';
+        }
+
+        if (this.toolDialog) {
+          if (this.tool.category && !this.categoryValues.includes(this.tool.category)) {
+            this.tool.category = this.categoryValues[0] || '';
+          }
+          if (this.tool.subCategory && !this.subCategoryValues.includes(this.tool.subCategory)) {
+            this.tool.subCategory = this.subCategoryValues[0] || '';
+          }
+          if (this.tool.inventoryStatus && !this.inventoryStatusValues.includes(this.tool.inventoryStatus)) {
+            this.tool.inventoryStatus = this.inventoryStatusValues[0] || FALLBACK_INVENTORY_STATUSES[0];
+          }
+        }
+
+        this.applyFilters();
+        this.updateInventorySummary();
+      });
+  }
+
+  private toDisplayList(values: LookupValue[], fallback: string[]): string[] {
+    const list = (values || []).map(v => v.display_name || v.name).filter(Boolean);
+    return list.length ? list : [...fallback];
+  }
+
+  private mapApiToolToTool(apiTool: ApiTool): Tool {
+    return {
+      id: apiTool.id,
+      name: apiTool.name,
+      brand: apiTool.brand || '',
+      category: apiTool.category,
+      subCategory: apiTool.sub_category || '',
+      inventoryStatus: apiTool.inventory_status,
+      estimatedPrice: apiTool.estimated_price ?? 0,
+      description: apiTool.description || '',
+      notes: apiTool.notes || '',
+      quantity: apiTool.quantity ?? 0
+    };
+  }
+
+  private mapToolToCreatePayload(tool: Tool): ToolCreate {
+    return {
+      name: tool.name.trim(),
+      category: tool.category,
+      sub_category: tool.subCategory || undefined,
+      inventory_status: tool.inventoryStatus,
+      estimated_price: tool.estimatedPrice,
+      quantity: tool.quantity,
+      brand: tool.brand || undefined,
+      description: tool.description || undefined,
+      notes: tool.notes || undefined
+    };
+  }
+
+  private mapToolToUpdatePayload(tool: Tool): ToolUpdate {
+    return this.mapToolToCreatePayload(tool);
   }
 
   setViewMode(mode: 'table' | 'grid'): void {
@@ -307,18 +358,38 @@ export class ToolsComponent implements OnInit, OnDestroy {
       acceptLabel: 'כן',
       rejectLabel: 'לא',
       accept: () => {
-        this.eventService.deleteTool(tool.id);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'הצלחה',
-          detail: 'הכלי נמחק בהצלחה',
-          life: 3000
-        });
+        this.toolService.deleteTool(tool.id)
+          .pipe(
+            takeUntil(this.destroy$),
+            catchError(error => {
+              console.error('Error deleting tool:', error);
+              this.messageService.add({
+                severity: 'error',
+                summary: 'שגיאה',
+                detail: 'מחיקת הכלי נכשלה',
+                life: 3000
+              });
+              return EMPTY;
+            })
+          )
+          .subscribe(() => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'הצלחה',
+              detail: 'הכלי נמחק בהצלחה',
+              life: 3000
+            });
+            this.loadTools();
+          });
       }
     });
   }
 
   deleteSelectedTools(): void {
+    if (!this.selectedTools.length) {
+      return;
+    }
+
     this.confirmationService.confirm({
       message: `האם אתה בטוח שברצונך למחוק ${this.selectedTools.length} כלים?`,
       header: 'אישור מחיקה',
@@ -326,16 +397,35 @@ export class ToolsComponent implements OnInit, OnDestroy {
       acceptLabel: 'כן',
       rejectLabel: 'לא',
       accept: () => {
-        this.selectedTools.forEach(tool => {
-          this.eventService.deleteTool(tool.id);
-        });
-        this.selectedTools = [];
-        this.messageService.add({
-          severity: 'success',
-          summary: 'הצלחה',
-          detail: 'הכלים נמחקו בהצלחה',
-          life: 3000
-        });
+        const ids = this.selectedTools.map(tool => tool.id);
+        const request$ = ids.length > 1
+          ? this.toolService.deleteMultipleTools(ids)
+          : this.toolService.deleteTool(ids[0]);
+
+        request$
+          .pipe(
+            takeUntil(this.destroy$),
+            catchError(error => {
+              console.error('Error deleting tools:', error);
+              this.messageService.add({
+                severity: 'error',
+                summary: 'שגיאה',
+                detail: 'מחיקת הכלים נכשלה',
+                life: 3000
+              });
+              return EMPTY;
+            })
+          )
+          .subscribe(() => {
+            this.selectedTools = [];
+            this.messageService.add({
+              severity: 'success',
+              summary: 'הצלחה',
+              detail: 'הכלים נמחקו בהצלחה',
+              life: 3000
+            });
+            this.loadTools();
+          });
       }
     });
   }
@@ -357,20 +447,40 @@ export class ToolsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.tool.id) {
-      this.tool.id = Date.now().toString();
-    }
+    const isUpdate = !!this.tool.id;
+    const payload = isUpdate
+      ? this.mapToolToUpdatePayload(this.tool)
+      : this.mapToolToCreatePayload(this.tool);
 
-    this.eventService.saveTool(this.tool);
-    this.messageService.add({
-      severity: 'success',
-      summary: 'הצלחה',
-      detail: 'הכלי נשמר בהצלחה',
-      life: 3000
-    });
-    
-    this.toolDialog = false;
-    this.tool = this.getEmptyTool();
+    const request$ = isUpdate
+      ? this.toolService.updateTool(this.tool.id, payload as ToolUpdate)
+      : this.toolService.createTool(payload as ToolCreate);
+
+    request$
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError(error => {
+          console.error('Error saving tool:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'שגיאה',
+            detail: 'שמירת הכלי נכשלה',
+            life: 3000
+          });
+          return EMPTY;
+        })
+      )
+      .subscribe(() => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'הצלחה',
+          detail: isUpdate ? 'הכלי עודכן בהצלחה' : 'הכלי נוצר בהצלחה',
+          life: 3000
+        });
+        this.toolDialog = false;
+        this.tool = this.getEmptyTool();
+        this.loadTools();
+      });
   }
 
   sortBy(field: string): void {
@@ -412,13 +522,29 @@ export class ToolsComponent implements OnInit, OnDestroy {
 
   onRowEditSave(tool: Tool): void {
     delete this.clonedTools[tool.id];
-    this.eventService.saveTool(tool);
-    this.messageService.add({
-      severity: 'success',
-      summary: 'הצלחה',
-      detail: 'הכלי עודכן בהצלחה',
-      life: 3000
-    });
+    this.toolService.updateTool(tool.id, this.mapToolToUpdatePayload(tool))
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError(error => {
+          console.error('Error updating tool:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'שגיאה',
+            detail: 'עדכון הכלי נכשל',
+            life: 3000
+          });
+          return EMPTY;
+        })
+      )
+      .subscribe(() => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'הצלחה',
+          detail: 'הכלי עודכן בהצלחה',
+          life: 3000
+        });
+        this.loadTools();
+      });
   }
 
   onRowEditCancel(tool: Tool, index: number): void {
@@ -469,9 +595,9 @@ export class ToolsComponent implements OnInit, OnDestroy {
   }
 
   private getEmptyTool(): Tool {
-    const defaultStatus = this.lookupService.getList('inventoryStatuses')[0] || 'במלאי';
-    const defaultCategory = this.lookupService.getList('toolCategories')[0] || '';
-    const defaultSubCategory = this.lookupService.getList('toolSubCategories')[0] || '';
+    const defaultStatus = this.inventoryStatusValues[0] || FALLBACK_INVENTORY_STATUSES[0];
+    const defaultCategory = this.categoryValues[0] || '';
+    const defaultSubCategory = this.subCategoryValues[0] || '';
 
     return {
       id: '',

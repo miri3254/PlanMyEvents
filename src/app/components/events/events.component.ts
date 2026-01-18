@@ -17,12 +17,19 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
 import { MessageService, ConfirmationService } from 'primeng/api';
-import { Subject } from 'rxjs';
-import { take, takeUntil } from 'rxjs/operators';
-import { EventService } from '../../services/event.service';
-import { CalendarDay, Event, EventStatus, HebrewDateParts } from '../../core/models';
-import { EVENT_STATUS_DISPLAY, EVENT_STATUS_OPTIONS } from '../../core/constants/app.constants';
-import { LookupService } from '../../core/services/lookup.service';
+import { Subject, Observable, EMPTY } from 'rxjs';
+import { take, takeUntil, catchError, map } from 'rxjs/operators';
+import { ApiEventService } from '../../services/api-event.service';
+import { ApiLookupService } from '../../services/api-lookup.service';
+import { 
+  ApiEvent, 
+  EventCreate, 
+  EventUpdate, 
+  EventStatusUpdate, 
+  EventsQueryParams,
+  LookupValue
+} from '../../core/models/api.models';
+import { CalendarDay, HebrewDateParts, EventStatus, Event } from '../../core/models';
 import {
   buildHebrewMonthOptions,
   formatHebrewMonthTitle,
@@ -34,6 +41,66 @@ import {
   shiftHebrewMonth,
   toHebrewParts
 } from '../../core/utils/hebrew-date.util';
+
+// Helper function to convert ApiEvent to local Event
+function mapApiEventToEvent(apiEvent: ApiEvent): Event {
+  return {
+    id: apiEvent.id,
+    name: apiEvent.name,
+    participants: apiEvent.guest_count,
+    eventType: apiEvent.event_type,
+    foodType: 'כל הסוגים', // Default value, might need to be mapped from another field
+    dishes: [], // Would need to map from apiEvent.dishes if available
+    createdAt: new Date(apiEvent.created_at || new Date().toISOString()),
+    eventDate: apiEvent.event_date,
+    hebrewDate: undefined, // Would need Hebrew date calculation
+    status: mapApiStatusToLocalStatus(apiEvent.status),
+    notes: apiEvent.notes
+  };
+}
+
+// Helper function to map API status to local EventStatus
+function mapApiStatusToLocalStatus(apiStatus: string): EventStatus {
+  const statusMap: { [key: string]: EventStatus } = {
+    'pending': 'בהמתנה לאישור',
+    'scheduled': 'אושר',
+    'in-progress': 'עבר',
+    'completed': 'הסתיים',
+    'cancelled': 'התבטל'
+  };
+  
+  return statusMap[apiStatus] || 'בהמתנה לאישור';
+}
+
+// Helper function to map local EventStatus to API status
+function mapLocalStatusToApiStatus(localStatus: EventStatus): string {
+  const statusMap: { [key in EventStatus]: string } = {
+    'בהמתנה לאישור': 'pending',
+    'אושר': 'scheduled',
+    'עבר': 'in-progress',
+    'הסתיים': 'completed',
+    'התבטל': 'cancelled'
+  };
+  
+  return statusMap[localStatus] || 'pending';
+}
+
+// Event status constants
+export const EVENT_STATUS_OPTIONS: { label: string; value: EventStatus }[] = [
+  { label: 'בהמתנה לאישור', value: 'בהמתנה לאישור' },
+  { label: 'אושר', value: 'אושר' },
+  { label: 'עבר', value: 'עבר' },
+  { label: 'התבטל', value: 'התבטל' },
+  { label: 'הסתיים', value: 'הסתיים' }
+];
+
+export const EVENT_STATUS_DISPLAY: { [key in EventStatus]: { label: string; severity: string; icon: string; class: string } } = {
+  'בהמתנה לאישור': { label: 'בהמתנה לאישור', severity: 'warn', icon: 'clock', class: 'pending' },
+  'אושר': { label: 'אושר', severity: 'info', icon: 'calendar', class: 'scheduled' },
+  'עבר': { label: 'עבר', severity: 'secondary', icon: 'history', class: 'past' },
+  'התבטל': { label: 'התבטל', severity: 'danger', icon: 'times', class: 'cancelled' },
+  'הסתיים': { label: 'הסתיים', severity: 'success', icon: 'check', class: 'completed' }
+};
 
 type EventFilterKey = 'all' | 'past' | 'cancelled' | 'completed' | 'pending';
 type CalendarViewMode = 'gregorian' | 'hebrew';
@@ -145,8 +212,8 @@ export class EventsComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   constructor(
-    private readonly eventService: EventService,
-    private readonly lookupService: LookupService,
+    private readonly eventService: ApiEventService,
+    private readonly lookupService: ApiLookupService,
     private readonly messageService: MessageService,
     private readonly confirmationService: ConfirmationService
   ) {
@@ -156,22 +223,36 @@ export class EventsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.lookupService.lookup$
       .pipe(takeUntil(this.destroy$))
-      .subscribe(snapshot => {
+      .subscribe((snapshot: any) => {
         this.eventTypeOptions = snapshot.eventTypes;
         this.kosherOptions = snapshot.kosherTypes;
         this.refreshHebrewSelectors(this.eventForm?.hebrewParts.year || this.currentHebrewMonth.year);
       });
 
-    this.eventService.events$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(events => {
-        this.events = events;
-        this.loadingList = false;
-        this.applyFilter();
-        this.syncCalendarWithSnapshot();
-      });
-
+    this.loadEvents();
     this.updateCalendarRange();
+  }
+
+  loadEvents(): void {
+    this.loadingList = true;
+    this.eventService.getEvents()
+      .pipe(
+        takeUntil(this.destroy$),
+        map((response: any) => response.items || []),
+        map((apiEvents: ApiEvent[]) => apiEvents.map(mapApiEventToEvent))
+      )
+      .subscribe({
+        next: (events: Event[]) => {
+          this.events = events;
+          this.loadingList = false;
+          this.applyFilter();
+          this.syncCalendarWithSnapshot();
+        },
+        error: (error: any) => {
+          console.error('Error loading events:', error);
+          this.loadingList = false;
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -211,7 +292,7 @@ export class EventsComponent implements OnInit, OnDestroy {
   openEventDetails(event: Event): void {
     this.selectedEvent = event;
     this.selectedStatus = event.status;
-    this.statusLocked = !this.eventService.canModifyStatus(event);
+    this.statusLocked = false; // For now, allow all status modifications
     this.detailVisible = true;
   }
 
@@ -297,14 +378,29 @@ export class EventsComponent implements OnInit, OnDestroy {
       acceptLabel: 'מחק',
       rejectLabel: 'בטל',
       accept: () => {
-        this.eventService.deleteEvent(event.id);
-        if (origin === 'details') {
-          this.closeDialog();
-        }
-        this.messageService.add({
-          severity: 'success',
-          summary: 'אירוע נמחק',
-          detail: `${event.name} הוסר מהמערכת`
+        this.eventService.deleteEvent(event.id).subscribe({
+          next: () => {
+            // Remove from local array
+            this.events = this.events.filter(e => e.id !== event.id);
+            this.applyFilter();
+            this.syncCalendarWithSnapshot();
+            
+            if (origin === 'details') {
+              this.closeDialog();
+            }
+            this.messageService.add({
+              severity: 'success',
+              summary: 'אירוע נמחק',
+              detail: `${event.name} הוסר מהמערכת`
+            });
+          },
+          error: (error: any) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'שגיאה',
+              detail: error?.message || 'מחיקת האירוע נכשלה'
+            });
+          }
         });
       }
     });
@@ -320,35 +416,70 @@ export class EventsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const payload = {
-      name: this.eventForm.name,
-      participants: this.eventForm.participants,
-      eventType: this.eventForm.eventType,
-      foodType: this.eventForm.foodType,
-      status: this.eventForm.status,
-      notes: this.eventForm.notes,
-      eventDate: this.eventForm.eventDate,
-      hebrewDate: this.eventForm.hebrewLabel,
-      hebrewParts: this.eventForm.hebrewParts
-    };
-
     this.eventFormSubmitting = true;
+    
     if (this.eventFormMode === 'create') {
-      const eventId = this.eventService.createEvent(payload);
-      this.eventService.setCurrentEvent(eventId);
-      this.messageService.add({
-        severity: 'success',
-        summary: 'אירוע נוצר',
-        detail: `${this.eventForm.name} נוסף ללוח`
-      });
-      this.eventFormSubmitting = false;
-      this.closeEventForm();
-    } else if (this.eventForm.id) {
-      this.eventService
-        .updateEventDetails(this.eventForm.id, payload)
-        .pipe(take(1))
+      const createPayload: EventCreate = {
+        name: this.eventForm.name,
+        event_type: this.eventForm.eventType,
+        event_date: this.eventForm.eventDate.toISOString().split('T')[0], 
+        event_time: '00:00', // Default time
+        guest_count: this.eventForm.participants,
+        notes: this.eventForm.notes
+      };
+
+      this.eventService.createEvent(createPayload)
+        .pipe(
+          take(1),
+          map(mapApiEventToEvent)
+        )
         .subscribe({
-          next: updated => {
+          next: (created: Event) => {
+            this.events = [created, ...this.events];
+            this.applyFilter();
+            this.syncCalendarWithSnapshot();
+            
+            this.messageService.add({
+              severity: 'success',
+              summary: 'אירוע נוצר',
+              detail: `${this.eventForm.name} נוסף ללוח`
+            });
+            this.eventFormSubmitting = false;
+            this.closeEventForm();
+          },
+          error: (error: any) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'שגיאה',
+              detail: error?.message || 'יצירת אירוע נכשלה'
+            });
+            this.eventFormSubmitting = false;
+          }
+        });
+    } else if (this.eventForm.id) {
+      const updatePayload: EventUpdate = {
+        name: this.eventForm.name,
+        event_type: this.eventForm.eventType,
+        event_date: this.eventForm.eventDate.toISOString().split('T')[0],
+        guest_count: this.eventForm.participants,
+        notes: this.eventForm.notes
+      };
+
+      this.eventService
+        .updateEvent(this.eventForm.id, updatePayload)
+        .pipe(
+          take(1),
+          map(mapApiEventToEvent)
+        )
+        .subscribe({
+          next: (updated: Event) => {
+            const index = this.events.findIndex(e => e.id === updated.id);
+            if (index !== -1) {
+              this.events[index] = updated;
+              this.applyFilter();
+              this.syncCalendarWithSnapshot();
+            }
+            
             this.messageService.add({
               severity: 'success',
               summary: 'אירוע עודכן',
@@ -357,7 +488,7 @@ export class EventsComponent implements OnInit, OnDestroy {
             this.eventFormSubmitting = false;
             this.closeEventForm();
           },
-          error: error => {
+          error: (error: any) => {
             this.messageService.add({
               severity: 'error',
               summary: 'שגיאה',
@@ -393,20 +524,20 @@ export class EventsComponent implements OnInit, OnDestroy {
   }
 
   getStatusSeverity(status: EventStatus): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' | null {
-    const severity = this.statusDisplay[status]?.severity;
+    const severity = EVENT_STATUS_DISPLAY[status]?.severity;
     if (!severity) {
       return null;
     }
 
-    return severity === 'warning' ? 'warn' : severity;
+    return severity === 'warning' ? 'warn' : severity as any;
   }
 
   getStatusIcon(status: EventStatus): string {
-    return this.statusDisplay[status]?.icon || 'pi pi-info-circle';
+    return EVENT_STATUS_DISPLAY[status]?.icon || 'info-circle';
   }
 
   getStatusClass(status: EventStatus): string {
-    return `status-${this.statusDisplay[status]?.severity || 'info'}`;
+    return `status-${EVENT_STATUS_DISPLAY[status]?.class || 'info'}`;
   }
 
   trackCell(index: number, cell: CalendarDay | null): string | number {
@@ -421,15 +552,28 @@ export class EventsComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const statusUpdate: EventStatusUpdate = {
+      status: mapLocalStatusToApiStatus(this.selectedStatus) as any
+    };
+
     this.statusUpdating = true;
     this.eventService
-      .updateEventStatus(this.selectedEvent.id, this.selectedStatus)
-      .pipe(take(1))
+      .updateEventStatus(this.selectedEvent.id, statusUpdate)
+      .pipe(
+        take(1),
+        map(mapApiEventToEvent)
+      )
       .subscribe({
-        next: updated => {
+        next: (updated: Event) => {
           this.selectedEvent = updated;
           this.selectedStatus = updated.status;
-          this.statusLocked = !this.eventService.canModifyStatus(updated);
+          // Update the event in the main list
+          const index = this.events.findIndex(e => e.id === updated.id);
+          if (index !== -1) {
+            this.events[index] = updated;
+            this.applyFilter();
+            this.syncCalendarWithSnapshot();
+          }
           this.messageService.add({
             severity: 'success',
             summary: 'סטטוס עודכן',
@@ -437,7 +581,7 @@ export class EventsComponent implements OnInit, OnDestroy {
           });
           this.statusUpdating = false;
         },
-        error: error => {
+        error: (error: any) => {
           this.messageService.add({
             severity: 'error',
             summary: 'שגיאה',
@@ -457,23 +601,12 @@ export class EventsComponent implements OnInit, OnDestroy {
 
   private loadCalendarEvents(): void {
     this.loadingCalendar = true;
-    this.eventService
-      .fetchEventsByRange(this.calendarRange.start, this.calendarRange.end)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: events => {
-          this.calendarEvents = events;
-          this.buildCalendarGrid();
-        },
-        error: () => {
-          this.calendarEvents = [];
-          this.buildCalendarGrid();
-          this.loadingCalendar = false;
-        },
-        complete: () => {
-          this.loadingCalendar = false;
-        }
-      });
+    // Use existing events and filter them for the calendar range
+    this.calendarEvents = this.events.filter(event => 
+      this.isWithinRange(event.eventDate, this.calendarRange)
+    );
+    this.buildCalendarGrid();
+    this.loadingCalendar = false;
   }
 
   private applyFilter(): void {
@@ -677,7 +810,8 @@ export class EventsComponent implements OnInit, OnDestroy {
     if (!matchingEvent) {
       return true;
     }
-    return !this.eventService.canModifyStatus(matchingEvent);
+    // For now, all statuses can be modified - can add logic later
+    return false;
   }
 
   get eventTypeSelectItems(): { label: string; value: string }[] {

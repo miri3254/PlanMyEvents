@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.planmyevents.example.com',
+  apiUrl: 'https://api.planmyevents.example.com/api',
   // Replace with real prod keys if needed
 };
 

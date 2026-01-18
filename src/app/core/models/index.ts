@@ -1,5 +1,7 @@
 // Core data models for PlanMyEvents
 
+export * from './api.models';
+
 export interface DishIngredient {
   productName: string;
   quantity: number;

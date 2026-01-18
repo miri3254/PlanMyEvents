@@ -83,12 +83,6 @@ type EventFormState = {
             <i class="pi pi-box"></i>
             <span>כלים</span>
           </a>
-          <a routerLink="/cart" 
-             routerLinkActive="active"
-             class="menu-item">
-            <i class="pi pi-shopping-bag"></i>
-            <span>עגלה</span>
-          </a>
           <a routerLink="/events" 
              routerLinkActive="active"
              class="menu-item">

@@ -1,11 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { EventService } from '../../services/event.service';
-import { LookupService } from '../../core/services/lookup.service';
+import { Subject, EMPTY, forkJoin, of } from 'rxjs';
+import { takeUntil, map, catchError } from 'rxjs/operators';
+import { ApiProductService } from '../../services/api-product.service';
+import { ApiLookupService } from '../../services/api-lookup.service';
 import { Product } from '../../core/models';
+import { ApiProduct, ProductCreate, ProductUpdate, LookupValue } from '../../core/models/api.models';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -21,6 +22,9 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DividerModule } from 'primeng/divider';
 import { TooltipModule } from 'primeng/tooltip';
+
+const FALLBACK_INVENTORY_STATUSES = ['במלאי', 'מלאי נמוך', 'אזל'];
+const FALLBACK_PRODUCT_CATEGORIES = ['מוצרי חלב', 'בשר ועוף', 'ירקות ופירות', 'תבלינים', 'יבשים', 'שמנים'];
 
 @Component({
   selector: 'app-products',
@@ -89,68 +93,123 @@ export class ProductsComponent implements OnInit, OnDestroy {
   clonedProducts: { [s: string]: Product } = {};
 
   constructor(
-    private eventService: EventService,
+    private productService: ApiProductService,
+    private lookupService: ApiLookupService,
     private confirmationService: ConfirmationService,
-    private messageService: MessageService,
-    private lookupService: LookupService
+    private messageService: MessageService
   ) {
     this.product = this.getEmptyProduct();
   }
 
   ngOnInit(): void {
-    this.subscribeToProducts();
-    this.lookupService.lookup$
+    this.loadProducts();
+    this.loadLookupData();
+  }
+
+  loadProducts(): void {
+    this.productService.getProducts()
+      .pipe(
+        takeUntil(this.destroy$),
+        map(response => response.items.map(this.mapApiProductToProduct)),
+        catchError(error => {
+          console.error('Error loading products:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'שגיאה',
+            detail: 'טעינת המוצרים נכשלה'
+          });
+          return EMPTY;
+        })
+      )
+      .subscribe(products => {
+        this.products = products;
+        this.applyFilters();
+        this.buildInventorySummary();
+      });
+  }
+
+  loadLookupData(): void {
+    forkJoin({
+      statuses: this.lookupService
+        .getLookupCategory('inventory_statuses')
+        .pipe(
+          catchError(error => {
+            console.warn('Failed to load inventory statuses:', error);
+            return of<LookupValue[]>([]);
+          })
+        ),
+      categories: this.lookupService
+        .getLookupCategory('product_categories')
+        .pipe(
+          catchError(error => {
+            console.warn('Failed to load product categories:', error);
+            return of<LookupValue[]>([]);
+          })
+        )
+    })
       .pipe(takeUntil(this.destroy$))
-      .subscribe(data => {
-        this.inventoryStatuses = data.inventoryStatuses.map(status => ({
-          label: status,
-          value: status
-        }));
+      .subscribe(({ statuses, categories }) => {
+        const statusList = this.toDisplayList(statuses, FALLBACK_INVENTORY_STATUSES);
+        const categoryList = this.toDisplayList(categories, FALLBACK_PRODUCT_CATEGORIES);
 
-        this.categories = data.productCategories.map(category => ({
-          label: category,
-          value: category
-        }));
+        this.inventoryStatuses = statusList.map(status => ({ label: status, value: status }));
+        this.categories = categoryList.map(category => ({ label: category, value: category }));
+        this.statusOptions = [{ label: 'כל הסטטוסים', value: '' }, ...this.inventoryStatuses];
 
-        this.statusOptions = [
-          { label: 'כל הסטטוסים', value: '' },
-          ...data.inventoryStatuses.map(status => ({ label: status, value: status }))
-        ];
-
-        if (
-          this.filterInventoryStatus &&
-          !data.inventoryStatuses.includes(this.filterInventoryStatus)
-        ) {
+        if (this.filterInventoryStatus && !statusList.includes(this.filterInventoryStatus)) {
           this.filterInventoryStatus = '';
           this.applyFilters();
         }
 
-        if (
-          this.productDialog &&
-          this.product.category &&
-          data.productCategories.length &&
-          !data.productCategories.includes(this.product.category)
-        ) {
-          this.product.category = data.productCategories[0];
+        if (this.productDialog && this.product.category && !categoryList.includes(this.product.category)) {
+          this.product.category = categoryList[0] || '';
         }
 
-        this.updateInventorySummary();
+        if (!this.product.inventoryStatus && statusList.length) {
+          this.product.inventoryStatus = statusList[0];
+        }
+
+        if (!this.product.category && categoryList.length) {
+          this.product.category = categoryList[0];
+        }
+
+        this.buildInventorySummary();
       });
+  }
+
+  // Mapping function
+  mapApiProductToProduct = (apiProduct: ApiProduct): Product => {
+    return {
+      id: apiProduct.id,
+      name: apiProduct.name,
+      inventoryStatus: apiProduct.inventory_status,
+      brand: apiProduct.brand || '',
+      packageQuantity: apiProduct.package_quantity || 0,
+      estimatedPrice: apiProduct.estimated_price,
+      category: apiProduct.category,
+      supplier: apiProduct.supplier || ''
+    };
+  };
+
+  private mapProductToCreatePayload(product: Product): ProductCreate {
+    return {
+      name: product.name.trim(),
+      category: product.category,
+      package_quantity: product.packageQuantity,
+      estimated_price: product.estimatedPrice,
+      inventory_status: product.inventoryStatus,
+      supplier: product.supplier?.trim() || undefined,
+      brand: product.brand?.trim() || undefined
+    };
+  }
+
+  private mapProductToUpdatePayload(product: Product): ProductUpdate {
+    return this.mapProductToCreatePayload(product);
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  private subscribeToProducts(): void {
-    this.eventService.products$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(products => {
-        this.products = products;
-        this.applyFilters();
-        this.updateInventorySummary();
-      });
   }
 
   setViewMode(mode: 'table' | 'grid'): void {
@@ -245,18 +304,38 @@ export class ProductsComponent implements OnInit, OnDestroy {
       acceptLabel: 'כן',
       rejectLabel: 'לא',
       accept: () => {
-        this.eventService.deleteProduct(product.id);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'הצלחה',
-          detail: 'המוצר נמחק בהצלחה',
-          life: 3000
-        });
+        this.productService.deleteProduct(product.id)
+          .pipe(
+            takeUntil(this.destroy$),
+            catchError(error => {
+              console.error('Error deleting product:', error);
+              this.messageService.add({
+                severity: 'error',
+                summary: 'שגיאה',
+                detail: 'מחיקת המוצר נכשלה',
+                life: 3000
+              });
+              return EMPTY;
+            })
+          )
+          .subscribe(() => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'הצלחה',
+              detail: 'המוצר נמחק בהצלחה',
+              life: 3000
+            });
+            this.loadProducts();
+          });
       }
     });
   }
 
   deleteSelectedProducts(): void {
+    if (!this.selectedProducts.length) {
+      return;
+    }
+
     this.confirmationService.confirm({
       message: `האם אתה בטוח שברצונך למחוק ${this.selectedProducts.length} מוצרים?`,
       header: 'אישור מחיקה',
@@ -264,16 +343,35 @@ export class ProductsComponent implements OnInit, OnDestroy {
       acceptLabel: 'כן',
       rejectLabel: 'לא',
       accept: () => {
-        this.selectedProducts.forEach(product => {
-          this.eventService.deleteProduct(product.id);
-        });
-        this.selectedProducts = [];
-        this.messageService.add({
-          severity: 'success',
-          summary: 'הצלחה',
-          detail: 'המוצרים נמחקו בהצלחה',
-          life: 3000
-        });
+        const ids = this.selectedProducts.map(product => product.id);
+        const request$ = ids.length > 1
+          ? this.productService.deleteMultipleProducts(ids)
+          : this.productService.deleteProduct(ids[0]);
+
+        request$
+          .pipe(
+            takeUntil(this.destroy$),
+            catchError(error => {
+              console.error('Error deleting products:', error);
+              this.messageService.add({
+                severity: 'error',
+                summary: 'שגיאה',
+                detail: 'מחיקת המוצרים נכשלה',
+                life: 3000
+              });
+              return EMPTY;
+            })
+          )
+          .subscribe(() => {
+            this.selectedProducts = [];
+            this.messageService.add({
+              severity: 'success',
+              summary: 'הצלחה',
+              detail: 'המוצרים נמחקו בהצלחה',
+              life: 3000
+            });
+            this.loadProducts();
+          });
       }
     });
   }
@@ -290,21 +388,43 @@ export class ProductsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // If it's a new product (no id), generate id and add timestamp
-    if (!this.product.id) {
-      this.product.id = Date.now().toString();
-    }
+    this.product.inventoryStatus = this.product.inventoryStatus || this.inventoryStatuses[0]?.value || FALLBACK_INVENTORY_STATUSES[0];
+    this.product.category = this.product.category || this.categories[0]?.value || FALLBACK_PRODUCT_CATEGORIES[0] || '';
 
-    this.eventService.saveProduct(this.product);
-    this.messageService.add({
-      severity: 'success',
-      summary: 'הצלחה',
-      detail: 'המוצר נשמר בהצלחה',
-      life: 3000
-    });
+    const isUpdate = !!this.product.id;
+    const payload = isUpdate
+      ? this.mapProductToUpdatePayload(this.product)
+      : this.mapProductToCreatePayload(this.product);
 
-    this.productDialog = false;
-    this.product = this.getEmptyProduct();
+    const request$ = isUpdate
+      ? this.productService.updateProduct(this.product.id, payload as ProductUpdate)
+      : this.productService.createProduct(payload as ProductCreate);
+
+    request$
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError(error => {
+          console.error('Error saving product:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'שגיאה',
+            detail: 'שמירת המוצר נכשלה',
+            life: 3000
+          });
+          return EMPTY;
+        })
+      )
+      .subscribe(() => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'הצלחה',
+          detail: isUpdate ? 'המוצר עודכן בהצלחה' : 'המוצר נוצר בהצלחה',
+          life: 3000
+        });
+        this.productDialog = false;
+        this.product = this.getEmptyProduct();
+        this.loadProducts();
+      });
   }
 
   sortBy(field: string): void {
@@ -347,18 +467,42 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   onRowEditSave(product: Product): void {
-    delete this.clonedProducts[product.id];
-    this.eventService.saveProduct(product);
-    this.messageService.add({
-      severity: 'success',
-      summary: 'הצלחה',
-      detail: 'המוצר עודכן בהצלחה',
-      life: 3000
-    });
+    const payload = this.mapProductToUpdatePayload(product);
+
+    this.productService.updateProduct(product.id, payload)
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError(error => {
+          console.error('Error updating product:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'שגיאה',
+            detail: 'עדכון המוצר נכשל',
+            life: 3000
+          });
+          const idx = this.filteredProducts.findIndex(item => item.id === product.id);
+          if (idx > -1) {
+            this.onRowEditCancel(product, idx);
+          }
+          return EMPTY;
+        })
+      )
+      .subscribe(() => {
+        delete this.clonedProducts[product.id];
+        this.messageService.add({
+          severity: 'success',
+          summary: 'הצלחה',
+          detail: 'המוצר עודכן בהצלחה',
+          life: 3000
+        });
+        this.loadProducts();
+      });
   }
 
   onRowEditCancel(product: Product, index: number): void {
-    this.filteredProducts[index] = this.clonedProducts[product.id];
+    if (this.clonedProducts[product.id]) {
+      this.filteredProducts[index] = this.clonedProducts[product.id];
+    }
     delete this.clonedProducts[product.id];
   }
 
@@ -394,23 +538,27 @@ export class ProductsComponent implements OnInit, OnDestroy {
     return product.id;
   }
 
-  private getEmptyProduct(): Product {
-    const defaultStatus = this.lookupService.getList('inventoryStatuses')[0] || 'במלאי';
-    const defaultCategory = this.lookupService.getList('productCategories')[0] || '';
+  private toDisplayList(values: LookupValue[] | undefined, fallback: string[]): string[] {
+    const resolved = (values ?? [])
+      .map(value => value?.display_name?.trim() || value?.name?.trim() || '')
+      .filter(value => !!value);
+    return resolved.length ? resolved : [...fallback];
+  }
 
+  private getEmptyProduct(): Product {
     return {
-      id: Date.now().toString(),
+      id: '',
       name: '',
-      inventoryStatus: defaultStatus,
+      inventoryStatus: this.inventoryStatuses[0]?.value || FALLBACK_INVENTORY_STATUSES[0],
       brand: '',
       packageQuantity: 1,
       estimatedPrice: 0,
-      category: defaultCategory,
+      category: this.categories[0]?.value || FALLBACK_PRODUCT_CATEGORIES[0] || '',
       supplier: ''
     };
   }
 
-  private updateInventorySummary(): void {
+  private buildInventorySummary(): void {
     if (!this.inventoryStatuses.length) {
       this.inventorySummary = [];
       return;
