@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { BaseApiService } from '../core/services/base-api.service';
 import { 
   ApiEvent, 
@@ -10,7 +11,9 @@ import {
   EventsQueryParams,
   ApiResponse,
   ShoppingListItem,
-  EquipmentListItem
+  ShoppingListResponse,
+  EquipmentListItem,
+  EquipmentListResponse
 } from '../core/models/api.models';
 
 @Injectable({
@@ -44,12 +47,12 @@ export class ApiEventService extends BaseApiService {
   }
 
   // Event Dishes
-  addDishToEvent(eventId: string, dishData: { dish_id: string; quantity: number }): Observable<EventDish> {
+  addDishToEvent(eventId: string, dishData: { dish_id: number; quantity: number }): Observable<EventDish> {
     return this.post<EventDish>(`/events/${eventId}/dishes`, dishData);
   }
 
-  updateEventDish(eventId: string, dishId: string, quantity: { quantity: number }): Observable<EventDish> {
-    return this.put<EventDish>(`/events/${eventId}/dishes/${dishId}`, quantity);
+  updateEventDish(eventId: string, dishId: string, data: { quantity?: number; notes?: string }): Observable<EventDish> {
+    return this.put<EventDish>(`/events/${eventId}/dishes/${dishId}`, data);
   }
 
   removeDishFromEvent(eventId: string, dishId: string): Observable<void> {
@@ -57,11 +60,11 @@ export class ApiEventService extends BaseApiService {
   }
 
   // Event Lists
-  getShoppingList(eventId: string): Observable<ShoppingListItem[]> {
-    return this.get<ShoppingListItem[]>(`/events/${eventId}/shopping-list`);
+  getShoppingList(eventId: string): Observable<ShoppingListResponse> {
+    return this.get<ShoppingListResponse>(`/events/${eventId}/shopping-list`);
   }
 
-  getEquipmentList(eventId: string): Observable<EquipmentListItem[]> {
-    return this.get<EquipmentListItem[]>(`/events/${eventId}/equipment-list`);
+  getEquipmentList(eventId: string): Observable<EquipmentListResponse> {
+    return this.get<EquipmentListResponse>(`/events/${eventId}/equipment-list`);
   }
 }

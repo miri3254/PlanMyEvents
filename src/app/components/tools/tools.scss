@@ -67,7 +67,7 @@
                         }
                         
                         .subtitle {
-                            color: var(--text-color-secondary);
+                            color: var(--muted-foreground);
                             font-size: 0.9rem;
                             margin: 0.25rem 0 0 0;
                         }
@@ -100,10 +100,10 @@
         
         // Filters Card
         .filters-card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 14px;
             padding: 1.25rem 1.5rem;
-            border: 1px solid var(--surface-border);
+            border: 1px solid var(--border);
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
             
             .filters-inner {
@@ -831,18 +831,27 @@
         transition: all 0.2s ease;
 
         &:hover {
-            background: var(--surface-hover) !important;
+            background: var(--table-row-hover) !important;
         }
+        
+        td {
+            color: var(--table-text);
+            
+            h3 {
+                color: var(--table-text);
+            }
+        }
+    }
+    
+    ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+        background: var(--table-header-bg);
+        color: var(--foreground);
     }
 
     // Card Hover Effect
     ::ng-deep .p-card {
         transition: all 0.3s ease;
-    }
-
-    // Button Animations
-    ::ng-deep .p-button {
-        transition: all 0.2s ease;
+        background: var(--card-bg);
 
         &:hover:not(:disabled) {
             transform: translateY(-2px);

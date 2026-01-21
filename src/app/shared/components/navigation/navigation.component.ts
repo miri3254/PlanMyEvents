@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Observable, Subject, takeUntil, map } from 'rxjs';
+import { Observable, Subject, takeUntil, map, combineLatest } from 'rxjs';
 import { MenubarModule } from 'primeng/menubar';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -10,9 +10,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
+import { TooltipModule } from 'primeng/tooltip';
 import { EventService } from '../../../services/event.service';
 import { Event } from '../../../core/models';
 import { LookupService } from '../../../core/services/lookup.service';
+import { ConnectionStatusService, ConnectionStatus } from '../../../core/services/connection-status.service';
 
 type EventFormState = {
   name: string;
@@ -36,9 +38,31 @@ type EventFormState = {
     InputNumberModule,
     SelectModule,
     DatePickerModule,
-    FormsModule
+    FormsModule,
+    TooltipModule
   ],
   template: `
+    <!-- Connection Error Banner -->
+    <div 
+      *ngIf="(connectionStatus$ | async) as status"
+      class="connection-banner"
+      [class.connected]="status.isConnected"
+      [class.disconnected]="!status.isConnected"
+      [class.show-banner]="!status.isConnected && showConnectionBanner">
+      <div class="banner-content" *ngIf="!status.isConnected && showConnectionBanner">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span class="banner-message">
+          <strong>אין חיבור לשרת!</strong> 
+          המערכת לא מצליחה להתחבר לשרת. חלק מהפונקציות לא יעבדו כראוי.
+          <br>
+          <small>אנא בדוק את החיבור לאינטרנט או פנה לתמיכה טכנית.</small>
+        </span>
+        <button class="banner-close" (click)="dismissBanner()" pTooltip="הסתר הודעה">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+    </div>
+
     <div class="nav-wrapper" dir="rtl">
       <!-- Gradient Header Bar -->
       <div class="gradient-header"></div>
@@ -99,6 +123,19 @@ type EventFormState = {
 
         <!-- Actions -->
         <div class="nav-actions">
+          <!-- Connection Status Indicator -->
+          <div 
+            *ngIf="(connectionStatus$ | async) as status"
+            class="connection-status-indicator"
+            [class.connected]="status.isConnected"
+            [class.disconnected]="!status.isConnected"
+            [pTooltip]="status.message"
+            tooltipPosition="bottom"
+            (click)="retryConnection()">
+            <i class="pi" [class.pi-wifi]="status.isConnected" [class.pi-wifi-off]="!status.isConnected"></i>
+            <span class="status-text">{{ status.isConnected ? 'מחובר' : 'מנותק' }}</span>
+          </div>
+
           <!-- Current Event Display -->
           <div *ngIf="currentEvent$ | async as event" class="current-event-badge">
             <i class="pi pi-users"></i>
@@ -243,6 +280,114 @@ type EventFormState = {
     </p-dialog>
   `,
   styles: [`
+    /* Connection Banner Styles */
+    .connection-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 2000;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+    }
+
+    .connection-banner.show-banner.disconnected {
+      transform: translateY(0);
+    }
+
+    .connection-banner.disconnected .banner-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white;
+      font-size: 1rem;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4);
+    }
+
+    .connection-banner .banner-content i.pi-exclamation-triangle {
+      font-size: 1.5rem;
+      animation: pulse 1.5s infinite;
+    }
+
+    .connection-banner .banner-message {
+      flex: 1;
+      text-align: right;
+    }
+
+    .connection-banner .banner-message small {
+      opacity: 0.9;
+    }
+
+    .connection-banner .banner-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      transition: background 0.2s;
+    }
+
+    .connection-banner .banner-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Connection Status Indicator */
+    .connection-status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .connection-status-indicator.connected {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.15));
+      color: #16a34a;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .connection-status-indicator.connected:hover {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(22, 163, 74, 0.25));
+    }
+
+    .connection-status-indicator.disconnected {
+      background: linear-gradient(135deg, rgba(220, 38, 38, 0.15), rgba(185, 28, 28, 0.15));
+      color: #dc2626;
+      border: 1px solid rgba(220, 38, 38, 0.3);
+      animation: attention 2s infinite;
+    }
+
+    .connection-status-indicator.disconnected:hover {
+      background: linear-gradient(135deg, rgba(220, 38, 38, 0.25), rgba(185, 28, 28, 0.25));
+    }
+
+    @keyframes attention {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+      50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+    }
+
+  .connection-status-indicator .pi {
+      font-size: 1rem;
+    }
+
     .nav-wrapper {
       position: sticky;
       top: 0;
@@ -436,9 +581,11 @@ type EventFormState = {
 export class NavigationComponent implements OnInit, OnDestroy {
   events$!: Observable<Event[]>;
   currentEvent$!: Observable<Event | null>;
+  connectionStatus$!: Observable<ConnectionStatus>;
 
   eventOptions: any[] = [];
   selectedEventId: string | null = null;
+  showConnectionBanner = true;
 
   private readonly destroy$ = new Subject<void>();
 
@@ -450,7 +597,8 @@ export class NavigationComponent implements OnInit, OnDestroy {
 
   constructor(
     private eventService: EventService,
-    private lookupService: LookupService
+    private lookupService: LookupService,
+    private connectionStatusService: ConnectionStatusService
   ) {
     this.newEvent = this.getDefaultEventForm();
   }
@@ -458,6 +606,7 @@ export class NavigationComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.events$ = this.eventService.events$;
     this.currentEvent$ = this.eventService.currentEvent$;
+    this.connectionStatus$ = this.connectionStatusService.status$;
 
     // Subscribe to events to build options
     this.events$
@@ -517,6 +666,15 @@ export class NavigationComponent implements OnInit, OnDestroy {
     if (this.selectedEventId) {
       this.eventService.setCurrentEvent(this.selectedEventId);
     }
+  }
+
+  dismissBanner(): void {
+    this.showConnectionBanner = false;
+  }
+
+  retryConnection(): void {
+    this.showConnectionBanner = true;
+    this.connectionStatusService.forceCheck().subscribe();
   }
 
   closeEventDialog(): void {

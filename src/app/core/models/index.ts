@@ -3,6 +3,8 @@
 export * from './api.models';
 
 export interface DishIngredient {
+  id?: string; // מזהה המרכיב במסד הנתונים
+  productId?: string; // מזהה מוצר
   productName: string;
   quantity: number;
   unit: string; // גרם/ליטר/יחידות/כפות/כוסות/מ"ל/ק"ג

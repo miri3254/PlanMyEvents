@@ -185,7 +185,10 @@
                             [severity]="getSubCategorySeverity(tool.subCategory)">
                         </p-tag>
                     </td>
-                    <td>₪{{tool.estimatedPrice}}</td>
+
+                    <td *ngIf="isDisposableTool(tool)">₪{{tool.estimatedPrice}}</td>
+                    <td *ngIf="!isDisposableTool(tool)">---</td>
+
                     <td>
                         <p-tag 
                             [value]="tool.inventoryStatus" 
@@ -439,6 +442,7 @@
                     <div class="detail-item">
                         <span class="detail-label">מחיר משוער</span>
                         <span class="detail-value price">₪{{selectedTool.estimatedPrice}}</span>
+                        
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">כמות במלאי</span>
@@ -479,5 +483,5 @@
     </p-dialog>
 
     <p-confirmDialog></p-confirmDialog>
-    <p-toast></p-toast>
+    <p-toast position="top-right"></p-toast>
 </div>

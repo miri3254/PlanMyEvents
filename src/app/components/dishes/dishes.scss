@@ -70,7 +70,7 @@
             
             .subtitle {
               font-family: var(--font-family);
-              color: var(--text-color-secondary);
+              color: var(--muted-foreground);
               font-size: 0.9rem;
               margin: 0.25rem 0 0 0;
             }
@@ -116,10 +116,10 @@
     
     // Filters Card
     .filters-card {
-      background: white;
+      background: var(--card-bg);
       border-radius: 14px;
       padding: 1.25rem 1.5rem;
-      border: 1px solid var(--surface-border);
+      border: 1px solid var(--border);
       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
       
       .filters-inner {
@@ -1004,10 +1004,29 @@
   }
 }
 
-@media (max-width: 768px) {
-  .ingredient-selection-dialog {
-    .p-dialog {
-      width: 95vw !important;
+/* =====================================
+   TABLE STYLING
+   ===================================== */
+::ng-deep .p-datatable .p-datatable-tbody > tr {
+  td {
+    color: var(--table-text);
+    
+    h3 {
+      color: var(--table-text);
     }
   }
+  
+  &:hover {
+    background: var(--table-row-hover) !important;
+  }
 }
+
+::ng-deep .p-datatable .p-datatable-thead > tr > th {
+  background: var(--table-header-bg);
+  color: var(--foreground);
+}
+
+::ng-deep .p-card {
+  background: var(--card-bg);
+}
+

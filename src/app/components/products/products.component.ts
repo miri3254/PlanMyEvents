@@ -135,7 +135,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
         .pipe(
           catchError(error => {
             console.warn('Failed to load inventory statuses:', error);
-            return of<LookupValue[]>([]);
+            return of<string[]>([]);
           })
         ),
       categories: this.lookupService
@@ -143,14 +143,15 @@ export class ProductsComponent implements OnInit, OnDestroy {
         .pipe(
           catchError(error => {
             console.warn('Failed to load product categories:', error);
-            return of<LookupValue[]>([]);
+            return of<string[]>([]);
           })
         )
     })
       .pipe(takeUntil(this.destroy$))
       .subscribe(({ statuses, categories }) => {
-        const statusList = this.toDisplayList(statuses, FALLBACK_INVENTORY_STATUSES);
-        const categoryList = this.toDisplayList(categories, FALLBACK_PRODUCT_CATEGORIES);
+        // Lookup service now returns string arrays directly
+        const statusList = statuses.length > 0 ? statuses : FALLBACK_INVENTORY_STATUSES;
+        const categoryList = categories.length > 0 ? categories : FALLBACK_PRODUCT_CATEGORIES;
 
         this.inventoryStatuses = statusList.map(status => ({ label: status, value: status }));
         this.categories = categoryList.map(category => ({ label: category, value: category }));
@@ -391,6 +392,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.product.inventoryStatus = this.product.inventoryStatus || this.inventoryStatuses[0]?.value || FALLBACK_INVENTORY_STATUSES[0];
     this.product.category = this.product.category || this.categories[0]?.value || FALLBACK_PRODUCT_CATEGORIES[0] || '';
 
+   
+
     const isUpdate = !!this.product.id;
     const payload = isUpdate
       ? this.mapProductToUpdatePayload(this.product)
@@ -538,11 +541,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
     return product.id;
   }
 
-  private toDisplayList(values: LookupValue[] | undefined, fallback: string[]): string[] {
-    const resolved = (values ?? [])
-      .map(value => value?.display_name?.trim() || value?.name?.trim() || '')
-      .filter(value => !!value);
-    return resolved.length ? resolved : [...fallback];
+  isDisposableProduct(product: Product): boolean {
+    return product.category === 'חד"פ';
   }
 
   private getEmptyProduct(): Product {

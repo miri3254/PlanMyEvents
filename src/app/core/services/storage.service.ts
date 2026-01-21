@@ -1,5 +1,3 @@
-// LocalStorage Service - Wrapper for all storage operations
-
 import { Injectable } from '@angular/core';
 
 @Injectable({

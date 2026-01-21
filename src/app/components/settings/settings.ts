@@ -23,6 +23,7 @@ import {
   LookupListKey
 } from '../../core/constants/app.constants';
 import { LookupService } from '../../core/services/lookup.service';
+import { ThemeService, Theme } from '../../core/services/theme.service';
 
 interface AppSettings {
   general: {
@@ -90,6 +91,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   settings: AppSettings;
   lookupData: LookupData | null = null;
+  currentTheme: Theme = 'light';
+  isDarkMode = false;
 
   readonly currencyOptions = [
     { label: 'שקל חדש (₪)', value: 'ILS' },
@@ -257,9 +260,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   constructor(
     private messageService: MessageService,
-    private lookupService: LookupService
+    private lookupService: LookupService,
+    private themeService: ThemeService
   ) {
     this.settings = this.buildDefaultSettings();
+    this.currentTheme = this.themeService.getCurrentTheme();
+    this.isDarkMode = this.currentTheme === 'dark';
   }
 
   ngOnInit(): void {
@@ -274,6 +280,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.dashboardCollections.dashboardSections = data.dashboardSections.map(widget => ({ ...widget }));
         this.dashboardCollections.dashboardMetrics = data.dashboardMetrics.map(widget => ({ ...widget }));
         this.syncSettingsWithLookups(data);
+      });
+
+    this.themeService.theme$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(theme => {
+        this.currentTheme = theme;
+        this.isDarkMode = theme === 'dark';
       });
 
     this.loadSettings();
@@ -452,6 +465,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
   resetWidgetGroup(group: DashboardWidgetGroup): void {
     this.lookupService.resetWidgetGroup(group);
     this.notify('info', 'איפוס קבוצה', 'הרכיבים חזרו לברירות המחדל.');
+  }
+
+  toggleTheme(): void {
+    this.isDarkMode = !this.isDarkMode;
+    const newTheme: Theme = this.isDarkMode ? 'dark' : 'light';
+    this.themeService.setTheme(newTheme);
+    this.notify('success', 'עדכון תמה', `עברת למצב ${this.isDarkMode ? 'כהה' : 'בהיר'}`);
   }
 
   private buildDefaultSettings(): AppSettings {

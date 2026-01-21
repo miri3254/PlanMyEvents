@@ -47,7 +47,11 @@ export class ApiDishService extends BaseApiService {
     return this.post<DishIngredient>(`/dishes/${dishId}/ingredients`, ingredient);
   }
 
-  updateIngredient(dishId: string, ingredientId: string, ingredient: { quantity: number; unit: string }): Observable<DishIngredient> {
+  updateIngredient(
+    dishId: string,
+    ingredientId: string,
+    ingredient: { quantity: number; unit: string; product_id?: string }
+  ): Observable<DishIngredient> {
     return this.put<DishIngredient>(`/dishes/${dishId}/ingredients/${ingredientId}`, ingredient);
   }
 

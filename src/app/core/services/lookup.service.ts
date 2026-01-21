@@ -12,6 +12,7 @@ import {
 import { StorageService } from './storage.service';
 
 @Injectable({ providedIn: 'root' })
+
 export class LookupService {
   private readonly storageKey = 'lookupData';
   private readonly dataSubject = new BehaviorSubject<LookupData>(

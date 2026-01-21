@@ -93,7 +93,7 @@ export const DEFAULT_TOOL_CATEGORIES = [
 ] as const;
 
 export const DEFAULT_TOOL_SUB_CATEGORIES = [
-  'חד"פ',
+  'חד״פ',
   'אמיתי'
 ] as const;
 

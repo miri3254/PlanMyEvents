@@ -374,10 +374,11 @@
                 <label>מוצר</label>
                 <p-select
                   [options]="products"
-                  [(ngModel)]="ingredient.productName"
+                  [(ngModel)]="ingredient.productId"
                   placeholder="בחר מוצר"
                   optionLabel="name"
-                  optionValue="name"
+                  optionValue="id"
+                  (onChange)="handleIngredientProductChange(i, $event.value)"
                   appendTo="body"
                   class="w-full">
                 </p-select>
@@ -704,6 +705,6 @@
   </p-dialog>
 
   <!-- Toast & Confirm -->
-  <p-toast position="top-center"></p-toast>
+  <p-toast position="top-right"></p-toast>
   <p-confirmDialog></p-confirmDialog>
 </div>

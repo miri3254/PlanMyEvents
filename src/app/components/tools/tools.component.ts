@@ -10,7 +10,7 @@ import { ApiTool, ToolCreate, ToolUpdate, LookupValue } from '../../core/models/
 
 const FALLBACK_INVENTORY_STATUSES = ['במלאי', 'מלאי נמוך', 'אזל'];
 const FALLBACK_TOOL_CATEGORIES = ['מפות', 'כלי הגשה', 'צלחות', 'סכו"ם', 'כוסות', 'קערות', 'מגשים', 'אחר'];
-const FALLBACK_TOOL_SUB_CATEGORIES = ['חד"פ', 'אמיתי'];
+const FALLBACK_TOOL_SUB_CATEGORIES = ['חד״פ', 'אמיתי'];
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -142,17 +142,18 @@ export class ToolsComponent implements OnInit, OnDestroy {
   private loadLookupData(): void {
     forkJoin({
       statuses: this.lookupService.getLookupCategory('inventory_statuses')
-        .pipe(catchError(() => of<LookupValue[]>([]))),
+        .pipe(catchError(() => of<string[]>([]))),
       categories: this.lookupService.getLookupCategory('tool_categories')
-        .pipe(catchError(() => of<LookupValue[]>([]))),
+        .pipe(catchError(() => of<string[]>([]))),
       subCategories: this.lookupService.getLookupCategory('tool_sub_categories')
-        .pipe(catchError(() => of<LookupValue[]>([])))
+        .pipe(catchError(() => of<string[]>([])))
     })
       .pipe(takeUntil(this.destroy$))
       .subscribe(({ statuses, categories, subCategories }) => {
-        this.inventoryStatusValues = this.toDisplayList(statuses, FALLBACK_INVENTORY_STATUSES);
-        this.categoryValues = this.toDisplayList(categories, FALLBACK_TOOL_CATEGORIES);
-        this.subCategoryValues = this.toDisplayList(subCategories, FALLBACK_TOOL_SUB_CATEGORIES);
+        // Lookup service now returns string arrays directly
+        this.inventoryStatusValues = statuses.length > 0 ? statuses : FALLBACK_INVENTORY_STATUSES;
+        this.categoryValues = categories.length > 0 ? categories : FALLBACK_TOOL_CATEGORIES;
+        this.subCategoryValues = subCategories.length > 0 ? subCategories : FALLBACK_TOOL_SUB_CATEGORIES;
 
         this.inventoryStatuses = this.inventoryStatusValues.map(value => ({ label: value, value }));
         this.categories = this.categoryValues.map(value => ({ label: value, value }));
@@ -191,23 +192,18 @@ export class ToolsComponent implements OnInit, OnDestroy {
       });
   }
 
-  private toDisplayList(values: LookupValue[], fallback: string[]): string[] {
-    const list = (values || []).map(v => v.display_name || v.name).filter(Boolean);
-    return list.length ? list : [...fallback];
-  }
-
   private mapApiToolToTool(apiTool: ApiTool): Tool {
     return {
       id: apiTool.id,
       name: apiTool.name,
-      brand: apiTool.brand || '',
+      brand: '',
       category: apiTool.category,
       subCategory: apiTool.sub_category || '',
       inventoryStatus: apiTool.inventory_status,
-      estimatedPrice: apiTool.estimated_price ?? 0,
+      estimatedPrice: apiTool.price_per_unit ?? 0,
       description: apiTool.description || '',
-      notes: apiTool.notes || '',
-      quantity: apiTool.quantity ?? 0
+      notes: '',
+      quantity: apiTool.quantity_in_stock ?? 0
     };
   }
 
@@ -216,12 +212,10 @@ export class ToolsComponent implements OnInit, OnDestroy {
       name: tool.name.trim(),
       category: tool.category,
       sub_category: tool.subCategory || undefined,
-      inventory_status: tool.inventoryStatus,
-      estimated_price: tool.estimatedPrice,
-      quantity: tool.quantity,
-      brand: tool.brand || undefined,
-      description: tool.description || undefined,
-      notes: tool.notes || undefined
+      quantity_in_stock: tool.quantity,
+      min_stock_level: 0,
+      price_per_unit: tool.estimatedPrice,
+      description: tool.description || undefined
     };
   }
 
@@ -398,34 +392,58 @@ export class ToolsComponent implements OnInit, OnDestroy {
       rejectLabel: 'לא',
       accept: () => {
         const ids = this.selectedTools.map(tool => tool.id);
-        const request$ = ids.length > 1
-          ? this.toolService.deleteMultipleTools(ids)
-          : this.toolService.deleteTool(ids[0]);
-
-        request$
-          .pipe(
-            takeUntil(this.destroy$),
-            catchError(error => {
-              console.error('Error deleting tools:', error);
+        
+        if (ids.length > 1) {
+          this.toolService.deleteMultipleTools(ids)
+            .pipe(
+              takeUntil(this.destroy$),
+              catchError(error => {
+                console.error('Error deleting tools:', error);
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'שגיאה',
+                  detail: 'מחיקת הכלים נכשלה',
+                  life: 3000
+                });
+                return EMPTY;
+              })
+            )
+            .subscribe(() => {
+              this.selectedTools = [];
               this.messageService.add({
-                severity: 'error',
-                summary: 'שגיאה',
-                detail: 'מחיקת הכלים נכשלה',
+                severity: 'success',
+                summary: 'הצלחה',
+                detail: 'הכלים נמחקו בהצלחה',
                 life: 3000
               });
-              return EMPTY;
-            })
-          )
-          .subscribe(() => {
-            this.selectedTools = [];
-            this.messageService.add({
-              severity: 'success',
-              summary: 'הצלחה',
-              detail: 'הכלים נמחקו בהצלחה',
-              life: 3000
+              this.loadTools();
             });
-            this.loadTools();
-          });
+        } else {
+          this.toolService.deleteTool(ids[0])
+            .pipe(
+              takeUntil(this.destroy$),
+              catchError(error => {
+                console.error('Error deleting tool:', error);
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'שגיאה',
+                  detail: 'מחיקת הכלי נכשלה',
+                  life: 3000
+                });
+                return EMPTY;
+              })
+            )
+            .subscribe(() => {
+              this.selectedTools = [];
+              this.messageService.add({
+                severity: 'success',
+                summary: 'הצלחה',
+                detail: 'הכלי נמחק בהצלחה',
+                life: 3000
+              });
+              this.loadTools();
+            });
+        }
       }
     });
   }
@@ -445,6 +463,11 @@ export class ToolsComponent implements OnInit, OnDestroy {
 
     if (!this.tool.name?.trim()) {
       return;
+    }
+
+    // איפוס מחיר לכלים שאינם חד"פ
+    if (!this.isDisposableTool(this.tool)) {
+      this.tool.estimatedPrice = 0;
     }
 
     const isUpdate = !!this.tool.id;
@@ -581,7 +604,7 @@ export class ToolsComponent implements OnInit, OnDestroy {
   }
 
   getSubCategorySeverity(subCategory: string): 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast' | undefined {
-    if (subCategory === 'חד"פ') {
+    if (subCategory === 'חד״פ') {
       return 'info';
     }
     if (subCategory === 'אמיתי') {
@@ -631,6 +654,9 @@ export class ToolsComponent implements OnInit, OnDestroy {
         badgeClass: this.getFilterBadgeClass(severity)
       };
     });
+  }
+  isDisposableTool(tool: Tool): boolean {
+    return tool.subCategory === 'חד״פ';
   }
 
   private getFilterBadgeClass(

@@ -80,17 +80,21 @@
                 <label for="language">שפה</label>
               </p-floatlabel>
 
-              <p-floatlabel>
-                <p-select 
-                  id="theme"
-                  [options]="themeOptions"
-                  [(ngModel)]="settings.general.theme"
-                  optionLabel="label"
-                  optionValue="value"
-                  class="w-full">
-                </p-select>
-                <label for="theme">עיצוב</label>
-              </p-floatlabel>
+              <!-- Theme Toggle -->
+              <div class="flex flex-column gap-2">
+                <label class="font-semibold">מצב תצוגה</label>
+                <div class="flex align-items-center gap-3">
+                  <i class="pi pi-sun text-xl" [class.text-primary]="!isDarkMode"></i>
+                  <p-button
+                    [text]="true"
+                    [rounded]="true"
+                    [icon]="isDarkMode ? 'pi pi-moon' : 'pi pi-sun'"
+                    (onClick)="toggleTheme()"
+                    [label]="isDarkMode ? 'מצב כהה' : 'מצב בהיר'">
+                  </p-button>
+                  <i class="pi pi-moon text-xl" [class.text-primary]="isDarkMode"></i>
+                </div>
+              </div>
             </div>
           </p-card>
         </div>

@@ -104,8 +104,8 @@ import {
             <div class="event-details">
               <h4>{{ event.name }}</h4>
               <div class="event-meta">
-                <span><i class="pi pi-calendar"></i> {{ formatDate(event.event_date) }}</span>
-                <span><i class="pi pi-clock"></i> {{ event.event_time }}</span>
+                <span><i class="pi pi-calendar"></i> {{ formatDate(event.date) }}</span>
+                <span><i class="pi pi-clock"></i> {{ formatTime(event.date) }}</span>
                 <span><i class="pi pi-users"></i> {{ event.guest_count }} אורחים</span>
                 <span class="status-badge" [ngClass]="'status-' + event.status">{{ getStatusDisplay(event.status) }}</span>
               </div>
@@ -528,26 +528,27 @@ export class DashboardComponent implements OnInit {
         return items
           .map(raw => {
             const eventDate = (raw as any).event_date || (raw as any).date;
-            const eventTime = (raw as any).event_time || (raw as any).time || '';
             const guestCount = (raw as any).guest_count || (raw as any).participants || 0;
             const status = this.normalizeStatus((raw as any).status);
+            const eventType = (raw as any).event_type || 'אחר';
             return {
-              id: raw.id,
+              id: Number(raw.id),
               name: raw.name,
-              event_date: eventDate,
-              event_time: eventTime,
+              date: eventDate,
+              event_type: eventType,
               guest_count: guestCount,
-              status
+              status,
+              location: (raw as any).location
             } as UpcomingEvent;
           })
           .filter(event => {
-            if (!event.event_date) {
+            if (!event.date) {
               return false;
             }
-            const date = new Date(event.event_date);
+            const date = new Date(event.date);
             return date >= today && date <= inSevenDays;
           })
-          .sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       }),
       catchError(fallbackError => {
         console.warn('Fallback upcoming events lookup failed:', fallbackError);
@@ -703,13 +704,23 @@ export class DashboardComponent implements OnInit {
     return date.toLocaleDateString('he-IL');
   }
 
+  formatTime(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+  }
+
   getStatusDisplay(status: string): string {
     const statusMap: { [key: string]: string } = {
       'pending': 'ממתין',
       'scheduled': 'מתוכנן',
       'in-progress': 'בתהליך',
       'completed': 'הושלם',
-      'cancelled': 'בוטל'
+      'cancelled': 'בוטל',
+      'טיוטה': 'טיוטה',
+      'מתוכנן': 'מתוכנן',
+      'בהכנה': 'בהכנה',
+      'הושלם': 'הושלם',
+      'בוטל': 'בוטל'
     };
     return statusMap[status] || status;
   }

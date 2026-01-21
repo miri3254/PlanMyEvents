@@ -40,7 +40,7 @@ export class ApiToolService extends BaseApiService {
     return this.post<ApiTool[]>('/tools/bulk', tools);
   }
 
-  deleteMultipleTools(toolIds: string[]): Observable<void> {
-    return this.delete<void>(`/tools/bulk?ids=${toolIds.join(',')}`);
+  deleteMultipleTools(toolIds: string[]): Observable<{ message: string; deleted_count: number; success: boolean }> {
+    return this.delete<{ message: string; deleted_count: number; success: boolean }>(`/tools/bulk?ids=${toolIds.join(',')}`);
   }
 }

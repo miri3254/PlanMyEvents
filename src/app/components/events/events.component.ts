@@ -52,8 +52,8 @@ function mapApiEventToEvent(apiEvent: ApiEvent): Event {
     foodType: 'כל הסוגים', // Default value, might need to be mapped from another field
     dishes: [], // Would need to map from apiEvent.dishes if available
     createdAt: new Date(apiEvent.created_at || new Date().toISOString()),
-    eventDate: apiEvent.event_date,
-    hebrewDate: undefined, // Would need Hebrew date calculation
+    eventDate: apiEvent.date,
+    hebrewDate: apiEvent.hebrew_date,
     status: mapApiStatusToLocalStatus(apiEvent.status),
     notes: apiEvent.notes
   };
@@ -422,8 +422,7 @@ export class EventsComponent implements OnInit, OnDestroy {
       const createPayload: EventCreate = {
         name: this.eventForm.name,
         event_type: this.eventForm.eventType,
-        event_date: this.eventForm.eventDate.toISOString().split('T')[0], 
-        event_time: '00:00', // Default time
+        date: this.eventForm.eventDate.toISOString(),
         guest_count: this.eventForm.participants,
         notes: this.eventForm.notes
       };
@@ -460,7 +459,7 @@ export class EventsComponent implements OnInit, OnDestroy {
       const updatePayload: EventUpdate = {
         name: this.eventForm.name,
         event_type: this.eventForm.eventType,
-        event_date: this.eventForm.eventDate.toISOString().split('T')[0],
+        date: this.eventForm.eventDate.toISOString(),
         guest_count: this.eventForm.participants,
         notes: this.eventForm.notes
       };

@@ -157,7 +157,9 @@
                         <p-tag [value]="product.category" severity="secondary"></p-tag>
                     </td>
                     <td>{{product.packageQuantity}}</td>
-                    <td>₪{{product.estimatedPrice}}</td>
+                    <td>
+                        <span>₪{{product.estimatedPrice}}</span>
+                    </td>
                     <td>
                         <p-tag 
                             [value]="product.inventoryStatus" 
@@ -223,7 +225,7 @@
                         <span class="text-muted">כמות באריזה:</span>
                         <span>{{product.packageQuantity}}</span>
                     </div>
-                    <div class="detail-row">
+                    <div class="detail-row" *ngIf="isDisposableProduct(product)">
                         <span class="text-muted">מחיר:</span>
                         <span>₪{{product.estimatedPrice}}</span>
                     </div>
@@ -317,7 +319,7 @@
                 </p-inputNumber>
             </div>
 
-            <div class="col-12 md:col-6 mb-3">
+            <div class="col-12 md:col-6 mb-3" *ngIf="isDisposableProduct(product)">
                 <label for="estimatedPrice" class="block mb-2 font-semibold">מחיר משוער (₪)</label>
                 <p-inputNumber 
                     id="estimatedPrice"
@@ -358,5 +360,5 @@
     </p-dialog>
 
     <p-confirmDialog></p-confirmDialog>
-    <p-toast></p-toast>
+    <p-toast position="top-right"></p-toast>
 </div>

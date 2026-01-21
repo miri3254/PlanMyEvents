@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Observable, Subject, combineLatest, EMPTY, BehaviorSubject } from 'rxjs';
-import { map, takeUntil, catchError, tap } from 'rxjs/operators';
+import { Observable, Subject, combineLatest, EMPTY, BehaviorSubject, forkJoin, of } from 'rxjs';
+import { map, takeUntil, catchError, tap, startWith, switchMap } from 'rxjs/operators';
 import { ApiDishService } from '../../services/api-dish.service';
 import { ApiProductService } from '../../services/api-product.service';
 import { ApiLookupService } from '../../services/api-lookup.service';
@@ -56,6 +56,7 @@ import { ScrollPanelModule } from 'primeng/scrollpanel';
 })
 export class DishesComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private filterChange$ = new BehaviorSubject<void>(undefined);
 
   dishes$!: Observable<Dish[]>;
   products$!: Observable<Product[]>;
@@ -74,6 +75,7 @@ export class DishesComponent implements OnInit, OnDestroy {
   isEventMode: boolean = false;
   products: Product[] = [];
   shoppingList: any[] = [];
+  originalIngredients: DishIngredient[] = [];
 
   viewOptions = [
     { icon: 'pi pi-th-large', value: 'grid' },
@@ -155,53 +157,76 @@ export class DishesComponent implements OnInit, OnDestroy {
   }
 
   loadLookupData(): void {
+    // Subscribe to the lookup observable for reactive updates
     this.lookupService.lookup$
       .pipe(takeUntil(this.destroy$))
       .subscribe(data => {
-        this.categories = ['עיקרית', 'ראשונה', 'תוספת', 'קינוח', 'משקה', 'חטיף'];
-        this.kosherTypes = data.kosherTypes || ['חלבי', 'בשרי', 'פרווה'];
-        this.units = ['גרם', 'ליטר', 'יחידות', 'כפות', 'כוסות', 'מ"ל', 'ק"ג'];
+        // Load categories from lookup data
+        if (data.dishCategories && data.dishCategories.length > 0) {
+          this.categories = data.dishCategories;
+        } else {
+          this.categories = ['עיקרית', 'ראשונה', 'תוספת', 'קינוח', 'משקה', 'חטיף'];
+        }
+
+        // Load units from lookup data
+        if (data.units && data.units.length > 0) {
+          this.units = data.units;
+        } else {
+          this.units = ['גרם', 'ליטר', 'יחידות', 'כפות', 'כוסות', 'מ"ל', 'ק"ג'];
+        }
+
+        // Load kosher types from lookup data
+        if (data.kosherTypes && data.kosherTypes.length > 0) {
+          this.kosherTypes = data.kosherTypes;
+        } else {
+          this.kosherTypes = ['חלבי', 'בשרי', 'פרווה'];
+        }
+
+        // Update kosher options for the filter dropdown
         this.kosherOptions = [
           { label: 'כל סוגי הכשרות', value: 'הכל' },
           ...this.kosherTypes.map(type => ({ label: type, value: type }))
         ];
 
-        if (
-          this.filterCategory !== 'הכל' &&
-          !this.categories.includes(this.filterCategory)
-        ) {
-          this.filterCategory = 'הכל';
-        }
-
-        if (
-          this.filterKosher !== 'הכל' &&
-          !this.kosherTypes.includes(this.filterKosher)
-        ) {
-          this.filterKosher = 'הכל';
-        }
-
-        if (this.editingDish) {
-          if (!this.categories.includes(this.editingDish.category)) {
-            this.editingDish.category = this.categories[0] || this.editingDish.category;
-          }
-          if (!this.kosherTypes.includes(this.editingDish.kosherType)) {
-            this.editingDish.kosherType = this.kosherTypes[0] || this.editingDish.kosherType;
-          }
-          if (this.editingDish.ingredients?.length) {
-            this.editingDish.ingredients = this.editingDish.ingredients.map(ingredient => {
-              const unit = this.units.includes(ingredient.unit)
-                ? ingredient.unit
-                : this.units[0] || ingredient.unit;
-              return { ...ingredient, unit };
-            });
-          }
-        }
-
-        this.onFilterChange();
+        this.validateFiltersAndEditingDish();
+        this.filterChange$.next();
       });
 
-    // Initialize lookup data
+    // Initialize lookup data from server
     this.lookupService.initializeLookupData();
+  }
+
+  private validateFiltersAndEditingDish(): void {
+    if (
+      this.filterCategory !== 'הכל' &&
+      !this.categories.includes(this.filterCategory)
+    ) {
+      this.filterCategory = 'הכל';
+    }
+
+    if (
+      this.filterKosher !== 'הכל' &&
+      !this.kosherTypes.includes(this.filterKosher)
+    ) {
+      this.filterKosher = 'הכל';
+    }
+
+    if (this.editingDish) {
+      if (!this.categories.includes(this.editingDish.category)) {
+        this.editingDish.category = this.categories[0] || this.editingDish.category;
+      }
+      if (!this.kosherTypes.includes(this.editingDish.kosherType)) {
+        this.editingDish.kosherType = this.kosherTypes[0] || this.editingDish.kosherType;
+      }
+      if (this.editingDish.ingredients?.length) {
+        this.editingDish.ingredients = this.editingDish.ingredients.map(ingredient => {
+          const unit = this.units.includes(ingredient.unit)
+            ? ingredient.unit
+            : this.units[0] || ingredient.unit;
+          return { ...ingredient, unit };
+        });
+      }
+    }
   }
 
   // Mapping functions
@@ -210,25 +235,32 @@ export class DishesComponent implements OnInit, OnDestroy {
       id: apiDish.id,
       name: apiDish.name,
       description: apiDish.description,
-      estimatedPrice: apiDish.estimated_price,
+      // Server returns price_per_unit, handle both for compatibility
+      estimatedPrice: (apiDish as any).price_per_unit ?? apiDish.estimated_price ?? 0,
       category: apiDish.category,
       kosherType: apiDish.kosher_type,
-      servingSize: apiDish.serving_size,
+      // Server returns serving_size as float, default to 1 if missing
+      servingSize: apiDish.serving_size ?? 1,
+      // Server returns ingredients with 'name' directly, not nested product object
       ingredients: apiDish.ingredients?.map(ing => ({
-        productName: ing.product?.name || '',
+        id: (ing as any).id,
+        productId: (ing as any).product_id || ing.product?.id,
+        productName: (ing as any).name || ing.product?.name || '',
         quantity: ing.quantity,
         unit: ing.unit
       })) || [],
+      // Server returns equipment with 'name' directly, not nested tool object
       equipment: apiDish.equipment?.map(eq => ({
-        name: eq.tool?.name || '',
+        name: (eq as any).name || eq.tool?.name || '',
         required: true
       })) || [],
-      imageUrl: undefined,
+      imageUrl: (apiDish as any).image_url,
       isActive: apiDish.is_active,
       createdDate: new Date(apiDish.created_at || new Date().toISOString()),
       lastModified: new Date(apiDish.updated_at || new Date().toISOString()),
+      // Server returns serving_dishes with 'name' directly
       servingDishes: apiDish.serving_dishes?.map(sd => ({
-        name: sd.tool?.name || '',
+        name: (sd as any).name || sd.tool?.name || '',
         quantity: sd.quantity,
         category: sd.tool?.category || ''
       })) || []
@@ -248,19 +280,20 @@ export class DishesComponent implements OnInit, OnDestroy {
     };
   };
 
-  private mapDishToCreatePayload(dish: Dish): DishCreate {
+  private mapDishToCreatePayload(dish: Dish): any {
     return {
       name: dish.name.trim(),
       description: dish.description?.trim(),
       category: dish.category,
       kosher_type: dish.kosherType,
       serving_size: dish.servingSize,
-      estimated_price: dish.estimatedPrice,
+      // Server expects price_per_unit
+      price_per_unit: dish.estimatedPrice,
       is_active: dish.isActive
     };
   }
 
-  private mapDishToUpdatePayload(dish: Dish): DishUpdate {
+  private mapDishToUpdatePayload(dish: Dish): any {
     return this.mapDishToCreatePayload(dish);
   }
 
@@ -272,13 +305,15 @@ export class DishesComponent implements OnInit, OnDestroy {
   setupFilteredDishes(): void {
     this.filteredDishes$ = combineLatest([
       this.dishes$,
-      this.currentEvent$
+      this.currentEvent$,
+      this.filterChange$
     ]).pipe(
       map(([dishes, event]) => {
         return dishes.filter(dish => {
+          const searchLower = this.searchQuery.toLowerCase();
           const matchSearch = 
-            dish.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-            (dish.description?.toLowerCase().includes(this.searchQuery.toLowerCase()) || false);
+            dish.name.toLowerCase().includes(searchLower) ||
+            (dish.description?.toLowerCase().includes(searchLower) || false);
           
           const matchCategory = this.filterCategory === 'הכל' || dish.category === this.filterCategory;
           const matchKosher = this.filterKosher === 'הכל' || dish.kosherType === this.filterKosher;
@@ -296,11 +331,11 @@ export class DishesComponent implements OnInit, OnDestroy {
   }
 
   onSearchChange(): void {
-    this.setupFilteredDishes();
+    this.filterChange$.next();
   }
 
   onFilterChange(): void {
-    this.setupFilteredDishes();
+    this.filterChange$.next();
   }
 
   setCategoryFilter(category: string): void {
@@ -343,6 +378,8 @@ export class DishesComponent implements OnInit, OnDestroy {
       waiterNotes: ''
     };
 
+    this.originalIngredients = [];
+
     this.editingDish.ingredients = this.editingDish.ingredients.map(ingredient => ({
       ...ingredient,
       unit: ingredient.unit || defaultUnit
@@ -351,7 +388,14 @@ export class DishesComponent implements OnInit, OnDestroy {
   }
 
   handleEditDish(dish: Dish): void {
-    this.editingDish = { ...dish };
+    this.editingDish = {
+      ...dish,
+      ingredients: dish.ingredients?.map(ing => ({ ...ing })) || [],
+      equipment: dish.equipment?.map(eq => ({ ...eq })) || [],
+      servingIngredients: dish.servingIngredients?.map(ing => ({ ...ing })) || [],
+      servingDishes: dish.servingDishes?.map(sd => ({ ...sd })) || []
+    };
+    this.originalIngredients = dish.ingredients?.map(ing => ({ ...ing })) || [];
     this.isDialogOpen = true;
   }
 
@@ -367,17 +411,28 @@ export class DishesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const missingProducts = this.getIngredientsMissingProductId(this.editingDish.ingredients);
+    if (missingProducts.length > 0) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'שגיאה',
+        detail: 'יש לבחור מוצר לכל מרכיב'
+      });
+      return;
+    }
+
     const isUpdate = !!this.editingDish.id;
     const payload = isUpdate
       ? this.mapDishToUpdatePayload(this.editingDish)
       : this.mapDishToCreatePayload(this.editingDish);
 
     const request$ = isUpdate
-      ? this.dishService.updateDish(this.editingDish.id, payload as DishUpdate)
-      : this.dishService.createDish(payload as DishCreate);
+      ? this.dishService.updateDish(this.editingDish.id, payload as DishUpdate).pipe(map(() => this.editingDish!.id))
+      : this.dishService.createDish(payload as DishCreate).pipe(map(res => res.id));
 
     request$
       .pipe(
+        switchMap(dishId => this.syncDishIngredients(dishId, this.editingDish!.ingredients)),
         takeUntil(this.destroy$),
         catchError(error => {
           console.error('Error saving dish:', error);
@@ -397,6 +452,7 @@ export class DishesComponent implements OnInit, OnDestroy {
         });
         this.isDialogOpen = false;
         this.editingDish = null;
+        this.originalIngredients = [];
         this.loadDishes();
       });
   }
@@ -443,10 +499,23 @@ export class DishesComponent implements OnInit, OnDestroy {
     if (!this.editingDish) return;
     const defaultUnit = this.units[0] || 'יחידות';
     this.editingDish.ingredients.unshift({
+      id: undefined,
+      productId: undefined,
       productName: '',
       quantity: 0,
       unit: defaultUnit
     });
+  }
+
+  handleIngredientProductChange(index: number, productId: string): void {
+    if (!this.editingDish) return;
+    const product = this.products.find(p => p.id === productId);
+    const productName = product?.name || this.editingDish.ingredients[index]?.productName || '';
+    this.editingDish.ingredients[index] = {
+      ...this.editingDish.ingredients[index],
+      productId,
+      productName
+    };
   }
 
   handleUpdateIngredient(index: number, field: keyof DishIngredient, value: any): void {
@@ -460,6 +529,22 @@ export class DishesComponent implements OnInit, OnDestroy {
   handleRemoveIngredient(index: number): void {
     if (!this.editingDish) return;
     this.editingDish.ingredients.splice(index, 1);
+  }
+
+  private getIngredientsMissingProductId(ingredients: DishIngredient[]): string[] {
+    return ingredients
+      .filter(ing => !this.resolveProductId(ing))
+      .map(ing => ing.productName || '');
+  }
+
+  private resolveProductId(ingredient: DishIngredient): string | null {
+    if (ingredient.productId) return ingredient.productId.toString();
+    const matched = this.products.find(p => p.name === ingredient.productName);
+    return matched?.id || null;
+  }
+
+  private isIngredientChanged(original: DishIngredient, current: DishIngredient): boolean {
+    return original.quantity !== current.quantity || original.unit !== current.unit;
   }
 
   // Equipment management
@@ -482,6 +567,79 @@ export class DishesComponent implements OnInit, OnDestroy {
   handleRemoveEquipment(index: number): void {
     if (!this.editingDish) return;
     this.editingDish.equipment.splice(index, 1);
+  }
+
+  private syncDishIngredients(dishId: string, ingredients: DishIngredient[]): Observable<void> {
+    const ops: Observable<any>[] = [];
+    const originalMap = new Map<string, DishIngredient>();
+    this.originalIngredients
+      .filter(ing => !!ing.id)
+      .forEach(ing => originalMap.set(ing.id as string, ing));
+
+    const processedOriginalIds = new Set<string>();
+
+    ingredients.forEach(ing => {
+      const productId = this.resolveProductId(ing);
+      if (!productId) {
+        return;
+      }
+
+      if (ing.id && originalMap.has(ing.id)) {
+        const original = originalMap.get(ing.id)!;
+        processedOriginalIds.add(ing.id);
+        const originalProductId = this.resolveProductId(original);
+        const productChanged = productId !== originalProductId;
+
+        if (productChanged) {
+          ops.push(this.wrapIngredientOp(this.dishService.removeIngredient(dishId, ing.id)));
+          ops.push(this.wrapIngredientOp(this.dishService.addIngredient(dishId, {
+            product_id: productId,
+            quantity: ing.quantity,
+            unit: ing.unit
+          })));
+        } else if (this.isIngredientChanged(original, ing)) {
+          // תיקון: שליחת product_id גם בעדכון רגיל
+          ops.push(this.wrapIngredientOp(this.dishService.updateIngredient(dishId, ing.id, {
+            product_id: productId,
+            quantity: ing.quantity,
+            unit: ing.unit
+          })));
+        }
+      } else {
+        // New ingredient
+        ops.push(this.wrapIngredientOp(this.dishService.addIngredient(dishId, {
+          product_id: productId,
+          quantity: ing.quantity,
+          unit: ing.unit
+        })));
+      }
+    });
+
+    // Deletions for removed ingredients
+    this.originalIngredients
+      .filter(ing => ing.id && !processedOriginalIds.has(ing.id))
+      .forEach(ing => {
+        ops.push(this.wrapIngredientOp(this.dishService.removeIngredient(dishId, ing.id as string)));
+      });
+
+    if (ops.length === 0) {
+      return of(void 0);
+    }
+
+    return forkJoin(ops).pipe(map(() => void 0));
+  }
+
+  private wrapIngredientOp<T>(obs: Observable<T>): Observable<null> {
+    return obs.pipe(
+      map(() => null),
+      catchError(err => {
+        if (err?.status === 404) {
+          // Ignore missing ingredient rows to keep save flow resilient
+          return of(null);
+        }
+        throw err;
+      })
+    );
   }
 
   // Serving ingredients management
