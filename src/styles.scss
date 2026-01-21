@@ -12,18 +12,50 @@
   --kosher-meat: hsl(24, 95%, 53%);
   --kosher-parve: hsl(142, 76%, 48%);
   
-  /* Backgrounds */
+  /* Light Mode (Default) */
   --background: hsl(40, 10%, 98%);
   --card-bg: hsl(0, 0%, 100%);
-  
-  /* Text */
   --foreground: hsl(20, 14%, 10%);
   --muted-foreground: hsl(25, 8%, 45%);
-  
-  /* Borders & Shadows */
   --border: hsl(36, 20%, 88%);
   --shadow-glow: 0 8px 32px hsla(24, 95%, 53%, 0.15);
   --shadow-hover: 0 12px 48px hsla(24, 95%, 53%, 0.2);
+  
+  /* Table & Content */
+  --table-text: hsl(20, 14%, 10%);
+  --table-header-bg: hsl(0, 0%, 98%);
+  --table-row-hover: hsl(40, 10%, 95%);
+}
+
+/* === Dark Mode === */
+[data-theme="dark"] {
+  /* Backgrounds */
+  --background: hsl(220, 15%, 12%);
+  --card-bg: hsl(220, 15%, 18%);
+  
+  /* Text */
+  --foreground: hsl(0, 0%, 95%);
+  --muted-foreground: hsl(0, 0%, 70%);
+  
+  /* Borders & Shadows */
+  --border: hsl(220, 15%, 25%);
+  --shadow-glow: 0 8px 32px hsla(0, 0%, 0%, 0.3);
+  --shadow-hover: 0 12px 48px hsla(0, 0%, 0%, 0.4);
+  
+  /* Table & Content */
+  --table-text: hsl(0, 0%, 95%);
+  --table-header-bg: hsl(220, 15%, 15%);
+  --table-row-hover: hsl(220, 15%, 22%);
+  
+  /* PrimeNG overrides for dark mode */
+  --surface-ground: hsl(220, 15%, 15%);
+  --surface-section: hsl(220, 15%, 18%);
+  --surface-card: hsl(220, 15%, 18%);
+  --surface-overlay: hsl(220, 15%, 20%);
+  --surface-border: hsl(220, 15%, 25%);
+  --surface-hover: hsl(220, 15%, 22%);
+  --text-color: hsl(0, 0%, 95%);
+  --text-color-secondary: hsl(0, 0%, 70%);
 }
 
 /* === Reset & Base === */
@@ -62,6 +94,10 @@ h2 {
 h3 {
   font-size: 1.25rem;
   font-weight: 600;
+  color: var(--foreground);
+}
+
+p, span, div {
   color: var(--foreground);
 }
 
@@ -216,8 +252,17 @@ h3 {
 .p-toast {
   direction: rtl;
   
+  /* Position below header (header height ~72px + gradient 4px) */
+  &.p-toast-top-right,
+  &.p-toast-top-left,
+  &.p-toast-top-center {
+    top: 85px !important;
+  }
+  
   .p-toast-message {
     direction: rtl;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 }
 
@@ -226,10 +271,22 @@ h3 {
   
   .p-datatable-thead > tr > th {
     text-align: right;
+    background: var(--table-header-bg);
+    color: var(--foreground);
   }
   
   .p-datatable-tbody > tr > td {
     text-align: right;
+    color: var(--table-text);
+    
+    h3 {
+      color: var(--table-text);
+      margin: 0;
+    }
+  }
+  
+  .p-datatable-tbody > tr:hover {
+    background: var(--table-row-hover);
   }
 }
 

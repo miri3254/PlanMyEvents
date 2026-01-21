@@ -1,0 +1,487 @@
+<div class="tools-container p-6">
+    <!-- כותרת ואזור פעולות עליון -->
+    <div class="top-section mb-5">
+        <div class="header-card">
+            <div class="header-inner">
+                <!-- צד ימין - כותרת -->
+                <div class="header-content">
+                    <div class="title-wrapper">
+                        <div class="title-icon">
+                            <i class="pi pi-wrench"></i>
+                        </div>
+                        <div class="title-text">
+                            <h1 class="gradient-title">ניהול כלים</h1>
+                            <p class="subtitle">מאגר כלי הגשה, מפות וציוד</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- צד שמאל - כפתור הוספה -->
+                <div class="header-actions">
+                    <p-button 
+                        label="כלי חדש" 
+                        icon="pi pi-plus" 
+                        (onClick)="openNew()"
+                        styleClass="add-tool-btn">
+                    </p-button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- אזור חיפוש וסינון -->
+        <div class="filters-card">
+            <div class="filters-inner">
+                <!-- שורה ראשונה - חיפוש, קטגוריה ומעבר תצוגה -->
+                <div class="filters-row filters-row-primary">
+                    <!-- חיפוש -->
+                    <div class="search-section">
+                        <span class="p-input-icon-right search-input-wrapper">
+                            <i class="pi pi-search"></i>
+                            <input 
+                                pInputText 
+                                [(ngModel)]="searchValue" 
+                                placeholder="חיפוש כלים, מותגים או תיאור..."
+                                (input)="onSearch()"
+                                class="search-input">
+                        </span>
+                    </div>
+                    
+                    <!-- סינון קטגוריות -->
+                    <div class="category-filters">
+                        <p-select
+                            [options]="categoryOptions"
+                            [(ngModel)]="filterCategory"
+                            (onChange)="applyFilters()"
+                            placeholder="קטגוריה"
+                            optionLabel="label"
+                            optionValue="value"
+                            class="filter-dropdown">
+                        </p-select>
+                    </div>
+                    
+                    <!-- מעבר תצוגה -->
+                    <div class="filter-actions">
+                        <div class="view-toggle-group">
+                            <p-button 
+                                label="טבלה"
+                                icon="pi pi-list" 
+                                [outlined]="viewMode !== 'table'"
+                                [text]="viewMode !== 'table'"
+                                size="small"
+                                (onClick)="setViewMode('table')">
+                            </p-button>
+                            <p-button 
+                                label="כרטיסיות"
+                                icon="pi pi-th-large" 
+                                [outlined]="viewMode !== 'grid'"
+                                [text]="viewMode !== 'grid'"
+                                size="small"
+                                (onClick)="setViewMode('grid')">
+                            </p-button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- שורה שנייה - כפתורי סינון סטטוס וסוג -->
+                <div class="filters-row filters-row-secondary">
+                    <div class="status-filters">
+                        <div 
+                            class="filter-stat-card"
+                            *ngFor="let summary of inventorySummary"
+                            [ngClass]="[summary.badgeClass, filterInventoryStatus === summary.value ? 'active' : '']"
+                            (click)="filterByInventoryStatus(summary.value)">
+                            <i [class]="summary.icon"></i>
+                            <span class="filter-label">{{ summary.label }}</span>
+                            <span class="stat-number">{{ summary.count }}</span>
+                        </div>
+                        
+                        <span class="filter-divider"></span>
+                        
+                        <p-button 
+                            label="חד פעמי"
+                            icon="pi pi-trash"
+                            [outlined]="filterSubCategory !== 'חד&quot;פ'"
+                            size="small"
+                            styleClass="sub-cat-btn"
+                            (onClick)="filterBySubCategory('חד&quot;פ')">
+                        </p-button>
+                        <p-button 
+                            label="כלים אמיתיים"
+                            icon="pi pi-star"
+                            [outlined]="filterSubCategory !== 'אמיתי'"
+                            size="small"
+                            styleClass="sub-cat-btn"
+                            (onClick)="filterBySubCategory('אמיתי')">
+                        </p-button>
+                    </div>
+                    
+                    <p-button 
+                        label="ניקוי סינונים"
+                        icon="pi pi-filter-slash"
+                        [outlined]="true"
+                        size="small"
+                        styleClass="clear-btn"
+                        (onClick)="clearFilters()">
+                    </p-button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- תצוגת טבלה -->
+    <p-card *ngIf="viewMode === 'table'">
+        <p-table [value]="filteredTools" [tableStyle]="{'min-width': '60rem'}">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th class="sortable-header" (click)="sortBy('name')">
+                        <div class="flex align-items-center gap-2">
+                            <span>שם הכלי</span>
+                            <i [class]="getSortIcon('name')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('brand')">
+                        <div class="flex align-items-center gap-2">
+                            <span>מותג</span>
+                            <i [class]="getSortIcon('brand')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('category')">
+                        <div class="flex align-items-center gap-2">
+                            <span>קטגוריה</span>
+                            <i [class]="getSortIcon('category')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('subCategory')">
+                        <div class="flex align-items-center gap-2">
+                            <span>סוג</span>
+                            <i [class]="getSortIcon('subCategory')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('estimatedPrice')">
+                        <div class="flex align-items-center gap-2">
+                            <span>מחיר משוער</span>
+                            <i [class]="getSortIcon('estimatedPrice')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('inventoryStatus')">
+                        <div class="flex align-items-center gap-2">
+                            <span>סטטוס</span>
+                            <i [class]="getSortIcon('inventoryStatus')"></i>
+                        </div>
+                    </th>
+                    <th>פעולות</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-tool>
+                <tr class="clickable-row" (click)="editTool(tool)" style="cursor: pointer">
+                    <td><h3>{{tool.name}}</h3></td>
+                    <td>{{tool.brand}}</td>
+                    <td>
+                        <p-tag [value]="tool.category" severity="secondary"></p-tag>
+                    </td>
+                    <td>
+                        <p-tag 
+                            [value]="tool.subCategory" 
+                            [severity]="getSubCategorySeverity(tool.subCategory)">
+                        </p-tag>
+                    </td>
+
+                    <td *ngIf="isDisposableTool(tool)">₪{{tool.estimatedPrice}}</td>
+                    <td *ngIf="!isDisposableTool(tool)">---</td>
+
+                    <td>
+                        <p-tag 
+                            [value]="tool.inventoryStatus" 
+                            [severity]="getStatusSeverity(tool.inventoryStatus)"
+                            [icon]="getStatusIcon(tool.inventoryStatus)">
+                        </p-tag>
+                    </td>
+                    <td (click)="$event.stopPropagation()">
+                        <div class="flex gap-2">
+                            <p-button 
+                                icon="pi pi-pencil" 
+                                [outlined]="true"
+                                size="small"
+                                (onClick)="editTool(tool)">
+                            </p-button>
+                            <p-button 
+                                icon="pi pi-trash" 
+                                severity="danger"
+                                [outlined]="true"
+                                size="small"
+                                (onClick)="deleteTool(tool)">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="7" class="text-center py-6">
+                        <p class="text-muted">לא נמצאו כלים</p>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+
+    <!-- תצוגת גריד -->
+    <div *ngIf="viewMode === 'grid'" class="tools-grid">
+        <div class="tool-card-wrapper" *ngFor="let tool of filteredTools; trackBy: trackByTool">
+            <p-card styleClass="tool-card hover-card h-full" (click)="viewToolDetails(tool)">
+                <ng-template pTemplate="header">
+                    <div class="card-header-wrapper">
+                        <h1 class="card-title">{{tool.name}}</h1>
+                        <p-tag 
+                            class="card-status"
+                            [value]="tool.inventoryStatus"
+                            [severity]="getStatusSeverity(tool.inventoryStatus)"
+                            [icon]="getStatusIcon(tool.inventoryStatus)">
+                        </p-tag>
+                    </div>
+                </ng-template>
+                <div class="tool-details">
+                    <div class="detail-row">
+                        <span class="text-muted">מותג:</span>
+                        <span>{{tool.brand}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="text-muted">קטגוריה:</span>
+                        <p-tag [value]="tool.category" severity="secondary"></p-tag>
+                    </div>
+                    <div class="detail-row">
+                        <span class="text-muted">סוג:</span>
+                        <p-tag 
+                            [value]="tool.subCategory" 
+                            [severity]="getSubCategorySeverity(tool.subCategory)">
+                        </p-tag>
+                    </div>
+                    <div class="detail-row">
+                        <span class="text-muted">מחיר:</span>
+                        <span>₪{{tool.estimatedPrice}}</span>
+                    </div>
+                </div>
+                <ng-template pTemplate="footer">
+                    <div class="flex gap-2" (click)="$event.stopPropagation()">
+                        <p-button 
+                            label="ערוך"
+                            icon="pi pi-pencil" 
+                            [outlined]="true"
+                            class="flex-1"
+                            (onClick)="editTool(tool)">
+                        </p-button>
+                        <p-button 
+                            icon="pi pi-trash" 
+                            severity="danger"
+                            [outlined]="true"
+                            (onClick)="deleteTool(tool)">
+                        </p-button>
+                    </div>
+                </ng-template>
+            </p-card>
+        </div>
+    </div>
+
+    <p-card *ngIf="viewMode === 'grid' && filteredTools.length === 0">
+        <div class="text-center py-6">
+            <p class="text-muted">לא נמצאו כלים</p>
+        </div>
+    </p-card>
+
+    <!-- דיאלוג עריכת/הוספת כלי -->
+    <p-dialog 
+        [(visible)]="toolDialog" 
+        [modal]="true" 
+        [style]="{width: '50rem', maxHeight: '90vh'}"
+        [contentStyle]="{overflow: 'visible'}"
+        [header]="tool.id ? 'עריכת ' + tool.name : 'כלי חדש'"
+        [draggable]="false" 
+        [resizable]="false">
+        
+        <div class="grid formgrid p-fluid">
+            <div class="col-12 md:col-6 mb-3">
+                <label for="name" class="block mb-2 font-semibold">שם הכלי *</label>
+                <input 
+                    pInputText 
+                    id="name" 
+                    [(ngModel)]="tool.name"
+                    placeholder="הזן שם כלי"
+                    [class.ng-invalid]="submitted && !tool.name">
+            </div>
+
+            <div class="col-12 md:col-6 mb-3">
+                <label for="brand" class="block mb-2 font-semibold">מותג</label>
+                <input 
+                    pInputText 
+                    id="brand" 
+                    [(ngModel)]="tool.brand"
+                    placeholder="שם המותג">
+            </div>
+
+            <div class="col-12 md:col-6 mb-3">
+                <label for="category" class="block mb-2 font-semibold">קטגוריה</label>
+                <p-select 
+                    id="category"
+                    [options]="categories" 
+                    [(ngModel)]="tool.category"
+                    placeholder="בחר קטגוריה"
+                    optionLabel="label"
+                    optionValue="value">
+                </p-select>
+            </div>
+
+            <div class="col-12 md:col-6 mb-3">
+                <label for="subCategory" class="block mb-2 font-semibold">תת קטגוריה (סוג)</label>
+                <p-select 
+                    id="subCategory"
+                    [options]="subCategories" 
+                    [(ngModel)]="tool.subCategory"
+                    placeholder="בחר תת קטגוריה"
+                    optionLabel="label"
+                    optionValue="value">
+                </p-select>
+            </div>
+
+            <div class="col-12 md:col-6 mb-3">
+                <label for="estimatedPrice" class="block mb-2 font-semibold">מחיר משוער (₪)</label>
+                <p-inputNumber 
+                    id="estimatedPrice"
+                    [(ngModel)]="tool.estimatedPrice"
+                    [min]="0"
+                    mode="currency"
+                    currency="ILS"
+                    locale="he-IL">
+                </p-inputNumber>
+            </div>
+
+            <div class="col-12 md:col-6 mb-3">
+                <label for="quantity" class="block mb-2 font-semibold">כמות במלאי</label>
+                <p-inputNumber 
+                    id="quantity"
+                    [(ngModel)]="tool.quantity"
+                    [min]="0"
+                    placeholder="0">
+                </p-inputNumber>
+            </div>
+
+            <div class="col-12 mb-3">
+                <label for="inventoryStatus" class="block mb-2 font-semibold">סטטוס מלאי</label>
+                <p-select 
+                    id="inventoryStatus"
+                    [options]="inventoryStatuses" 
+                    [(ngModel)]="tool.inventoryStatus"
+                    placeholder="בחר סטטוס"
+                    optionLabel="label"
+                    optionValue="value">
+                </p-select>
+            </div>
+
+            <div class="col-12 mb-3">
+                <label for="description" class="block mb-2 font-semibold">תיאור / הערות</label>
+                <textarea 
+                    pTextarea
+                    id="description" 
+                    [(ngModel)]="tool.description"
+                    placeholder="הזן תיאור או הערות לגבי הכלי"
+                    rows="3"
+                    class="w-full">
+                </textarea>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <p-button 
+                label="ביטול" 
+                icon="pi pi-times" 
+                [outlined]="true"
+                (onClick)="hideDialog()">
+            </p-button>
+            <p-button 
+                label="שמור כלי" 
+                icon="pi pi-check" 
+                (onClick)="saveTool()">
+            </p-button>
+        </ng-template>
+    </p-dialog>
+
+    <!-- דיאלוג פרטי כלי -->
+    <p-dialog 
+        [(visible)]="detailDialog" 
+        [modal]="true" 
+        [style]="{width: '45rem', maxHeight: '90vh'}"
+        [header]="selectedTool?.name || 'פרטי כלי'"
+        [draggable]="false" 
+        [resizable]="false">
+        
+        <div class="detail-view" *ngIf="selectedTool">
+            <div class="detail-section">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">שם הכלי</span>
+                        <span class="detail-value">{{selectedTool.name}}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">מותג</span>
+                        <span class="detail-value">{{selectedTool.brand || '-'}}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">קטגוריה</span>
+                        <span class="detail-value">
+                            <p-tag [value]="selectedTool.category" severity="secondary"></p-tag>
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">סוג (תת קטגוריה)</span>
+                        <span class="detail-value">
+                            <p-tag 
+                                [value]="selectedTool.subCategory" 
+                                [severity]="getSubCategorySeverity(selectedTool.subCategory)">
+                            </p-tag>
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">מחיר משוער</span>
+                        <span class="detail-value price">₪{{selectedTool.estimatedPrice}}</span>
+                        
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">כמות במלאי</span>
+                        <span class="detail-value">{{selectedTool.quantity || 0}}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">סטטוס מלאי</span>
+                        <span class="detail-value">
+                            <p-tag 
+                                [value]="selectedTool.inventoryStatus" 
+                                [severity]="getStatusSeverity(selectedTool.inventoryStatus)"
+                                [icon]="getStatusIcon(selectedTool.inventoryStatus)">
+                            </p-tag>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="detail-description" *ngIf="selectedTool.description">
+                    <span class="detail-label">תיאור / הערות</span>
+                    <p class="detail-text">{{selectedTool.description}}</p>
+                </div>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <p-button 
+                label="סגור" 
+                icon="pi pi-times" 
+                [outlined]="true"
+                (onClick)="hideDetailDialog()">
+            </p-button>
+            <p-button 
+                label="ערוך כלי" 
+                icon="pi pi-pencil" 
+                (onClick)="editFromDetails()">
+            </p-button>
+        </ng-template>
+    </p-dialog>
+
+    <p-confirmDialog></p-confirmDialog>
+    <p-toast position="top-right"></p-toast>
+</div>

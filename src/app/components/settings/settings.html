@@ -80,17 +80,21 @@
                 <label for="language">שפה</label>
               </p-floatlabel>
 
-              <p-floatlabel>
-                <p-select 
-                  id="theme"
-                  [options]="themeOptions"
-                  [(ngModel)]="settings.general.theme"
-                  optionLabel="label"
-                  optionValue="value"
-                  class="w-full">
-                </p-select>
-                <label for="theme">עיצוב</label>
-              </p-floatlabel>
+              <!-- Theme Toggle -->
+              <div class="flex flex-column gap-2">
+                <label class="font-semibold">מצב תצוגה</label>
+                <div class="flex align-items-center gap-3">
+                  <i class="pi pi-sun text-xl" [class.text-primary]="!isDarkMode"></i>
+                  <p-button
+                    [text]="true"
+                    [rounded]="true"
+                    [icon]="isDarkMode ? 'pi pi-moon' : 'pi pi-sun'"
+                    (onClick)="toggleTheme()"
+                    [label]="isDarkMode ? 'מצב כהה' : 'מצב בהיר'">
+                  </p-button>
+                  <i class="pi pi-moon text-xl" [class.text-primary]="isDarkMode"></i>
+                </div>
+              </div>
             </div>
           </p-card>
         </div>
@@ -390,6 +394,160 @@
                 </p-inputNumber>
                 <label for="backup-interval">מרווח גיבוי (בימים)</label>
               </p-floatlabel>
+            </div>
+          </p-card>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Domain Dictionary Management -->
+    <p-card styleClass="mb-4">
+      <ng-template pTemplate="header">
+        <div class="flex align-items-center p-3">
+          <i class="pi pi-database mr-2 text-primary"></i>
+          <span class="font-bold text-lg">ניהול נתוני בסיס</span>
+        </div>
+      </ng-template>
+
+      <div class="flex justify-content-end mb-3">
+        <p-button 
+          label="איפוס כל המילונים"
+          icon="pi pi-refresh"
+          severity="warn"
+          [outlined]="true"
+          (onClick)="resetAllLookupData()">
+        </p-button>
+      </div>
+
+      <div class="grid">
+        <div class="col-12 lg:col-4" *ngFor="let group of listGroups">
+          <p-card [header]="group.title" styleClass="h-full dictionary-card">
+            <p class="text-600 mb-3">{{ group.description }}</p>
+
+            <div class="lookup-section" *ngFor="let list of group.lists">
+              <div class="lookup-header">
+                <div class="flex align-items-center gap-2">
+                  <i class="{{ list.icon }} text-primary"></i>
+                  <span class="font-medium">{{ list.label }}</span>
+                </div>
+                <p-button 
+                  icon="pi pi-refresh"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="secondary"
+                  (onClick)="resetList(list.key)">
+                </p-button>
+              </div>
+
+              <div class="lookup-items">
+                <div class="lookup-row" *ngFor="let value of editableLists[list.key]; let i = index">
+                  <input 
+                    pInputText 
+                    [(ngModel)]="editableLists[list.key][i]"
+                    (blur)="commitListItem(list.key, i)"
+                    (keyup.enter)="commitListItem(list.key, i); $event.preventDefault()" />
+                  <p-button 
+                    icon="pi pi-trash"
+                    severity="danger"
+                    [text]="true"
+                    (onClick)="removeListItem(list.key, i)">
+                  </p-button>
+                </div>
+
+                <div class="lookup-add">
+                  <input 
+                    pInputText 
+                    [placeholder]="list.placeholder"
+                    [(ngModel)]="listDrafts[list.key]"
+                    (keyup.enter)="addListItem(list.key)" />
+                  <p-button 
+                    icon="pi pi-plus"
+                    severity="primary"
+                    [outlined]="true"
+                    (onClick)="addListItem(list.key)"
+                    [disabled]="!(listDrafts[list.key] && listDrafts[list.key].trim())">
+                  </p-button>
+                </div>
+              </div>
+            </div>
+          </p-card>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Dashboard Customization Section -->
+    <p-card styleClass="mb-4">
+      <ng-template pTemplate="header">
+        <div class="flex align-items-center p-3">
+          <i class="pi pi-sliders-h mr-2 text-primary"></i>
+          <span class="font-bold text-lg">ניהול לוח בקרה</span>
+        </div>
+      </ng-template>
+
+      <div class="grid">
+        <div class="col-12 md:col-6" *ngFor="let group of dashboardGroups">
+          <p-card [header]="group.title" styleClass="h-full dashboard-card">
+            <p class="text-600 mb-3">{{ group.description }}</p>
+
+            <div class="dashboard-item" *ngFor="let widget of dashboardCollections[group.key]; let i = index">
+              <div class="flex flex-column gap-2 flex-1">
+                <input 
+                  pInputText 
+                  [(ngModel)]="dashboardCollections[group.key][i].label"
+                  (blur)="commitWidget(group.key, i)"
+                  placeholder="שם תצוגה" />
+                <textarea 
+                  class="p-inputtextarea p-inputtext"
+                  rows="2"
+                  [(ngModel)]="dashboardCollections[group.key][i].description"
+                  (blur)="commitWidget(group.key, i)"
+                  placeholder="תיאור קצר"></textarea>
+              </div>
+              <div class="dashboard-controls">
+                <p-toggleButton
+                  [(ngModel)]="dashboardCollections[group.key][i].enabled"
+                  (onChange)="commitWidget(group.key, i)"
+                  onLabel="פעיל"
+                  offLabel="כבוי">
+                </p-toggleButton>
+                <p-button 
+                  icon="pi pi-trash"
+                  severity="danger"
+                  [text]="true"
+                  (onClick)="removeWidget(group.key, i)">
+                </p-button>
+              </div>
+            </div>
+
+            <div class="dashboard-add">
+              <h4 class="mb-2">הוסף רכיב חדש</h4>
+              <div class="flex flex-column gap-2">
+                <input 
+                  pInputText 
+                  [placeholder]="group.addPlaceholder"
+                  [(ngModel)]="dashboardDrafts[group.key].label" />
+                <textarea 
+                  class="p-inputtextarea p-inputtext"
+                  rows="2"
+                  [placeholder]="group.addDescriptionPlaceholder"
+                  [(ngModel)]="dashboardDrafts[group.key].description"></textarea>
+                <div class="flex gap-2">
+                  <p-button 
+                    label="הוסף"
+                    icon="pi pi-plus"
+                    severity="primary"
+                    (onClick)="addDashboardWidget(group.key)"
+                    [disabled]="!(dashboardDrafts[group.key].label && dashboardDrafts[group.key].label.trim())">
+                  </p-button>
+                  <p-button 
+                    label="איפוס קבוצה"
+                    icon="pi pi-refresh"
+                    [outlined]="true"
+                    severity="secondary"
+                    (onClick)="resetWidgetGroup(group.key)">
+                  </p-button>
+                </div>
+              </div>
             </div>
           </p-card>
         </div>

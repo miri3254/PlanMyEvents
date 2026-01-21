@@ -1,0 +1,21 @@
+# PlanMyEvents Copilot Instructions
+- **Stack Snapshot**: Angular 20.3 standalone app with lazy-loaded routes (`src/app/app.routes.ts`), PrimeNG 20 UI kit, Chart.js 4 analytics, RxJS 7.8 observables, TypeScript 5.9; dev scripts live in root `package.json`.
+- **Workspace Layout**: Feature UIs under `src/app/components`, shared chrome in `src/app/shared`, and domain/state code consolidated in `src/app/core` (constants, models, services).
+- **State Management**: `src/app/core/services/event.service.ts` owns all Event/Dish/Product/Cart state via `BehaviorSubject`s; always call its APIs instead of maintaining component-local arrays.
+- **Persistence**: `StorageService` wraps browser localStorage with the `planmyevents_` prefix—preserve keys and reuse it for any new persisted entity.
+- **Event Context**: `currentEvent$` drives filtering and cart scope; helper methods like `getEventsSorted`, `isDishInCurrentEvent`, and `getCartForCurrentEvent` keep logic centralized.
+- **Kosher Logic**: Follow the existing compatibility rule (e.g., `DishesComponent.setupFilteredDishes` keeps `פרווה` dishes visible for all events); extend filters by composing `combineLatest` streams.
+- **Cart Flow**: `addDishToCart` prevents duplicate dish IDs per event and seeds `peopleCount` from the dish `servingSize`; `CartComponent` expects that single-selection contract when computing totals.
+- **Shopping List**: Use `EventService.getShoppingList()` to aggregate ingredients by product, mirroring the map-based merge logic already implemented.
+- **Demo Seed Data**: First load auto-generates dishes/products in `EventService.generateDemo*`; avoid altering IDs or structure unless you also update the demo builders.
+- **UI System**: RTL is enforced globally (`dir="rtl"`, Heebo font) with design tokens in `src/styles.scss`; reuse `kosher-badge-*`, `status-badge`, and `gradient-card` classes for consistent visuals.
+- **PrimeNG Usage**: Components rely on PrimeNG standalone modules (e.g., `DialogModule`, `TableModule`, `Tabs`); import the module list directly in the component decorator rather than NgModules.
+- **Navigation**: `shared/components/navigation/navigation.component.ts` manages event creation and selection; when introducing event-dependent actions elsewhere, delegate to `EventService.setCurrentEvent` instead of duplicating dialog logic.
+- **Dashboard Analytics**: `components/dashboard/dashboard.component.ts` subscribes to service streams and derives chart datasets in `setupCharts`; prefer transforming observables there rather than in templates.
+- **Products Module**: `components/products/products.component.ts` keeps filtered views in memory; after mutating products call `loadProducts()` to resubscribe so new sorting/filters apply.
+- **Testing & Commands**: Run `npm start` for dev, `npm run build` for production, and `npm test` for Karma/Jasmine; all commands execute from the repository root.
+- **Documentation Sources**: Architectural intent and checklists live in `IMPLEMENTATION_STATUS.md` and `QUICK_IMPLEMENTATION_GUIDE.md`; `README.md` currently has merge markers, so treat it as stale.
+- **Coding Conventions**: Observe `PROJECT_RULES.md`—Angular style guide alignment, Hebrew RTL UX, PrimeNG-first components, and comments only for domain-specific rationale.
+- **Models**: Define or extend types in `src/app/core/models/index.ts` so `EventService` and UI layers can share them without per-feature duplicates.
+- **Error Handling**: Maintain existing PrimeNG toast patterns (`MessageService`) for user feedback instead of browser alerts.
+- **Localization**: All end-user strings are Hebrew; ensure new copy respects RTL direction and matches existing terminology (e.g., כשרות, עגלה, אירוע).

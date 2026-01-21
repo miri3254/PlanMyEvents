@@ -1,101 +1,135 @@
-<div class="dishes-container" dir="rtl">
-  <!-- Header -->
-  <div class="header-section">
-    <div class="header-content">
-      <div class="gradient-background"></div>
-      <h1 class="gradient-title">
-        {{ isEventMode ? 'תפריט לאירוע: ' + currentEvent?.name : 'ניהול מנות' }}
-      </h1>
-      <p class="subtitle" *ngIf="isEventMode && currentEvent">
-        {{ currentEvent.participants }} משתתפים • {{ currentEvent.eventType }} • {{ currentEvent.foodType }}
-      </p>
-      <p class="subtitle" *ngIf="!isEventMode">
-        צור וערוך מנות עם מרכיבים וציוד
-      </p>
+<div class="dishes-container p-6" dir="rtl">
+  <!-- כותרת ואזור פעולות עליון -->
+  <div class="top-section mb-5">
+    <div class="header-card main-header">
+      <div class="header-inner">
+        <!-- צד ימין - כותרת -->
+        <div class="header-content">
+          <div class="title-wrapper">
+            <div class="title-icon">
+              <i class="pi pi-star-fill"></i>
+            </div>
+            <div class="title-text">
+              <h1 class="gradient-title">
+                {{ isEventMode ? 'תפריט לאירוע: ' + currentEvent?.name : 'ניהול מנות' }}
+              </h1>
+              <p class="subtitle" *ngIf="isEventMode && currentEvent">
+                {{ currentEvent.participants }} משתתפים • {{ currentEvent.eventType }} • {{ currentEvent.foodType }}
+              </p>
+              <p class="subtitle" *ngIf="!isEventMode">
+                הדף המרכזי - ניהול מנות עם מרכיבים וציוד
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- צד שמאל - כפתורי פעולה -->
+        <div class="header-actions">
+          <p-button 
+            label="מנה חדשה"
+            icon="pi pi-plus"
+            (onClick)="handleCreateDish()"
+            styleClass="add-dish-btn">
+          </p-button>
+        </div>
+      </div>
     </div>
     
-    <div class="header-actions">
-      <p-button 
-        *ngIf="isEventMode"
-        label="עגלה ({{ cartItems.length }})"
-        icon="pi pi-shopping-cart"
-        (onClick)="showCart = !showCart"
-        [outlined]="true"
-        styleClass="cart-btn">
-      </p-button>
-      
-      <p-button 
-        *ngIf="isEventMode"
-        label="רשימת קניות"
-        icon="pi pi-shopping-bag"
-        (onClick)="openShoppingList()"
-        [outlined]="true"
-        styleClass="shopping-list-btn">
-      </p-button>
-      
-      <p-button 
-        label="מנה חדשה"
-        icon="pi pi-plus"
-        (onClick)="handleCreateDish()"
-        styleClass="btn-gradient">
-      </p-button>
+    <!-- אזור חיפוש וסינון -->
+    <div class="filters-card">
+      <div class="filters-inner">
+        <!-- שורה ראשונה - חיפוש, כשרות ומעבר תצוגה -->
+        <div class="filters-row filters-row-primary">
+          <!-- חיפוש -->
+          <div class="search-section">
+            <span class="p-input-icon-right search-input-wrapper">
+              <i class="pi pi-search"></i>
+              <input 
+                pInputText 
+                [(ngModel)]="searchQuery"
+                (ngModelChange)="onSearchChange()"
+                placeholder="חיפוש מנות..."
+                class="search-input">
+            </span>
+          </div>
+          
+          <!-- סינון כשרות -->
+          <div class="category-filters">
+            <p-select
+              [options]="kosherOptions"
+              [(ngModel)]="filterKosher"
+              (onChange)="onFilterChange()"
+              placeholder="כל סוגי הכשרות"
+              optionLabel="label"
+              optionValue="value"
+              class="filter-dropdown">
+            </p-select>
+          </div>
+          
+          <!-- מעבר תצוגה -->
+          <div class="filter-actions">
+            <div class="view-toggle-group">
+              <p-button 
+                label="טבלה"
+                icon="pi pi-list" 
+                [outlined]="viewMode !== 'table'"
+                [text]="viewMode !== 'table'"
+                size="small"
+                (onClick)="setViewMode('table')">
+              </p-button>
+              <p-button 
+                label="כרטיסיות"
+                icon="pi pi-th-large" 
+                [outlined]="viewMode !== 'grid'"
+                [text]="viewMode !== 'grid'"
+                size="small"
+                (onClick)="setViewMode('grid')">
+              </p-button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- שורה שנייה - כפתורי סינון קטגוריות -->
+        <div class="filters-row filters-row-secondary">
+          <div class="category-pills">
+            <div
+              class="filter-stat-card category-card"
+              [ngClass]="{'active': filterCategory === 'הכל'}"
+              (click)="setCategoryFilter('הכל')">
+              <i class="pi pi-list"></i>
+              <span class="filter-label">כל הקטגוריות</span>
+            </div>
+            <div
+              class="filter-stat-card category-card"
+              *ngFor="let category of categories"
+              [ngClass]="{'active': filterCategory === category}"
+              (click)="setCategoryFilter(category)">
+              <span class="filter-label">{{ category }}</span>
+            </div>
+          </div>
+          
+          <p-button 
+            label="ניקוי סינונים"
+            icon="pi pi-filter-slash"
+            [outlined]="true"
+            size="small"
+            styleClass="clear-btn"
+            (onClick)="clearAllFilters()">
+          </p-button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Search & Filter -->
-  <p-card styleClass="search-card">
-    <div class="search-filter-section">
-      <div class="search-input-wrapper">
-        <i class="pi pi-search search-icon"></i>
-        <input 
-          pInputText 
-          type="text" 
-          [(ngModel)]="searchQuery"
-          (ngModelChange)="onSearchChange()"
-          placeholder="חיפוש מנות..."
-          class="search-input" />
-      </div>
-      
-      <p-select
-        [options]="categoryOptions"
-        [(ngModel)]="filterCategory"
-        (onChange)="onFilterChange()"
-        placeholder="כל הקטגוריות"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="filter-select">
-      </p-select>
-
-      <p-select
-        [options]="kosherOptions"
-        [(ngModel)]="filterKosher"
-        (onChange)="onFilterChange()"
-        placeholder="כל סוגי הכשרות"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="filter-select">
-      </p-select>
-
-      <p-selectButton 
-        *ngIf="!isEventMode"
-        [options]="viewOptions" 
-        [(ngModel)]="viewMode"
-        optionLabel="icon"
-        optionValue="value">
-        <ng-template let-item>
-          <i [class]="item.icon"></i>
-        </ng-template>
-      </p-selectButton>
-    </div>
-  </p-card>
-
   <!-- Main Content -->
-  <div class="main-content" [class.with-cart]="isEventMode && showCart">
+  <div class="main-content">
     <!-- Dishes List -->
     <div class="dishes-section">
       <!-- Grid View -->
       <div *ngIf="viewMode === 'grid'" class="dishes-grid">
-        <div class="dish-card" *ngFor="let dish of filteredDishes$ | async">
+        <div 
+          class="dish-card" 
+          *ngFor="let dish of filteredDishes$ | async">
           <div class="dish-card-header">
             <div>
               <h3 class="dish-name">{{ dish.name }}</h3>
@@ -117,7 +151,7 @@
               <span>₪{{ dish.estimatedPrice }}</span>
             </div>
             <div class="dish-detail">
-              <span class="detail-label">מנות להכנה:</span>
+              <span class="detail-label">מס סועדים למנה:</span>
               <span>{{ dish.servingSize }}</span>
             </div>
             <div class="dish-detail">
@@ -130,27 +164,17 @@
 
           <div class="dish-card-footer">
             <p-button 
-              *ngIf="isEventMode"
-              label="הוסף לתפריט"
-              icon="pi pi-plus"
-              (onClick)="handleAddToCart(dish)"
+              label="ערוך"
+              icon="pi pi-pencil"
+              (onClick)="handleEditDish(dish)"
+              [outlined]="true"
               styleClass="flex-1">
             </p-button>
-            
-            <ng-container *ngIf="!isEventMode">
-              <p-button 
-                label="ערוך"
-                icon="pi pi-pencil"
-                (onClick)="handleEditDish(dish)"
-                [outlined]="true"
-                styleClass="flex-1">
-              </p-button>
-              <p-button 
-                icon="pi pi-trash"
-                (onClick)="confirmDelete(dish.id)"
-                severity="danger">
-              </p-button>
-            </ng-container>
+            <p-button 
+              icon="pi pi-trash"
+              (onClick)="confirmDelete(dish.id)"
+              severity="danger">
+            </p-button>
           </div>
         </div>
 
@@ -161,20 +185,50 @@
 
       <!-- Table View -->
       <p-card *ngIf="viewMode === 'table'">
-        <p-table [value]="(filteredDishes$ | async) || []">
+        <p-table
+          [value]="(filteredDishes$ | async) || []"
+          sortMode="single">
           <ng-template pTemplate="header">
             <tr>
-              <th>שם המנה</th>
-              <th>קטגוריה</th>
-              <th>כשרות</th>
-              <th>מחיר</th>
-              <th>מנות</th>
+              <th pSortableColumn="name">
+                <span class="sortable-column">
+                  שם המנה
+                  <p-sortIcon field="name"></p-sortIcon>
+                </span>
+              </th>
+              <th pSortableColumn="category">
+                <span class="sortable-column">
+                  קטגוריה
+                  <p-sortIcon field="category"></p-sortIcon>
+                </span>
+              </th>
+              <th pSortableColumn="kosherType">
+                <span class="sortable-column">
+                  כשרות
+                  <p-sortIcon field="kosherType"></p-sortIcon>
+                </span>
+              </th>
+              <th pSortableColumn="estimatedPrice">
+                <span class="sortable-column">
+                  מחיר
+                  <p-sortIcon field="estimatedPrice"></p-sortIcon>
+                </span>
+              </th>
+              <th pSortableColumn="servingSize">
+                <span class="sortable-column">
+                  מס סועדים במנה
+                  <p-sortIcon field="servingSize"></p-sortIcon>
+                </span>
+              </th>
               <th>פעולות</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-dish>
-            <tr>
-              <td>{{ dish.name }}</td>
+            <tr 
+                [ngClass]="{'selected-row': false}"
+              (click)="handleEditDish(dish)"
+              style="cursor: pointer">
+              <td><h3>{{ dish.name }}</h3></td>
               <td>
                 <p-tag [value]="dish.category" severity="secondary"></p-tag>
               </td>
@@ -189,25 +243,17 @@
               <td>
                 <div class="action-buttons">
                   <p-button 
-                    *ngIf="isEventMode"
-                    icon="pi pi-plus"
-                    (onClick)="handleAddToCart(dish)"
+                    icon="pi pi-pencil"
+                    (onClick)="handleEditDish(dish); $event.stopPropagation()"
+                    [outlined]="true"
                     size="small">
                   </p-button>
-                  <ng-container *ngIf="!isEventMode">
-                    <p-button 
-                      icon="pi pi-pencil"
-                      (onClick)="handleEditDish(dish)"
-                      [outlined]="true"
-                      size="small">
-                    </p-button>
-                    <p-button 
-                      icon="pi pi-trash"
-                      (onClick)="confirmDelete(dish.id)"
-                      severity="danger"
-                      size="small">
-                    </p-button>
-                  </ng-container>
+                  <p-button 
+                    icon="pi pi-trash"
+                    (onClick)="confirmDelete(dish.id); $event.stopPropagation()"
+                    severity="danger"
+                    size="small">
+                  </p-button>
                 </div>
               </td>
             </tr>
@@ -215,89 +261,6 @@
         </p-table>
       </p-card>
     </div>
-
-    <!-- Cart Sidebar -->
-    <p-card *ngIf="isEventMode && showCart" styleClass="cart-sidebar">
-      <ng-template pTemplate="header">
-        <div class="cart-header">
-          <h3>עגלת קניות</h3>
-          <p-button 
-            icon="pi pi-times"
-            (onClick)="showCart = false"
-            [text]="true"
-            size="small">
-          </p-button>
-        </div>
-        <p class="cart-subtitle">מנות שנבחרו לאירוע</p>
-      </ng-template>
-
-      <p-scrollPanel [style]="{width: '100%', height: '400px'}">
-        <div *ngIf="cartItems.length === 0" class="empty-cart">
-          <p>העגלה ריקה</p>
-        </div>
-
-        <div class="cart-items">
-          <div class="cart-item" *ngFor="let item of cartItems">
-            <div class="cart-item-header">
-              <p class="cart-item-name">{{ item.dishName }}</p>
-              <p-button 
-                icon="pi pi-times"
-                (onClick)="removeFromCart(item.dishId)"
-                [text]="true"
-                size="small">
-              </p-button>
-            </div>
-
-            <div class="quantity-controls">
-              <p-button 
-                icon="pi pi-minus"
-                (onClick)="updateCartQuantity(item.dishId, item.quantity - 1)"
-                [outlined]="true"
-                size="small">
-              </p-button>
-              <p-inputnumber 
-                [(ngModel)]="item.quantity"
-                (ngModelChange)="updateCartQuantity(item.dishId, item.quantity)"
-                [min]="0"
-                [showButtons]="false"
-                styleClass="quantity-input">
-              </p-inputnumber>
-              <p-button 
-                icon="pi pi-plus"
-                (onClick)="updateCartQuantity(item.dishId, item.quantity + 1)"
-                [outlined]="true"
-                size="small">
-              </p-button>
-            </div>
-
-            <p class="cart-item-price">
-              ₪{{ item.estimatedPrice }} × {{ item.quantity }} = ₪{{ item.estimatedPrice * item.quantity }}
-            </p>
-          </div>
-        </div>
-      </p-scrollPanel>
-
-      <ng-template pTemplate="footer" *ngIf="cartItems.length > 0">
-        <p-divider></p-divider>
-        <div class="cart-total">
-          <span>סה"כ:</span>
-          <span class="total-price">₪{{ totalPrice }}</span>
-        </div>
-        <div class="cart-actions">
-          <p-button 
-            label="נקה עגלה"
-            (onClick)="clearCart()"
-            [outlined]="true"
-            styleClass="w-full">
-          </p-button>
-          <p-button 
-            label="סיים ושמור"
-            icon="pi pi-check"
-            styleClass="w-full">
-          </p-button>
-        </div>
-      </ng-template>
-    </p-card>
   </div>
 
   <!-- Edit Dish Dialog -->
@@ -307,11 +270,12 @@
     [style]="{width: '90vw', maxWidth: '1000px'}"
     [header]="editingDish?.name ? 'עריכת ' + editingDish?.name : 'מנה חדשה'">
     
-    <p-tabs *ngIf="editingDish">
+    <p-tabs *ngIf="editingDish" value="0">
       <p-tablist>
         <p-tab value="0">פרטים כלליים</p-tab>
         <p-tab value="1">מרכיבים ({{ editingDish.ingredients.length }})</p-tab>
         <p-tab value="2">ציוד ({{ editingDish.equipment.length }})</p-tab>
+        <p-tab value="3">הגשה</p-tab>
       </p-tablist>
 
       <p-tabpanels>
@@ -330,25 +294,13 @@
             </div>
 
             <div class="form-field">
-              <label for="price">מחיר משוער *</label>
-              <p-inputnumber 
-                id="price"
-                [(ngModel)]="editingDish.estimatedPrice"
-                [min]="0"
-                mode="currency"
-                currency="ILS"
-                locale="he-IL"
-                class="w-full">
-              </p-inputnumber>
-            </div>
-
-            <div class="form-field">
               <label for="category">קטגוריה *</label>
               <p-select
                 id="category"
                 [options]="categories"
                 [(ngModel)]="editingDish.category"
                 placeholder="בחר קטגוריה"
+                appendTo="body"
                 class="w-full">
                 <ng-template let-item>{{ item }}</ng-template>
               </p-select>
@@ -361,6 +313,7 @@
                 [options]="kosherTypes"
                 [(ngModel)]="editingDish.kosherType"
                 placeholder="בחר סוג כשרות"
+                appendTo="body"
                 class="w-full">
                 <ng-template let-item>{{ item }}</ng-template>
               </p-select>
@@ -372,6 +325,8 @@
                 id="servingSize"
                 [(ngModel)]="editingDish.servingSize"
                 [min]="1"
+                mode="decimal"
+                [maxFractionDigits]="2"
                 class="w-full">
               </p-inputnumber>
             </div>
@@ -413,17 +368,18 @@
         </div>
 
         <div class="ingredients-list">
-          <div class="ingredient-item" *ngFor="let ingredient of editingDish.ingredients; let i = index">
+          <div class="ingredient-item" *ngFor="let ingredient of editingDish.ingredients; let i = index; trackBy: trackByIndex">
             <div class="ingredient-fields">
               <div class="form-field">
                 <label>מוצר</label>
                 <p-select
                   [options]="products"
-                  [(ngModel)]="ingredient.productName"
-                  (onChange)="handleUpdateIngredient(i, 'productName', ingredient.productName)"
+                  [(ngModel)]="ingredient.productId"
                   placeholder="בחר מוצר"
                   optionLabel="name"
-                  optionValue="name"
+                  optionValue="id"
+                  (onChange)="handleIngredientProductChange(i, $event.value)"
+                  appendTo="body"
                   class="w-full">
                 </p-select>
               </div>
@@ -432,9 +388,10 @@
                 <label>כמות</label>
                 <p-inputnumber 
                   [(ngModel)]="ingredient.quantity"
-                  (ngModelChange)="handleUpdateIngredient(i, 'quantity', ingredient.quantity)"
                   [min]="0"
                   [step]="0.1"
+                  mode="decimal"
+                  [maxFractionDigits]="2"
                   class="w-full">
                 </p-inputnumber>
               </div>
@@ -444,7 +401,7 @@
                 <p-select
                   [options]="units"
                   [(ngModel)]="ingredient.unit"
-                  (onChange)="handleUpdateIngredient(i, 'unit', ingredient.unit)"
+                  appendTo="body"
                   class="w-full">
                   <ng-template let-item>{{ item }}</ng-template>
                 </p-select>
@@ -479,14 +436,13 @@
         </div>
 
         <div class="equipment-list">
-          <div class="equipment-item" *ngFor="let equip of editingDish.equipment; let i = index">
+          <div class="equipment-item" *ngFor="let equip of editingDish.equipment; let i = index; trackBy: trackByIndex">
             <div class="equipment-fields">
               <div class="form-field">
                 <label>שם הציוד</label>
                 <input 
                   pInputText 
                   [(ngModel)]="equip.name"
-                  (ngModelChange)="handleUpdateEquipment(i, 'name', equip.name)"
                   placeholder="שם הכלי/ציוד"
                   class="w-full" />
               </div>
@@ -494,7 +450,6 @@
               <div class="form-field checkbox-field">
                 <p-checkbox 
                   [(ngModel)]="equip.required"
-                  (onChange)="handleUpdateEquipment(i, 'required', equip.required)"
                   [binary]="true"
                   [inputId]="'required-' + i">
                 </p-checkbox>
@@ -514,6 +469,164 @@
           <p *ngIf="editingDish.equipment.length === 0" class="empty-message">
             לא הוגדר ציוד
           </p>
+        </div>
+      </p-tabpanel>
+
+      <!-- Serving Tab -->
+      <p-tabpanel value="3">
+        <div class="dialog-form">
+          <!-- תיאור צורת הגשה -->
+          <div class="form-field full-width">
+            <label for="servingDescription">תיאור צורת הגשה</label>
+            <textarea 
+              id="servingDescription"
+              pInputText
+              [(ngModel)]="editingDish.servingDescription"
+              placeholder="תאר את צורת ההגשה..."
+              rows="2"
+              class="w-full">
+            </textarea>
+          </div>
+
+          <!-- רכיבים להגשה -->
+          <div class="section-container">
+            <div class="tab-header">
+              <p>רכיבים להגשה</p>
+              <p-button 
+                label="הוסף רכיב"
+                icon="pi pi-plus"
+                (onClick)="handleAddServingIngredient()"
+                size="small">
+              </p-button>
+            </div>
+
+            <div class="ingredients-list">
+              <div class="ingredient-item" *ngFor="let ingredient of editingDish.servingIngredients; let i = index; trackBy: trackByIndex">
+                <div class="ingredient-fields">
+                  <div class="form-field">
+                    <label>מוצר</label>
+                    <p-select
+                      [options]="products"
+                      [(ngModel)]="ingredient.productName"
+                      placeholder="בחר מוצר"
+                      optionLabel="name"
+                      optionValue="name"
+                      appendTo="body"
+                      class="w-full">
+                    </p-select>
+                  </div>
+
+                  <div class="form-field">
+                    <label>כמות</label>
+                    <p-inputnumber 
+                      [(ngModel)]="ingredient.quantity"
+                      [min]="0"
+                      [step]="0.1"
+                      mode="decimal"
+                      [maxFractionDigits]="2"
+                      class="w-full">
+                    </p-inputnumber>
+                  </div>
+
+                  <div class="form-field">
+                    <label>יחידה</label>
+                    <p-select
+                      [options]="units"
+                      [(ngModel)]="ingredient.unit"
+                      appendTo="body"
+                      class="w-full">
+                      <ng-template let-item>{{ item }}</ng-template>
+                    </p-select>
+                  </div>
+                </div>
+
+                <p-button 
+                  icon="pi pi-trash"
+                  (onClick)="handleRemoveServingIngredient(i)"
+                  severity="danger"
+                  [text]="true"
+                  size="small">
+                </p-button>
+              </div>
+
+              <p *ngIf="!editingDish.servingIngredients || editingDish.servingIngredients.length === 0" class="empty-message">
+                לא הוגדרו רכיבים להגשה
+              </p>
+            </div>
+          </div>
+
+          <!-- כלים להגשה -->
+          <div class="section-container">
+            <div class="tab-header">
+              <p>כלים להגשה</p>
+              <p-button 
+                label="הוסף כלי"
+                icon="pi pi-plus"
+                (onClick)="handleAddServingDish()"
+                size="small">
+              </p-button>
+            </div>
+
+            <div class="equipment-list">
+              <div class="serving-dish-item" *ngFor="let servingDish of editingDish.servingDishes; let i = index; trackBy: trackByIndex">
+                <div class="serving-dish-fields">
+                  <div class="form-field">
+                    <label>שם</label>
+                    <input 
+                      pInputText 
+                      [(ngModel)]="servingDish.name"
+                      placeholder="שם הכלי"
+                      class="w-full" />
+                  </div>
+
+                  <div class="form-field">
+                    <label>כמות</label>
+                    <p-inputnumber 
+                      [(ngModel)]="servingDish.quantity"
+                      [min]="1"
+                      mode="decimal"
+                      [maxFractionDigits]="2"
+                      class="w-full">
+                    </p-inputnumber>
+                  </div>
+
+                  <div class="form-field">
+                    <label>קטגוריה</label>
+                    <input 
+                      pInputText 
+                      [(ngModel)]="servingDish.category"
+                      placeholder="קטגוריה"
+                      class="w-full" />
+                  </div>
+                </div>
+
+                <p-button 
+                  icon="pi pi-trash"
+                  (onClick)="handleRemoveServingDish(i)"
+                  severity="danger"
+                  [text]="true"
+                  size="small">
+                </p-button>
+              </div>
+
+              <p *ngIf="!editingDish.servingDishes || editingDish.servingDishes.length === 0" class="empty-message">
+                לא הוגדרו כלים להגשה
+              </p>
+            </div>
+          </div>
+
+          <!-- הערות למלצר -->
+          <div class="form-field full-width">
+            <label for="waiterNotes">הערות למלצר</label>
+            <textarea 
+              id="waiterNotes"
+              pInputText
+              [(ngModel)]="editingDish.waiterNotes"
+              placeholder="הערות למלצר..."
+              rows="3"
+              class="w-full">
+            </textarea>
+          </div>
         </div>
       </p-tabpanel>
     </p-tabpanels>
@@ -575,7 +688,7 @@
     <ng-template pTemplate="footer">
       <div *ngIf="shoppingList.length > 0" class="shopping-total">
         <span>סה"כ משוער:</span>
-        <span class="total-price">₪{{ getShoppingListTotal() }}</span>
+        <span class="total-price">₪0</span>
       </div>
       <div class="dialog-footer">
         <p-button 
@@ -592,6 +705,6 @@
   </p-dialog>
 
   <!-- Toast & Confirm -->
-  <p-toast position="top-center"></p-toast>
+  <p-toast position="top-right"></p-toast>
   <p-confirmDialog></p-confirmDialog>
 </div>

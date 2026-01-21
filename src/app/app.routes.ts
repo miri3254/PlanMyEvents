@@ -18,16 +18,30 @@ export const routes: Routes = [
   {
     path: 'products',
     loadComponent: () => 
-      import('./components/products/products')
+      import('./components/products/products.component')
         .then(m => m.ProductsComponent),
     title: 'מוצרים - PlanMyEvents'
   },
   {
-    path: 'cart',
+    path: 'tools',
     loadComponent: () => 
-      import('./components/cart/cart')
-        .then(m => m.CartComponent),
-    title: 'עגלה - PlanMyEvents'
+      import('./components/tools/tools.component')
+        .then(m => m.ToolsComponent),
+    title: 'כלים - PlanMyEvents'
+  },
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./components/settings/settings')
+        .then(m => m.SettingsComponent),
+    title: 'הגדרות - PlanMyEvents'
+  },
+  {
+    path: 'events',
+    loadComponent: () =>
+      import('./components/events/events.component')
+        .then(m => m.EventsComponent),
+    title: 'אירועים - PlanMyEvents'
   },
   {
     path: '**',

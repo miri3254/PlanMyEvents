@@ -1,83 +1,98 @@
 <div class="products-container p-6">
-    <!-- כותרת -->
-    <div class="header-section flex justify-content-between align-items-center mb-5">
-        <div class="header-content">
-            <div class="gradient-background"></div>
-            <h1 class="gradient-title mb-2">ניהול מוצרים</h1>
-            <p class="text-muted">מאגר מוצרים ומרכיבים למנות</p>
+    <!-- כותרת ואזור פעולות עליון -->
+    <div class="top-section mb-5">
+        <div class="header-card">
+            <div class="header-inner">
+                <!-- צד ימין - כותרת -->
+                <div class="header-content">
+                    <div class="title-wrapper">
+                        <div class="title-icon">
+                            <i class="pi pi-box"></i>
+                        </div>
+                        <div class="title-text">
+                            <h1 class="gradient-title">ניהול מוצרים</h1>
+                            <p class="subtitle">מאגר מוצרים ומרכיבים למנות</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- צד שמאל - כפתור הוספה -->
+                <div class="header-actions">
+                    <p-button 
+                        label="מוצר חדש" 
+                        icon="pi pi-plus" 
+                        (onClick)="openNew()"
+                        styleClass="add-product-btn">
+                    </p-button>
+                </div>
+            </div>
         </div>
-        <p-button 
-            label="מוצר חדש" 
-            icon="pi pi-plus" 
-            (onClick)="openNew()"
-            styleClass="gradient-button shadow-glow">
-        </p-button>
+        
+        <!-- אזור חיפוש וסינון -->
+        <div class="filters-card">
+            <div class="filters-inner">
+                <!-- שורה עליונה - חיפוש וסטטיסטיקות -->
+                <div class="filters-row">
+                    <!-- חיפוש -->
+                    <div class="search-section">
+                        <span class="p-input-icon-right search-input-wrapper">
+                            <i class="pi pi-search"></i>
+                            <input 
+                                pInputText 
+                                [(ngModel)]="searchValue" 
+                                placeholder="חיפוש מוצרים, מותגים או ספקים..."
+                                (input)="onSearch()"
+                                class="search-input">
+                        </span>
+                    </div>
+                    
+                    <!-- כפתורי סינון סטטוס -->
+                    <div class="status-filters">
+                        <div 
+                            class="filter-stat-card"
+                            *ngFor="let summary of inventorySummary"
+                            [ngClass]="[summary.badgeClass, filterInventoryStatus === summary.value ? 'active' : '']"
+                            (click)="filterByInventoryStatus(summary.value)">
+                            <i [class]="summary.icon"></i>
+                            <span class="filter-label">{{ summary.label }}</span>
+                            <span class="stat-number">{{ summary.count }}</span>
+                        </div>
+                        
+                        <p-button 
+                            label="ניקוי סינונים"
+                            icon="pi pi-filter-slash"
+                            [outlined]="true"
+                            size="small"
+                            styleClass="clear-btn"
+                            (onClick)="clearFilters()">
+                        </p-button>
+                    </div>
+                    
+                    <!-- מעבר תצוגה -->
+                    <div class="filter-actions">
+                        <div class="view-toggle-group">
+                            <p-button 
+                                label="טבלה"
+                                icon="pi pi-list" 
+                                [outlined]="viewMode !== 'table'"
+                                [text]="viewMode !== 'table'"
+                                size="small"
+                                (onClick)="setViewMode('table')">
+                            </p-button>
+                            <p-button 
+                                label="כרטיסיות"
+                                icon="pi pi-th-large" 
+                                [outlined]="viewMode !== 'grid'"
+                                [text]="viewMode !== 'grid'"
+                                size="small"
+                                (onClick)="setViewMode('grid')">
+                            </p-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <!-- חיפוש וסינון -->
-    <p-card class="mb-4">
-        <div class="flex flex-wrap gap-2 align-items-center">
-            <span class="p-input-icon-right search-input-wrapper">
-                <i class="pi pi-search"></i>
-                <input 
-                    pInputText 
-                    [(ngModel)]="searchValue" 
-                    placeholder="חיפוש מוצרים, מותגים או ספקים..."
-                    (input)="onSearch()"
-                    class="w-full">
-            </span>
-            
-            <!-- Status Filter Buttons -->
-            <div class="filter-stat-card filter-stat-success" 
-                 (click)="filterByInventoryStatus('במלאי')" 
-                 [class.active]="filterInventoryStatus === 'במלאי'">
-                <i class="pi pi-check-circle"></i>
-                <span>במלאי</span>
-                <span class="stat-number">{{inventoryStats.inStock}}</span>
-            </div>
-            
-            <div class="filter-stat-card filter-stat-warning" 
-                 (click)="filterByInventoryStatus('מלאי-נמוך')"
-                 [class.active]="filterInventoryStatus === 'מלאי-נמוך'">
-                <i class="pi pi-exclamation-circle"></i>
-                <span>מלאי נמוך</span>
-                <span class="stat-number">{{inventoryStats.lowStock}}</span>
-            </div>
-            
-            <div class="filter-stat-card filter-stat-danger" 
-                 (click)="filterByInventoryStatus('אזל')"
-                 [class.active]="filterInventoryStatus === 'אזל'">
-                <i class="pi pi-times-circle"></i>
-                <span>אזל</span>
-                <span class="stat-number">{{inventoryStats.outOfStock}}</span>
-            </div>
-
-            <p-button 
-                label="ניקוי סינונים"
-                icon="pi pi-filter-slash"
-                [outlined]="true"
-                size="small"
-                (onClick)="clearFilters()">
-            </p-button>
-
-            <div class="view-toggle-group flex gap-1 border-1 border-round p-1">
-                <p-button 
-                    icon="pi pi-list" 
-                    [outlined]="viewMode !== 'table'"
-                    [text]="viewMode !== 'table'"
-                    size="small"
-                    (onClick)="setViewMode('table')">
-                </p-button>
-                <p-button 
-                    icon="pi pi-th-large" 
-                    [outlined]="viewMode !== 'grid'"
-                    [text]="viewMode !== 'grid'"
-                    size="small"
-                    (onClick)="setViewMode('grid')">
-                </p-button>
-            </div>
-        </div>
-    </p-card>
 
 
 
@@ -132,7 +147,9 @@
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-product>
-                <tr>
+                <tr 
+                    (click)="editProduct(product)"
+                    style="cursor: pointer">
                     <td><h3>{{product.name}}</h3></td>
                     <td>{{product.brand}}</td>
                     <td>{{product.supplier}}</td>
@@ -140,7 +157,9 @@
                         <p-tag [value]="product.category" severity="secondary"></p-tag>
                     </td>
                     <td>{{product.packageQuantity}}</td>
-                    <td>₪{{product.estimatedPrice}}</td>
+                    <td>
+                        <span>₪{{product.estimatedPrice}}</span>
+                    </td>
                     <td>
                         <p-tag 
                             [value]="product.inventoryStatus" 
@@ -154,14 +173,14 @@
                                 icon="pi pi-pencil" 
                                 [outlined]="true"
                                 size="small"
-                                (onClick)="editProduct(product)">
+                                (onClick)="editProduct(product); $event.stopPropagation()">
                             </p-button>
                             <p-button 
                                 icon="pi pi-trash" 
                                 severity="danger"
                                 [outlined]="true"
                                 size="small"
-                                (onClick)="deleteProduct(product)">
+                                (onClick)="deleteProduct(product); $event.stopPropagation()">
                             </p-button>
                         </div>
                     </td>
@@ -206,7 +225,7 @@
                         <span class="text-muted">כמות באריזה:</span>
                         <span>{{product.packageQuantity}}</span>
                     </div>
-                    <div class="detail-row">
+                    <div class="detail-row" *ngIf="isDisposableProduct(product)">
                         <span class="text-muted">מחיר:</span>
                         <span>₪{{product.estimatedPrice}}</span>
                     </div>
@@ -300,7 +319,7 @@
                 </p-inputNumber>
             </div>
 
-            <div class="col-12 md:col-6 mb-3">
+            <div class="col-12 md:col-6 mb-3" *ngIf="isDisposableProduct(product)">
                 <label for="estimatedPrice" class="block mb-2 font-semibold">מחיר משוער (₪)</label>
                 <p-inputNumber 
                     id="estimatedPrice"
@@ -341,5 +360,5 @@
     </p-dialog>
 
     <p-confirmDialog></p-confirmDialog>
-    <p-toast></p-toast>
+    <p-toast position="top-right"></p-toast>
 </div>
