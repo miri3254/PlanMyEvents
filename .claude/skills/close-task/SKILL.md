@@ -15,4 +15,4 @@ description: Finish a PlanMyEvents task - update knowledge files briefly and giv
    - איך לבדוק ומה התוצאה הצפויה.
    - בדיקות שהורצו בפועל (עם תוצאות) מול בדיקות ידניות מוצעות.
    - מה נשאר פתוח / שאלות.
-3. Don't commit unless asked. If asked: `git -C Angular` only for frontend; FastAPI is not under git.
+3. Don't commit unless asked. If asked: branch + commit from workspace root, push, PR to main.

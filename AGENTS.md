@@ -17,7 +17,7 @@ Last inspected: 2026-11-15. This is a source-code map, not a certification of ru
 - `docs/catering-todo/README.md`: task index, with one task per each of the eight attached Word files plus cross-cutting email requests.
 - Existing knowledge lives in `Angular/.ai/`; use this shared location for backend context too.
 - Root `package.json` is NOT the frontend runnable package. Run frontend commands in Angular.
-- On inspection root `git status` failed despite a .git directory; `git -C Angular status` worked and showed many existing modifications. Verify actual repository boundaries; preserve user changes.
+- Single Git repo at workspace root since 2026-11-23 (Angular history preserved under Angular/). Client recipes, DBs and .env are ignored.
 
 ## Working rules
 - Hebrew, RTL user-facing UI and concise Hebrew communication unless requested otherwise.
