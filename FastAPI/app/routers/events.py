@@ -207,8 +207,8 @@ def add_dish(event_id: int, data: EventDishCreate, svc: EventService = Depends(_
 
 
 @router.put("/{event_id}/dishes/{dish_id}", response_model=EventResponse)
-def update_dish(event_id: int, dish_id: int, data: EventDishUpdate, svc: EventService = Depends(_svc)):
-    return svc.update_event_dish(event_id, dish_id, data)
+def update_dish(event_id: int, dish_id: int, data: EventDishUpdate, event_dish_id: int | None = None, svc: EventService = Depends(_svc)):
+    return svc.update_event_dish(event_id, dish_id, data, event_dish_id)
 
 
 @router.delete("/{event_id}/dishes/{dish_id}", response_model=SuccessResponse)
@@ -303,7 +303,7 @@ def get_dish_serving_selections(event_id: int, db: Session = Depends(get_db)):
         selected = service._selection_map(event_id, kind)
         for ed in event.dishes:
             selected_id = selected.get(("dish", ed.id)) or selected.get(("dish_id", ed.dish_id))
-            resolved = service._resolve_serving_set(event, ed.dish_id, selected_id) if kind == "serving" else service._resolve_set(ed.dish_id, kind, selected_id)
+            resolved = service._resolve_serving_set(event, ed.dish_id, selected_id, ed) if kind == "serving" else service._resolve_set(ed.dish_id, kind, selected_id)
             if resolved:
                 result.append({"dish_id": ed.dish_id, "set_type": kind, "set_id": resolved.id})
     return result
@@ -320,6 +320,14 @@ def update_dish_serving_selections(
     calculations.replace_serving_selections(event_id, data.selections)
     db.commit()
     return calculations.summarize(event)
+
+
+@router.get("/{event_id}/calculations/manual-tools")
+def get_manual_tools(event_id: int, db: Session = Depends(get_db)):
+    from app.models.calculation import EventManualToolRow
+    _calculation_event(event_id, db)
+    return [dict(tool_id=r.tool_id, name=r.name, quantity=r.quantity, is_reusable=r.is_reusable, notes=r.notes)
+            for r in db.query(EventManualToolRow).filter_by(event_id=event_id).all()]
 
 
 @router.put("/{event_id}/calculations/manual-tools", response_model=EventCalculationSummary)
@@ -473,9 +481,9 @@ def get_waiter_pdf(event_id: int, db: Session = Depends(get_db)):
         })
     
     # חישובים אוטומטיים
-    guest_count = event.guest_count or 1
-    waiter_count = math.ceil(guest_count / 50) * 2
-    table_count = math.ceil(guest_count / 8)
+    calculations = EventCalculationService(db)
+    waiter_count = calculations.waiter_count(event)
+    table_count = calculations.table_count(event)
     event_sequence_label = _event_sequence_label(event, db)
     event_sequence_color = event.day_sequence_color if event_sequence_label else None
 
@@ -485,7 +493,7 @@ def get_waiter_pdf(event_id: int, db: Session = Depends(get_db)):
             event_name=event.name,
             event_date=event_date_formatted,
             hebrew_date=event.hebrew_date,
-            guest_count=guest_count,
+            guest_count=event.guest_count or 1,
             location=event.address,
             dishes_data=dishes_data,
             blank_path=None,
@@ -605,9 +613,9 @@ def get_catering_pdf(event_id: int, db: Session = Depends(get_db)):
         })
     
     # חישובים אוטומטיים
-    guest_count_val = event.guest_count or 1
-    waiter_count = math.ceil(guest_count_val / 50) * 2
-    table_count = math.ceil(guest_count_val / 8)
+    calculations = EventCalculationService(db)
+    waiter_count = calculations.waiter_count(event)
+    table_count = calculations.table_count(event)
     event_sequence_label = _event_sequence_label(event, db)
     event_sequence_color = event.day_sequence_color if event_sequence_label else None
 
@@ -617,7 +625,7 @@ def get_catering_pdf(event_id: int, db: Session = Depends(get_db)):
             event_name=event.name,
             event_date=event_date_formatted,
             hebrew_date=event.hebrew_date,
-            guest_count=guest_count_val,
+            guest_count=event.guest_count or 1,
             location=event.address,
             dishes_data=dishes_data,
             blank_path=None,

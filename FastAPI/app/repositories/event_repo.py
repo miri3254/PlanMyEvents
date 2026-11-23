@@ -5,7 +5,7 @@ Event repository — data access for Event aggregate.
 from typing import Optional, List
 from datetime import datetime
 
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy import and_
 
 from app.repositories.base_repo import BaseRepository
@@ -55,12 +55,30 @@ class EventRepository(BaseRepository[Event]):
             q = q.filter(Event.name.ilike(f"%{search}%"))
 
         total = q.count()
-        events = q.order_by(Event.date.desc()).offset(skip).limit(limit).all()
+        events = (
+            q.options(*self._list_relations())
+            .order_by(Event.date.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
         return events, total
+
+    @staticmethod
+    def _list_relations():
+        """Eager-load everything _build_response touches, one query per relation."""
+        return (
+            selectinload(Event.owners),
+            selectinload(Event.dishes),
+            selectinload(Event.tray_selections),
+            selectinload(Event.delivery_notes).joinedload(EventDeliveryNote.template),
+            selectinload(Event.boxes),
+        )
 
     def get_in_range(self, start: datetime, end: datetime) -> List[Event]:
         return (
             self._active()
+            .options(*self._list_relations())
             .filter(and_(Event.date >= start, Event.date <= end))
             .order_by(Event.date)
             .all()

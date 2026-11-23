@@ -792,7 +792,7 @@ def generate_waiter_pdf(
         waiter_text = _bidi(f"מספר מלצרים: {waiter_count}  (2 מלצרים לכל 50 סועדים)")
         elements.append(Paragraph(waiter_text, styles['event_detail']))
     if table_count is not None:
-        table_text = _bidi(f"מספר שולחנות: {table_count}  (שולחן לכל 8 סועדים)")
+        table_text = _bidi(f"מספר שולחנות: {table_count}  (שולחן לכל 8 סועדים; שולחן מתוק - חצי)")
         elements.append(Paragraph(table_text, styles['event_detail']))
 
     # סוג הכלים

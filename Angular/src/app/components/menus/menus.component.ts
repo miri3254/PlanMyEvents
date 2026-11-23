@@ -99,7 +99,7 @@ export class MenusComponent implements OnInit, OnDestroy {
   filteredPickerDishes: any[] = [];
   selectedPickerDishes: any[] = [];  // Multi-select - dishes selected in picker
   dishPickerSubmitting = false;      // Loading state for adding multiple dishes
-  dishEditMap: Record<number, { is_upgrade: boolean; extra_charge: number | null }> = {};
+  dishEditMap: Record<number, { is_upgrade: boolean; extra_charge: number | null; default_serving_mode: "personal" | "central" | null }> = {};
 
   // Kosher type options for menu form
   kosherTypeOptions = [
@@ -448,6 +448,7 @@ export class MenusComponent implements OnInit, OnDestroy {
             // Add to local array
             if (!this.dishPickerCategory.dish_mappings) this.dishPickerCategory.dish_mappings = [];
             this.dishPickerCategory.dish_mappings.push({
+              id: result.id,
               mapping_id: result.id,
               dish_id: dish.id,
               dish_name: dish.name,
@@ -550,6 +551,7 @@ export class MenusComponent implements OnInit, OnDestroy {
           // Add to local array
           if (!this.dishPickerCategory.dish_mappings) this.dishPickerCategory.dish_mappings = [];
           this.dishPickerCategory.dish_mappings.push({
+            id: result.id,
             mapping_id: result.id,
             dish_id: dish.id,
             dish_name: dish.name,
@@ -578,6 +580,7 @@ export class MenusComponent implements OnInit, OnDestroy {
 
   openDishEdit(dish: any): void {
     this.dishEditMap[dish.id] = {
+      default_serving_mode: dish.default_serving_mode ?? null,
       is_upgrade: dish.is_upgrade ?? false,
       extra_charge: dish.extra_charge ?? null
     };
@@ -591,10 +594,12 @@ export class MenusComponent implements OnInit, OnDestroy {
     const edit = this.dishEditMap[dish.id];
     if (!edit) return;
     this.menuService.updateDishMapping(dish.id, {
+      default_serving_mode: edit.default_serving_mode,
       is_upgrade: edit.is_upgrade,
       extra_charge: edit.is_upgrade ? (edit.extra_charge ?? undefined) : undefined
     }).pipe(take(1)).subscribe({
       next: () => {
+        dish.default_serving_mode = edit.default_serving_mode;
         dish.is_upgrade = edit.is_upgrade;
         dish.extra_charge = edit.is_upgrade ? edit.extra_charge : null;
         delete this.dishEditMap[dish.id];

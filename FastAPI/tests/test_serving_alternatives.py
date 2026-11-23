@@ -132,3 +132,87 @@ def test_menu_inventory_mapping_persists(setup):
     MenuService(db).update_template(menu.id, payload.model_dump(exclude_unset=True))
     db.expire_all()
     assert MenuService(db).get_template_by_id(menu.id)['table_setting_items'][0]['real_tool_id'] == tool.id
+
+
+def test_menu_default_and_event_override_survive_dishware_switch(setup):
+    from app.models.menu import MenuCategory, DishMenuMapping
+    db, menu, dish, tool, event, ed = setup
+    category = MenuCategory(template_id=menu.id, name='main', name_hebrew='עיקרית')
+    db.add(category); db.flush()
+    ed.category_id = category.id
+    mapping = DishMenuMapping(dish_id=dish.id, category_id=category.id, default_serving_mode='personal')
+    db.add(mapping)
+    central = variant(db, dish, tool)
+    personal = variant(db, dish, tool, mode='personal', default=False)
+    real_central = variant(db, dish, tool, kind='real')
+    svc = EventCalculationService(db)
+    assert svc._resolve_serving_set(event, dish.id).id == personal.id
+    ed.serving_mode = 'central'; db.commit(); db.expire_all()
+    assert svc._resolve_serving_set(event, dish.id).id == central.id
+    event.is_real_dishes = True
+    assert svc._resolve_serving_set(event, dish.id).id == real_central.id
+    ed.serving_mode = None
+    assert svc._resolve_serving_set(event, dish.id) is None
+    warnings = []
+    assert svc._calculate_serving_sets(event, None, [], warnings) == []
+    assert warnings
+    event.is_real_dishes = False
+    svc.snapshot_event(event); event.status = EventStatus.APPROVED; db.commit()
+    frozen = svc.summarize(event).tool_requirements
+    mapping.default_serving_mode = 'central'; db.commit()
+    assert svc.summarize(event).tool_requirements == frozen
+
+
+def test_explicit_mode_without_configured_tools_never_uses_legacy(setup):
+    from app.models.dish import ServingDish
+    db, menu, dish, tool, event, ed = setup
+    db.add(ServingDish(dish_id=dish.id, tool_id=tool.id, name='old', quantity=1))
+    ed.serving_mode = 'personal'; db.commit()
+    svc = EventCalculationService(db)
+    warnings = []
+    assert svc._calculate_serving_sets(event, None, [], warnings) == []
+    assert warnings and svc.serving_tools_for_document(event)[ed.id] == []
+
+
+def test_manual_tools_material_from_inventory_validation_before_replace(setup):
+    from app.models.calculation import EventManualToolRow
+    from app.schemas.calculation import EventManualToolRowUpdate
+    db, menu, dish, tool, event, ed = setup
+    svc = EventCalculationService(db)
+    svc.replace_manual_tools(event.id, [EventManualToolRowUpdate(tool_id=tool.id, quantity=3, is_reusable=False)])
+    db.commit()
+    row = db.query(EventManualToolRow).filter_by(event_id=event.id).one()
+    assert row.is_reusable is True  # Catalog material wins, no guessed/unchecked checkbox.
+    with pytest.raises(Exception):
+        svc.replace_manual_tools(event.id, [EventManualToolRowUpdate(tool_id=99999)])
+    assert db.query(EventManualToolRow).filter_by(event_id=event.id).one().quantity == 3
+    assert svc._manual_tools(event, [])[0].quantity == 3
+
+
+def test_default_in_submeal_category(setup):
+    from app.models.menu import MenuSubMeal, MenuCategory, DishMenuMapping
+    db, menu, dish, tool, event, ed = setup
+    meal = MenuSubMeal(template_id=menu.id, name='בוקר')
+    db.add(meal); db.flush()
+    category = MenuCategory(sub_meal_id=meal.id, name='main', name_hebrew='עיקרית')
+    db.add(category); db.flush()
+    db.add(DishMenuMapping(dish_id=dish.id, category_id=category.id, default_serving_mode='personal'))
+    ed.category_id = category.id; ed.sub_meal_id = meal.id
+    variant(db, dish, tool)
+    personal = variant(db, dish, tool, mode='personal', default=False)
+    assert EventCalculationService(db)._resolve_serving_set(event, dish.id).id == personal.id
+
+
+def test_serving_override_targets_exact_event_row(setup):
+    from app.services.event_service import EventService
+    from app.schemas.event import EventDishUpdate
+    db, menu, dish, tool, event, ed = setup
+    second = EventDish(event_id=event.id, dish_id=dish.id, quantity=1)
+    db.add(second); db.commit()
+    svc = EventService(db)
+    svc.update_event_dish(event.id, dish.id, EventDishUpdate(serving_mode='personal'), second.id)
+    db.refresh(ed); db.refresh(second)
+    assert ed.serving_mode is None and second.serving_mode == 'personal'
+    with pytest.raises(Exception):
+        svc.update_event_dish(event.id, dish.id, EventDishUpdate(serving_mode='central'), 999999)
+    assert second.serving_mode == 'personal'

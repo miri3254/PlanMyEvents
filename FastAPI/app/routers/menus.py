@@ -75,6 +75,7 @@ class MenuCategoryUpdateSchema(BaseModel):
 
 
 class DishMappingCreateSchema(BaseModel):
+    default_serving_mode: Optional[Literal["personal", "central"]] = None
     dish_id: int
     category_id: int
     is_upgrade: bool = False
@@ -83,6 +84,7 @@ class DishMappingCreateSchema(BaseModel):
 
 
 class DishMappingUpdateSchema(BaseModel):
+    default_serving_mode: Optional[Literal["personal", "central"]] = None
     is_upgrade: Optional[bool] = None
     extra_charge: Optional[float] = None
     display_order: Optional[int] = None

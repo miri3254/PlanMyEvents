@@ -27,7 +27,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./components/event-dish-wizard/event-dish-wizard.component')
         .then(m => m.EventDishWizardComponent),
-    title: 'בחירת מנות לאירוע - PlanMyEvents'
+    title: 'הוספת מנות או כלים - PlanMyEvents'
   },
   {
     path: 'products',

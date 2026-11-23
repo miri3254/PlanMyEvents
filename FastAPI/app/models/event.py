@@ -142,6 +142,7 @@ class EventDish(BaseModel):
 
     quantity = Column(Integer, default=1, nullable=False)
     is_upgrade = Column(Boolean, default=False, nullable=False)
+    serving_mode = Column(String(20), nullable=True)  # null inherits the menu
     is_gift = Column(Boolean, default=False, nullable=False)
     extra_charge = Column(Float, nullable=True)
     notes = Column(Text, nullable=True)

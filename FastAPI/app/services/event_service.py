@@ -170,13 +170,31 @@ class EventService:
         logger.info(f"Auto-completed {len(events)} past approved events")
         return len(events)
 
+    def _lookup_by_ids(self, model, ids) -> dict:
+        """Load rows for the given ids in one query (avoids per-row N+1 lookups)."""
+        unique_ids = {i for i in ids if i}
+        if not unique_ids:
+            return {}
+        return {row.id: row for row in self.db.query(model).filter(model.id.in_(unique_ids)).all()}
+
     def _build_response(self, event: Event) -> dict:
+        from app.models.menu import MenuCategory, MenuSubMeal
+
+        dish_by_id = self._lookup_by_ids(
+            Dish,
+            [ed.dish_id for ed in event.dishes] + [t.dish_id for t in event.tray_selections],
+        )
+        category_by_id = self._lookup_by_ids(
+            MenuCategory,
+            [ed.category_id for ed in event.dishes] + [t.category_id for t in event.tray_selections],
+        )
+        sub_meal_by_id = self._lookup_by_ids(MenuSubMeal, [ed.sub_meal_id for ed in event.dishes])
+
         dishes = []
         for ed in event.dishes:
-            dish = self.db.query(Dish).filter(Dish.id == ed.dish_id).first()
-            from app.models.menu import MenuCategory, MenuSubMeal
-            cat = self.db.query(MenuCategory).filter(MenuCategory.id == ed.category_id).first() if ed.category_id else None
-            sm = self.db.query(MenuSubMeal).filter(MenuSubMeal.id == ed.sub_meal_id).first() if ed.sub_meal_id else None
+            dish = dish_by_id.get(ed.dish_id)
+            cat = category_by_id.get(ed.category_id) if ed.category_id else None
+            sm = sub_meal_by_id.get(ed.sub_meal_id) if ed.sub_meal_id else None
             dishes.append({
                 "id": ed.id,
                 "event_id": ed.event_id,
@@ -186,6 +204,7 @@ class EventService:
                 "quantity": ed.quantity,
                 "is_upgrade": ed.is_upgrade,
                 "is_gift": ed.is_gift,
+                "serving_mode": ed.serving_mode,
                 "extra_charge": ed.extra_charge,
                 "notes": ed.notes,
                 "is_draft": ed.is_draft,
@@ -210,9 +229,8 @@ class EventService:
 
         trays = []
         for t in event.tray_selections:
-            dish = self.db.query(Dish).filter(Dish.id == t.dish_id).first()
-            from app.models.menu import MenuCategory
-            cat = self.db.query(MenuCategory).filter(MenuCategory.id == t.category_id).first() if t.category_id else None
+            dish = dish_by_id.get(t.dish_id)
+            cat = category_by_id.get(t.category_id) if t.category_id else None
             trays.append({
                 "id": t.id, "event_id": t.event_id, "dish_id": t.dish_id,
                 "category_id": t.category_id, "tray_count": t.tray_count,
@@ -311,8 +329,8 @@ class EventService:
             "created_at": event.created_at,
             "updated_at": event.updated_at,
             # חישובים אוטומטיים
-            "waiter_count": math.ceil((event.guest_count or 1) / 50) * 2,
-            "table_count": math.ceil((event.guest_count or 1) / 8),
+            "waiter_count": self.calculations.waiter_count(event),
+            "table_count": self.calculations.table_count(event),
             "dishes": dishes,
             "owners": owners,
             "tray_selections": trays,
@@ -343,11 +361,7 @@ class EventService:
     def get_events(self, **kwargs) -> tuple[list[dict], int]:
         self.complete_past_approved_events()
         events, total = self.repo.get_list(**kwargs)
-        items = []
-        for e in events:
-            e_full = self.repo.get_with_relations(e.id)
-            items.append(self._build_response(e_full))
-        return items, total
+        return [self._build_response(e) for e in events], total
 
     def get_event(self, event_id: int) -> dict:
         self.complete_past_approved_events()
@@ -357,19 +371,15 @@ class EventService:
     def get_events_in_range(self, start: datetime, end: datetime) -> list[dict]:
         self.complete_past_approved_events()
         events = self.repo.get_in_range(start, end)
-        return [self._build_response(self.repo.get_with_relations(e.id)) for e in events]
+        return [self._build_response(e) for e in events]
 
     def create_event(self, data: EventCreate) -> dict:
         # Validate min guests
         menu_type_val = data.menu_type
-        min_g = MIN_GUESTS.get(menu_type_val, 1)
-        if data.guest_count < min_g:
-            msg = f"מינימום {min_g} סועדים נדרש לתפריט '{menu_type_val}'. הוזנו {data.guest_count} סועדים."
-            logger.warning(f"❌ Create event validation failed: {msg}")
-            raise AppException(400, msg)
+        template = self.menu_repo.get_template_by_type(menu_type_val)
+        self._validate_min_guests(data.guest_count, menu_type_val, template)
 
         # Resolve base price from template
-        template = self.menu_repo.get_template_by_type(menu_type_val)
         base_price = template.base_price_per_guest if template else None
         real_dishes_extra = getattr(template, 'real_dishes_extra_per_guest', 0.0) if template else 0.0
 
@@ -418,16 +428,31 @@ class EventService:
         logger.info(f"📋 Owners in request: {data.owners}")
 
         # Validate guest count against menu min
-        if "guest_count" in update_data:
+        if "guest_count" in update_data or "menu_type" in update_data:
             mt = update_data.get("menu_type") or str(event.menu_type)
-            min_g = MIN_GUESTS.get(mt, 1)
-            logger.info(f"👥 Guest validation: {update_data['guest_count']} >= {min_g} for menu '{mt}'")
-            if update_data["guest_count"] < min_g:
-                msg = f"מינימום {min_g} סועדים נדרש לתפריט '{mt}'. הוזנו {update_data['guest_count']} סועדים."
-                logger.warning(f"❌ {msg}")
-                raise AppException(400, msg)
+            guests = update_data.get("guest_count", event.guest_count)
+            self._validate_min_guests(guests, mt, self.menu_repo.get_template_by_type(mt))
+
+        # The UI sends the whole form, so only real changes count.
+        frozen_fields = ("guest_count", "is_real_dishes", "is_morning_split", "menu_type")
+        changed_frozen = [
+            f for f in frozen_fields
+            if f in update_data and update_data[f] != (str(event.menu_type) if f == "menu_type" else getattr(event, f, None))
+        ]
+        if changed_frozen:
+            self._ensure_editable(event)
+        menu_changed = "menu_type" in changed_frozen
+        old_guests = event.guest_count
 
         self.repo.update(event, update_data)
+
+        if "guest_count" in changed_frozen:
+            self._rescale_dish_units(event, old_guests)
+
+        if menu_changed:
+            template = self.menu_repo.get_template_by_type(str(event.menu_type))
+            event.base_price_per_guest = template.base_price_per_guest if template else None
+            event.real_dishes_extra_per_guest = (getattr(template, "real_dishes_extra_per_guest", 0.0) or 0.0) if template else 0.0
 
         sequence_dates = []
         if "date" in update_data and update_data["date"].date() != old_date.date():
@@ -443,7 +468,7 @@ class EventService:
             self._replace_boxes(event_id, data.boxes)
 
         # Recalculate price if relevant fields changed
-        if any(field in update_data for field in ['guest_count', 'is_real_dishes', 'is_morning_split', 'final_price']):
+        if menu_changed or any(field in update_data for field in ['guest_count', 'is_real_dishes', 'is_morning_split', 'final_price']):
             self._recalc_total(event)
 
         for sequence_date in sequence_dates:
@@ -480,10 +505,18 @@ class EventService:
 
         event.status = new_status
 
-        # Price snapshot on APPROVED
+        # Price snapshot on APPROVED. Approval also confirms the dish selection:
+        # the UI never calls /dishes/finalize, so wizard dishes stay is_draft until here.
         if new_status == EventStatus.APPROVED.value:
+            for ed in event.dishes:
+                ed.is_draft = False
             self._snapshot_prices(event)
             self.calculations.snapshot_event(event)
+
+        # APPROVED → DRAFT reopens the event for editing: drop the frozen calculation,
+        # dish price snapshots and tool reservations; they are rebuilt on re-approval.
+        if new_status == EventStatus.DRAFT.value and current == EventStatus.APPROVED.value:
+            self._clear_approval_snapshot(event)
         
         # Inventory deduction on COMPLETED (only if was APPROVED)
         if new_status == EventStatus.COMPLETED.value and current == EventStatus.APPROVED.value:
@@ -497,6 +530,50 @@ class EventService:
 
         logger.info(f"סטטוס אירוע {event_id} שונה: {current} → {new_status}")
         return self._build_response(self.repo.get_with_relations(event_id))
+
+    # User decision 2026-11-23: recipe (DishIngredient) and Dish.base_price describe ONE
+    # dish unit that serves Dish.serving_size guests. EventDish.quantity = number of units
+    # (wizard: ceil(guests / serving_size)). Never multiply it by guest_count again.
+    @staticmethod
+    def _dish_units(ed: EventDish) -> float:
+        return ed.quantity or 0
+
+    def _rescale_dish_units(self, event: Event, old_guests: int | None) -> None:
+        """Guest count changed: update dishes whose quantity is still the automatic one."""
+        for ed in event.dishes:
+            dish = ed.dish
+            serving = (dish.serving_size if dish else None) or 1
+            if old_guests and ed.quantity == math.ceil(old_guests / serving):
+                ed.quantity = math.ceil((event.guest_count or 1) / serving)
+
+    @staticmethod
+    def _validate_min_guests(guest_count: int, menu_type: str, template) -> None:
+        # User decision 2026-11-23: the menu's own min_guests wins; the constants list
+        # is only a fallback for a menu type with no MenuTemplate row.
+        min_g = template.min_guests if template and template.min_guests else MIN_GUESTS.get(menu_type, 1)
+        if (guest_count or 0) < min_g:
+            msg = f"מינימום {min_g} סועדים נדרש לתפריט '{menu_type}'. הוזנו {guest_count} סועדים."
+            logger.warning(f"❌ {msg}")
+            raise AppException(400, msg)
+
+    def _clear_approval_snapshot(self, event: Event) -> None:
+        self.db.query(EventCalculationSnapshot).filter(EventCalculationSnapshot.event_id == event.id).delete()
+        for ed in event.dishes:
+            ed.snapshot_base_price = None
+            ed.snapshot_client_price = None
+            # Back to draft so the wizard's replace (draft_only) can drop de-selected dishes.
+            ed.is_draft = True
+        self.calculations.release_reservations(event.id)
+
+    def _ensure_editable(self, event: Event) -> None:
+        """Approved/completed events are frozen (price + calculation snapshot)."""
+        status = event.status.value if hasattr(event.status, "value") else str(event.status)
+        if status in (EventStatus.APPROVED.value, EventStatus.COMPLETED.value):
+            raise AppException(
+                400,
+                f"לא ניתן לשנות מנות, מגשים, תפריט או מספר סועדים באירוע בסטטוס '{status}'. "
+                "יש להחזיר את האירוע לטיוטה ולאשר מחדש.",
+            )
 
     def _snapshot_prices(self, event: Event):
         """Freeze dish/tray prices at finalization time."""
@@ -529,12 +606,16 @@ class EventService:
             if not dish:
                 continue
             
-            multiplier = ed.quantity * event.guest_count
+            multiplier = self._dish_units(ed)
             
             for ing in dish.ingredients:
                 if not ing.product_id:
                     continue
-                
+                # A calculation rule replaced this ingredient (e.g. with a prepared product);
+                # its quantity already comes from calc product_requirements below.
+                if ing.product_id in replaced_product_ids:
+                    continue
+
                 product = self.db.query(Product).filter(Product.id == ing.product_id).first()
                 if not product:
                     continue
@@ -591,6 +672,7 @@ class EventService:
 
     def add_dish_to_event(self, event_id: int, data: EventDishCreate) -> dict:
         event = self._get_or_404(event_id)
+        self._ensure_editable(event)
         dish = self.db.query(Dish).filter(Dish.id == data.dish_id).first()
         if not dish:
             raise AppException(404, "מנה לא נמצאה")
@@ -603,6 +685,7 @@ class EventService:
             quantity=data.quantity,
             is_upgrade=data.is_upgrade,
             is_gift=data.is_gift,
+            serving_mode=data.serving_mode,
             extra_charge=data.extra_charge,
             notes=data.notes,
         )
@@ -613,13 +696,21 @@ class EventService:
         self.db.commit()
         return self.get_event(event_id)
 
-    def update_event_dish(self, event_id: int, dish_id: int, data: EventDishUpdate) -> dict:
-        ed = self.repo.get_event_dish(event_id, dish_id)
+    def update_event_dish(self, event_id: int, dish_id: int, data: EventDishUpdate, event_dish_id: int | None = None) -> dict:
+        ed = (self.db.query(EventDish).filter_by(id=event_dish_id, event_id=event_id, dish_id=dish_id).first()
+              if event_dish_id is not None else self.repo.get_event_dish(event_id, dish_id))
         if not ed:
             raise AppException(404, "המנה לא נמצאה באירוע")
+        self._ensure_editable(self._get_or_404(event_id))
         for k, v in data.model_dump(exclude_unset=True).items():
             if hasattr(ed, k):
                 setattr(ed, k, v)
+        if 'serving_mode' in data.model_fields_set:
+            from app.models.calculation import EventDishServingSelection
+            self.db.query(EventDishServingSelection).filter(
+                EventDishServingSelection.event_id == event_id,
+                EventDishServingSelection.dish_id == dish_id,
+                EventDishServingSelection.set_type == 'serving').delete()
         event = self._get_or_404(event_id)
         self._recalc_total(event)
         self.db.commit()
@@ -629,6 +720,7 @@ class EventService:
         ed = self.repo.get_event_dish(event_id, dish_id)
         if not ed:
             raise AppException(404, "המנה לא נמצאה באירוע")
+        self._ensure_editable(self._get_or_404(event_id))
         self.repo.remove_dish(ed)
         event = self._get_or_404(event_id)
         self._recalc_total(event)
@@ -637,6 +729,7 @@ class EventService:
 
     def bulk_save_dishes(self, event_id: int, dishes_data: list[EventDishCreate], is_draft: bool = True, replace: bool = False) -> dict:
         event = self._get_or_404(event_id)
+        self._ensure_editable(event)
         if replace:
             self.repo.bulk_delete_dishes(event_id, draft_only=is_draft)
 
@@ -654,6 +747,7 @@ class EventService:
                 existing.category_id = dd.category_id
                 existing.is_upgrade = dd.is_upgrade
                 existing.is_gift = dd.is_gift
+                existing.serving_mode = dd.serving_mode
                 existing.extra_charge = dd.extra_charge
                 saved.append(existing)
             else:
@@ -662,6 +756,7 @@ class EventService:
                     sub_meal_id=dd.sub_meal_id, category_id=dd.category_id,
                     quantity=dd.quantity, is_upgrade=dd.is_upgrade,
                     is_gift=dd.is_gift,
+                    serving_mode=dd.serving_mode,
                     extra_charge=dd.extra_charge, notes=dd.notes,
                     is_draft=is_draft,
                 )
@@ -685,6 +780,7 @@ class EventService:
 
     def add_tray(self, event_id: int, data: EventTrayCreate) -> dict:
         event = self._get_or_404(event_id)
+        self._ensure_editable(event)
         dish = self.db.query(Dish).filter(Dish.id == data.dish_id).first()
         if not dish:
             raise AppException(404, "מנה לא נמצאה")
@@ -710,6 +806,7 @@ class EventService:
         tray = self.repo.get_tray(tray_id)
         if not tray or tray.event_id != event_id:
             raise AppException(404, "מגש לא נמצא באירוע")
+        self._ensure_editable(self._get_or_404(event_id))
         for k, v in data.model_dump(exclude_unset=True).items():
             if hasattr(tray, k):
                 setattr(tray, k, v)
@@ -722,6 +819,7 @@ class EventService:
         tray = self.repo.get_tray(tray_id)
         if not tray or tray.event_id != event_id:
             raise AppException(404, "מגש לא נמצא באירוע")
+        self._ensure_editable(self._get_or_404(event_id))
         self.repo.remove_tray(tray)
         event = self._get_or_404(event_id)
         self._recalc_total(event)
@@ -744,7 +842,7 @@ class EventService:
             if not dish:
                 continue
 
-            multiplier = ed.quantity * event.guest_count
+            multiplier = self._dish_units(ed)
             for ing in dish.ingredients:
                 if not ing.product_id:
                     continue
@@ -784,6 +882,8 @@ class EventService:
 
     def toggle_morning_split(self, event_id: int, split: bool) -> dict:
         event = self._get_or_404(event_id)
+        if bool(event.is_morning_split) != bool(split):
+            self._ensure_editable(event)
         event.is_morning_split = split
         if split:
             # Find split charge from Shabbat morning sub-meal
@@ -883,7 +983,7 @@ class EventService:
             dish = self.db.query(Dish).filter(Dish.id == ed.dish_id).first()
             if not dish:
                 continue
-            multiplier = ed.quantity * event.guest_count
+            multiplier = self._dish_units(ed)
             for ing in dish.ingredients:
                 if ing.product_id and ing.product_id in replaced_product_ids:
                     continue

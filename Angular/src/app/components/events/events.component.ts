@@ -1355,7 +1355,7 @@ export class EventsComponent implements OnInit, OnDestroy {
             this.messageService.add({
               severity: 'success',
               summary: 'אירוע נוצר',
-              detail: `${this.eventForm.name} נוסף ללוח - עובר להוספת מנות`
+              detail: `${this.eventForm.name} נוסף ללוח - עובר להוספת מנות או כלים`
             });
             this.eventFormSubmitting = false;
             this.closeEventForm();
@@ -1417,7 +1417,7 @@ export class EventsComponent implements OnInit, OnDestroy {
             this.messageService.add({
               severity: 'success',
               summary: 'אירוע עודכן',
-              detail: `${updated.name} נשמר בהצלחה - עובר להוספת מנות`
+              detail: `${updated.name} נשמר בהצלחה - עובר להוספת מנות או כלים`
             });
             this.eventFormSubmitting = false;
             this.closeEventForm();
@@ -1653,7 +1653,7 @@ export class EventsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * ניווט לדף בחירת מנות לאירוע
+   * ניווט לדף הוספת מנות או כלים
    */
   navigateToAddDishes(event: Event): void {
     if (!event?.id) {

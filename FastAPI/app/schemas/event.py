@@ -3,7 +3,7 @@ Event schemas.
 """
 
 from pydantic import BaseModel, Field
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Literal
 from datetime import datetime
 
 
@@ -65,6 +65,7 @@ class EventDeliveryNoteResponse(BaseModel):
 # ─── Event Dish ───────────────────────────────────────────────────────
 
 class EventDishCreate(BaseModel):
+    serving_mode: Optional[Literal["personal", "central"]] = None
     dish_id: int
     sub_meal_id: Optional[int] = None
     category_id: Optional[int] = None
@@ -76,6 +77,7 @@ class EventDishCreate(BaseModel):
 
 
 class EventDishUpdate(BaseModel):
+    serving_mode: Optional[Literal["personal", "central"]] = None
     sub_meal_id: Optional[int] = None
     category_id: Optional[int] = None
     quantity: Optional[int] = Field(None, ge=1)
@@ -92,6 +94,7 @@ class EventDishBulkRequest(BaseModel):
 
 
 class EventDishResponse(BaseModel):
+    serving_mode: Optional[Literal["personal", "central"]] = None
     id: int
     event_id: int
     dish_id: int

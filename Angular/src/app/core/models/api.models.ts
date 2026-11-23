@@ -206,6 +206,7 @@ export interface ApiEvent extends BaseEntity {
 // ============================================
 
 export interface EventDishCreate {
+  serving_mode?: "personal" | "central" | null;
   dish_id: number;
   sub_meal_id?: number;
   category_id?: number;
@@ -217,6 +218,7 @@ export interface EventDishCreate {
 }
 
 export interface ApiEventDish extends BaseEntity {
+  serving_mode?: "personal" | "central" | null;
   event_id: number;
   dish_id: number;
   sub_meal_id?: number;

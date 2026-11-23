@@ -16,8 +16,9 @@ import { MessageService } from 'primeng/api';
 
 import { ApiEventService } from '../../services/api-event.service';
 import { ApiDishService } from '../../services/api-dish.service';
+import { ApiToolService } from '../../services/api-tool.service';
 import { ApiMenuService } from '../../services/api-menu.service';
-import { ApiEvent, EventDishCreate, ApiEventDish, DishServingSet } from '../../core/models/api.models';
+import { ApiEvent, EventDishCreate, ApiEventDish, DishServingSet, ApiDish, ApiTool } from '../../core/models/api.models';
 import { MenuTemplate, MenuSubMeal, MenuCategory, DishMenuMapping, CategoryDishesResponse } from '../../models/menu.model';
 
 // ============================================
@@ -84,6 +85,20 @@ export class EventDishWizardComponent implements OnInit, OnDestroy {
   servingSets = new Map<number, DishServingSet[]>();
   selectedServingSets: Record<string, number> = {};
 
+  extrasOpen = false;
+  private extraSearchRequest = 0;
+  extraSearch = '';
+  extraResults: ApiDish[] = [];
+  extraTools: ApiTool[] = [];
+  manualTools: Array<{tool_id?: number | null; name?: string; quantity: number; is_reusable: boolean; notes?: string}> = [];
+  extrasLoaded = false;
+  extrasLoading = false;
+  manualSaving = false;
+  newToolId: number | null = null;
+  newToolQuantity = 1;
+  get editable(): boolean { return this.event?.status === 'טיוטה'; }
+  get freeDishes(): ApiEventDish[] { return (this.event?.dishes || []).filter(d => !d.category_id); }
+
   // Summary mode
   showSummary = false;
 
@@ -101,7 +116,7 @@ export class EventDishWizardComponent implements OnInit, OnDestroy {
   }
 
   get totalSelected(): number {
-    return this.steps.reduce((sum, s) => sum + s.selectedDishIds.size, 0);
+    return this.freeDishes.length + this.steps.reduce((sum, s) => sum + s.selectedDishIds.size, 0);
   }
 
   /** Count only standard dishes (exclude upgrades) for quota checking */
@@ -143,6 +158,7 @@ export class EventDishWizardComponent implements OnInit, OnDestroy {
     private eventService: ApiEventService,
     private dishService: ApiDishService,
     private menuService: ApiMenuService,
+    private toolService: ApiToolService,
     private messageService: MessageService
   ) {}
 
@@ -289,7 +305,7 @@ export class EventDishWizardComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadServingSets(dishes: DishMenuMapping[]): void {
+  private loadServingSets(dishes: Array<{dish_id: number}>): void {
     const missing = dishes.filter(dish => !this.servingSets.has(dish.dish_id));
     if (!missing.length) return;
     forkJoin(missing.map(dish => this.dishService.getServingSets(dish.dish_id)))
@@ -320,6 +336,96 @@ export class EventDishWizardComponent implements OnInit, OnDestroy {
     });
     this.eventService.updateDishServingSelections(this.eventId, selections)
       .pipe(takeUntil(this.destroy$)).subscribe({error: () => this.messageService.add({severity: 'error', summary: 'בחירת ההגשה לא נשמרה. יש לרענן ולנסות שוב'})});
+  }
+
+  servingMode(dishId: number): 'personal' | 'central' | null {
+    return this.servingEventDish(dishId)?.serving_mode ?? null;
+  }
+
+  private servingEventDish(dishId: number): ApiEventDish | undefined {
+    const step = this.currentStep;
+    return this.event?.dishes?.find(d => d.dish_id === dishId && (!step ||
+      (d.category_id === step.categoryId && (d.sub_meal_id ?? null) === step.subMealId)));
+  }
+
+  setServingMode(dishId: number, mode: 'personal' | 'central' | null, eventDishId?: number): void {
+    if (!this.editable || this.savingDishIds.has(dishId)) return;
+    this.savingDishIds.add(dishId);
+    this.eventService.updateEventDish(this.eventId, dishId, {serving_mode: mode}, eventDishId ?? this.servingEventDish(dishId)?.id)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: event => { this.event = event; this.savingDishIds.delete(dishId); },
+        error: () => { this.savingDishIds.delete(dishId); this.messageService.add({severity: 'error', summary: 'צורת ההגשה לא נשמרה'}); }
+      });
+  }
+
+  openExtras(): void {
+    this.extrasOpen = !this.extrasOpen;
+    if (!this.extrasOpen || this.extrasLoaded || this.extrasLoading) return;
+    this.extrasLoading = true;
+    forkJoin({tools: this.toolService.getAllTools(), rows: this.eventService.getManualTools(this.eventId)})
+      .pipe(takeUntil(this.destroy$)).subscribe({next: data => {
+        this.extraTools = data.tools; this.manualTools = data.rows; this.extrasLoaded = true; this.extrasLoading = false;
+        this.searchExtraDishes();
+      }, error: () => { this.extrasLoading = false; this.messageService.add({severity: 'error', summary: 'לא ניתן לטעון תוספות. סגרו ופתחו שוב כדי לנסות מחדש'}); }});
+  }
+
+  searchExtraDishes(): void {
+    const request = ++this.extraSearchRequest;
+    this.extraResults = [];
+    this.dishService.getDishes({search: this.extraSearch, is_active: true, limit: 200})
+      .pipe(takeUntil(this.destroy$)).subscribe({next: result => { if (request === this.extraSearchRequest) this.extraResults = result.items; },
+        error: () => this.messageService.add({severity: 'error', summary: 'חיפוש המנות נכשל'})});
+  }
+
+  alreadySelected(dishId: number): boolean { return !!this.event?.dishes?.some(d => d.dish_id === dishId); }
+
+  addFreeDish(dish: ApiDish): void {
+    if (!this.editable || this.alreadySelected(dish.id) || this.savingDishIds.has(dish.id)) return;
+    this.savingDishIds.add(dish.id);
+    this.eventService.addDishToEvent(this.eventId, {dish_id: dish.id, quantity: 1, is_upgrade: true,
+      extra_charge: dish.client_price || 0}).pipe(takeUntil(this.destroy$)).subscribe({next: event => {
+        this.event = event; this.savingDishIds.delete(dish.id);
+      }, error: () => {this.savingDishIds.delete(dish.id); this.messageService.add({severity: 'error', summary: 'המנה לא נוספה'});}});
+  }
+
+  removeFreeDish(dishId: number): void {
+    if (!this.editable || this.savingDishIds.has(dishId)) return;
+    this.savingDishIds.add(dishId);
+    this.eventService.removeDishFromEvent(this.eventId, dishId).pipe(takeUntil(this.destroy$)).subscribe({next: () => {
+      if (this.event) this.event.dishes = this.event.dishes?.filter(d => d.dish_id !== dishId);
+      this.giftDishIds.delete(dishId); this.savingDishIds.delete(dishId);
+    }, error: () => {this.savingDishIds.delete(dishId); this.messageService.add({severity: 'error', summary: 'ההסרה נכשלה'});}});
+  }
+
+  setFreeGift(dish: ApiEventDish, value: boolean): void {
+    if (!this.editable || this.savingDishIds.has(dish.dish_id)) return;
+    this.savingDishIds.add(dish.dish_id);
+    this.eventService.updateEventDish(this.eventId, dish.dish_id, {is_gift: value}).pipe(takeUntil(this.destroy$)).subscribe({next: event => {
+      this.event = event; this.savingDishIds.delete(dish.dish_id);
+    }, error: () => {this.savingDishIds.delete(dish.dish_id); this.messageService.add({severity: 'error', summary: 'סימון המתנה לא נשמר'});}});
+  }
+
+  addFreeTool(): void {
+    if (!this.editable || !this.extrasLoaded || this.manualSaving) return;
+    const tool = this.extraTools.find(t => t.id === Number(this.newToolId));
+    if (!tool || !Number.isInteger(this.newToolQuantity) || this.newToolQuantity < 1) return;
+    const rows = this.manualTools.map(r => ({...r}));
+    const existing = rows.find(r => r.tool_id === tool.id);
+    if (existing) existing.quantity += this.newToolQuantity;
+    else rows.push({tool_id: tool.id, name: tool.name, quantity: this.newToolQuantity, is_reusable: tool.sub_category === 'אמיתי'});
+    this.persistManualTools(rows);
+  }
+
+  removeFreeTool(index: number): void {
+    if (this.editable && !this.manualSaving) this.persistManualTools(this.manualTools.filter((_, i) => i !== index));
+  }
+
+  private persistManualTools(rows: typeof this.manualTools): void {
+    this.manualSaving = true;
+    this.eventService.updateManualTools(this.eventId, rows).pipe(takeUntil(this.destroy$)).subscribe({next: () => {
+      this.manualTools = rows; this.manualSaving = false;
+      this.messageService.add({severity: 'success', summary: 'הכלים נשמרו באירוע'});
+    }, error: () => {this.manualSaving = false; this.messageService.add({severity: 'error', summary: 'הכלים לא נשמרו'});}});
   }
 
   // ========================================
@@ -432,7 +538,8 @@ export class EventDishWizardComponent implements OnInit, OnDestroy {
     this.savingDishIds.add(dish.dish_id);
 
     this.eventService.addDishToEvent(this.eventId, payload).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
+      next: updated => {
+        this.event = updated;
         step.selectedDishIds.add(dish.dish_id);
         this.savingDishIds.delete(dish.dish_id);
       },

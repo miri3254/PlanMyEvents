@@ -477,10 +477,6 @@ def test_event_full_crud_with_dishes_trays_calculations_lists_and_pdfs(client):
         200,
     )
     assert event["guest_count"] == 90
-    event = assert_ok(client.patch(f"/api/events/{event_id}/status", json={"status": EventStatus.APPROVED.value}), 200)
-    assert event["status"] == EventStatus.APPROVED.value
-    event = assert_ok(client.patch(f"/api/events/{event_id}/price", json={"final_price": 9999}), 200)
-    assert event["final_price"] == 9999
     event = assert_ok(client.patch(f"/api/events/{event_id}/morning-split", json={"is_morning_split": True}), 200)
     assert event["is_morning_split"] is True
 
@@ -497,6 +493,17 @@ def test_event_full_crud_with_dishes_trays_calculations_lists_and_pdfs(client):
     tray = tray_event["tray_selections"][-1]
     tray_event = assert_ok(client.put(f"/api/events/{event_id}/trays/{tray['id']}", json={"tray_count": 3, "price_per_tray": 45}), 200)
     assert any(row["id"] == tray["id"] and row["tray_count"] == 3 for row in tray_event["tray_selections"])
+
+    event = assert_ok(client.patch(f"/api/events/{event_id}/status", json={"status": EventStatus.APPROVED.value}), 200)
+    assert event["status"] == EventStatus.APPROVED.value
+    assert all(row["is_draft"] is False for row in event["dishes"])
+    event = assert_ok(client.patch(f"/api/events/{event_id}/price", json={"final_price": 9999}), 200)
+    assert event["final_price"] == 9999
+    # Approved events are frozen: same values pass, real changes need draft first.
+    assert_ok(client.put(f"/api/events/{event_id}", json={"guest_count": 90, "notes": "same guests ok"}), 200)
+    assert client.put(f"/api/events/{event_id}", json={"guest_count": 95}).status_code == 400
+    assert client.post(f"/api/events/{event_id}/dishes", json={"dish_id": dish["id"], "quantity": 1}).status_code == 400
+    assert client.put(f"/api/events/{event_id}/trays/{tray['id']}", json={"tray_count": 4}).status_code == 400
 
     summary = assert_ok(
         client.put(
@@ -542,6 +549,10 @@ def test_event_full_crud_with_dishes_trays_calculations_lists_and_pdfs(client):
         assert "application/pdf" in pdf_response.headers.get("content-type", "")
         assert len(pdf_response.content) > 100
 
+    assert client.delete(f"/api/events/{event_id}/trays/{tray['id']}").status_code == 400
+    event = assert_ok(client.patch(f"/api/events/{event_id}/status", json={"status": EventStatus.DRAFT.value}), 200)
+    assert event["has_calculation_snapshot"] is False
+    assert all(row["is_draft"] is True and row["snapshot_base_price"] is None for row in event["dishes"])
     assert_ok(client.delete(f"/api/events/{event_id}/trays/{tray['id']}"), 200)
     assert_ok(client.delete(f"/api/events/{event_id}/dishes/{event_dish['dish_id']}"), 200)
     assert_ok(client.post(f"/api/events/{event_id}/restore-stock"), 200)

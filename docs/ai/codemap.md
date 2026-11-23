@@ -32,7 +32,7 @@ Update this file when you add/move/delete a file or a key function. Do not add h
 - routers/: events.py (717; PDFs assembled here), dishes.py (297), menus.py (216), lookup.py, receipts.py, unit_conversions.py, dashboard.py, products.py, tools.py, backup.py.
 - schemas/: event.py (386), dish.py (217), calculation.py (177), dashboard.py, menu.py, product.py, tool.py, receipt.py, unit_conversion.py, common.py.
 - utils/pdf_generator.py (1409, ReportLab, Hebrew via `_bidi`, fonts/backgrounds in app/assets/).
-- alembic/versions/: head = `o8d9e0f1a2b3_workbook_clearing`. New migration: down_revision = current head; additive; local apply via scripts/apply_*_migration.py pattern (backup first).
+- alembic/versions/: head = `p9e0f1a2b3c4_menu_serving_mode`. New migration: down_revision = current head; additive; local apply via scripts/apply_*_migration.py pattern (backup first).
 - scripts/: `prepare_*`/`apply_*` are guarded (dry-run + backup). `seed_*`, `clean_wipe_*`, `reset_data`, `new_clear_db` are destructive — only on explicit user request.
 - FastAPI/*.py at root (check_*, fix_*, populate_db, clear_db_runner, debug_*) = ad-hoc helpers, not app code.
 
@@ -47,3 +47,5 @@ Update this file when you add/move/delete a file or a key function. Do not add h
 ## Tests
 Backend `FastAPI/tests/` (always `DATABASE_URL=sqlite://` before import): test_event_calculations.py (engine) · test_drinks_workbook.py · test_rolls_workbook.py · test_tablecloth_workbook.py · test_workbook_remaining.py (presets, fees, tool import) · test_serving_alternatives.py · test_delivery_sheet_pdf.py · test_deep_crud_flows.py (API CRUD + lifecycle) · test_prepare_drink_products.py · test_comprehensive.py.
 Frontend: `*.spec.ts` beside each component (11). E2E Playwright in Angular/tests (no webServer/baseURL configured).
+
+2026-11-23: DishMenuMapping.default_serving_mode → EventDish.serving_mode → calc _menu_serving_mode/_resolve_serving_set; wizard free additions reuse EventDish/EventManualToolRow (GET/PUT manual-tools). Guarded local upgrade: scripts/apply_menu_serving_mode_migration.py.

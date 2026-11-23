@@ -71,8 +71,8 @@ export class ApiEventService extends BaseApiService {
   // ========================================
 
   /** הוספת מנה לאירוע - נשמרת מיד (ללא מצב ביניים של טיוטה) */
-  addDishToEvent(eventId: number, dishData: EventDishCreate): Observable<ApiEventDish> {
-    return this.post<ApiEventDish>(`/events/${eventId}/dishes`, dishData);
+  addDishToEvent(eventId: number, dishData: EventDishCreate): Observable<ApiEvent> {
+    return this.post<ApiEvent>(`/events/${eventId}/dishes`, dishData);
   }
 
   /** שמירה מרובה של מנות */
@@ -86,13 +86,15 @@ export class ApiEventService extends BaseApiService {
   }
 
   updateEventDish(eventId: number, dishId: number, data: {
+    serving_mode?: "personal" | "central" | null;
     quantity?: number;
     notes?: string;
     is_upgrade?: boolean;
     is_gift?: boolean;
     extra_charge?: number;
-  }): Observable<ApiEventDish> {
-    return this.put<ApiEventDish>(`/events/${eventId}/dishes/${dishId}`, data);
+  }, eventDishId?: number): Observable<ApiEvent> {
+    const query = eventDishId == null ? '' : `?event_dish_id=${eventDishId}`;
+    return this.put<ApiEvent>(`/events/${eventId}/dishes/${dishId}${query}`, data);
   }
 
   removeDishFromEvent(eventId: number, dishId: number): Observable<void> {
@@ -176,6 +178,10 @@ export class ApiEventService extends BaseApiService {
 
   updateDishServingSelections(eventId: number, selections: unknown[]): Observable<EventCalculationSummary> {
     return this.put<EventCalculationSummary>(`/events/${eventId}/calculations/dish-serving-selections`, { selections });
+  }
+
+  getManualTools(eventId: number): Observable<Array<{tool_id?: number | null; name?: string; quantity: number; is_reusable: boolean; notes?: string}>> {
+    return this.get(`/events/${eventId}/calculations/manual-tools`);
   }
 
   updateManualTools(eventId: number, rows: unknown[]): Observable<EventCalculationSummary> {
