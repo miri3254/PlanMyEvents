@@ -1,0 +1,697 @@
+<p-toast position="top-left" dir="rtl"></p-toast>
+<p-confirmDialog [rtl]="true"></p-confirmDialog>
+<app-loading-overlay [visible]="isLoading"></app-loading-overlay>
+
+<div class="dishes-container p-6" dir="rtl">
+  <!-- ============================================ -->
+  <!-- Top Section - Header + Filters -->
+  <!-- ============================================ -->
+  <div class="top-section mb-5">
+
+    <!-- Event Mode Header -->
+    <div *ngIf="isEventMode && currentEvent" class="event-header-card">
+      <div class="event-header-inner">
+        <div class="event-header-left">
+          <p-button icon="pi pi-arrow-right" [text]="true" (onClick)="goBackToEvents()" pTooltip="חזרה לאירועים"></p-button>
+          <div class="title-wrapper">
+            <div class="title-icon"><i class="pi pi-calendar-clock"></i></div>
+            <div class="title-text">
+              <h1 class="gradient-title">בחירת מנות לאירוע: {{ currentEvent.name }}</h1>
+              <div class="event-meta">
+                <p-tag [value]="currentEvent.menuType" severity="info"></p-tag>
+                <span class="guest-count"><i class="pi pi-users"></i> {{ currentEvent.guestCount }} אורחים</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <span class="selected-count"><i class="pi pi-check-circle"></i> {{ selectedDishIds.size }} מנות נבחרו</span>
+          <p-button label="סיום בחירה" icon="pi pi-check" (onClick)="finishSelection()" severity="success"></p-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Normal Mode Header Card -->
+    <div *ngIf="!isEventMode" class="header-card main-header">
+      <div class="header-inner">
+        <div class="header-content">
+          <div class="title-wrapper">
+            <div class="title-icon"><i class="pi pi-list"></i></div>
+            <div class="title-text">
+              <h1 class="gradient-title">ניהול מנות</h1>
+              <p class="subtitle">מאגר מנות ומתכונים לאירועים</p>
+            </div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <p-button
+            label="מנה חדשה"
+            icon="pi pi-plus"
+            (onClick)="handleCreateDish()"
+            styleClass="add-dish-btn">
+          </p-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters Card -->
+    <div class="filters-card">
+      <div class="filters-inner">
+        <div class="filters-row">
+          <!-- חיפוש -->
+          <div class="search-section">
+            <span class="p-input-icon-right search-input-wrapper">
+              <i class="pi pi-search"></i>
+              <input
+                pInputText
+                [(ngModel)]="searchQuery"
+                (ngModelChange)="onSearchChange()"
+                placeholder="חיפוש מנה..."
+                class="search-input">
+            </span>
+          </div>
+
+          <!-- כשרות -->
+          <p-select
+            [options]="kosherOptions"
+            [(ngModel)]="filterKosher"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="סוג כשרות"
+            (ngModelChange)="onFilterChange()"
+            [style]="{'min-width': '160px'}">
+          </p-select>
+
+          <!-- ניקוי -->
+          <p-button
+            *ngIf="searchQuery || filterKosher !== 'הכל'"
+            label="ניקוי סינונים"
+            icon="pi pi-filter-slash"
+            [outlined]="true"
+            size="small"
+            styleClass="clear-btn"
+            (onClick)="clearAllFilters()">
+          </p-button>
+
+          <!-- מעבר תצוגה -->
+          <div class="filter-actions">
+            <div class="view-toggle-group">
+              <p-button
+                label="טבלה"
+                icon="pi pi-list"
+                [outlined]="viewMode !== 'table'"
+                [text]="viewMode !== 'table'"
+                size="small"
+                (onClick)="setViewMode('table')">
+              </p-button>
+              <p-button
+                label="כרטיסיות"
+                icon="pi pi-th-large"
+                [outlined]="viewMode !== 'grid'"
+                [text]="viewMode !== 'grid'"
+                size="small"
+                (onClick)="setViewMode('grid')">
+              </p-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Table View -->
+  <!-- ============================================ -->
+  <p-card *ngIf="viewMode === 'table'">
+    <p-table
+      [value]="(filteredDishes$ | async) || []"
+      [tableStyle]="{'min-width': '60rem'}"
+      sortField="name"
+      [sortOrder]="1"
+      dir="rtl">
+
+      <!-- Event Mode Checkbox Column -->
+      <ng-template pTemplate="header">
+        <tr>
+          <th *ngIf="isEventMode" style="width: 60px; text-align: center;">בחר</th>
+          <th pSortableColumn="name" class="sortable-header" style="min-width: 220px;">
+            <div class="flex align-items-center gap-2">
+              <span>מנה</span>
+              <p-sortIcon field="name"></p-sortIcon>
+            </div>
+          </th>
+          <th style="width: 100px;">כשרות</th>
+          <th pSortableColumn="basePrice" class="sortable-header" style="width: 110px;">
+            <div class="flex align-items-center gap-2">
+              <span>עלות</span>
+              <p-sortIcon field="basePrice"></p-sortIcon>
+            </div>
+          </th>
+          <th pSortableColumn="clientPrice" class="sortable-header" style="width: 120px;">
+            <div class="flex align-items-center gap-2">
+              <span>מחיר ללקוח</span>
+              <p-sortIcon field="clientPrice"></p-sortIcon>
+            </div>
+          </th>
+          <th style="width: 100px;">מרכיבים</th>
+          <th style="min-width: 150px;">תפריטים</th>
+          <th *ngIf="!isEventMode" style="width: 120px;">פעולות</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-dish>
+        <tr class="clickable-row"
+            (click)="!isEventMode && handleEditDish(dish)"
+            [class.selected-row]="isEventMode && isDishSelected(dish.id)"
+            [class.no-products-row]="dish.hasNoProducts">
+          <!-- Checkbox -->
+          <td *ngIf="isEventMode" style="text-align: center;" (click)="$event.stopPropagation()">
+            <p-checkbox [binary]="true" [ngModel]="isDishSelected(dish.id)" (ngModelChange)="toggleDishSelection(dish)"></p-checkbox>
+          </td>
+
+          <!-- Name + warning -->
+          <td>
+            <div class="dish-name-cell">
+              <h3 class="dish-name">{{ dish.name }}</h3>
+              <i *ngIf="dish.hasNoProducts" class="pi pi-exclamation-triangle text-orange-500 mr-1" pTooltip="מנה ללא מוצרים מקושרים"></i>
+            </div>
+          </td>
+
+          <!-- Kosher -->
+          <td>
+            <span class="kosher-badge" [ngClass]="getKosherClass(dish.kosherType)">
+              <i [class]="getKosherIcon(dish.kosherType)"></i>
+              {{ dish.kosherType }}
+            </span>
+          </td>
+
+          <!-- Base Price -->
+          <td class="price-cell">{{ dish.basePrice | number:'1.0-2' }} ₪</td>
+
+          <!-- Client Price -->
+          <td class="price-cell">{{ dish.clientPrice | number:'1.0-2' }} ₪</td>
+
+          <!-- Ingredients count -->
+          <td class="center-cell">
+            <span class="ingredient-count">{{ dish.ingredients?.length || 0 }}</span>
+          </td>
+
+          <!-- Menu Types -->
+          <td>
+            <div class="menu-tags">
+              <p-tag *ngFor="let menuType of getDishMenuTypes(dish)"
+                [value]="getMenuTypeHebrew(menuType)"
+                [severity]="getMenuTypeSeverity(menuType)"
+                styleClass="menu-tag-small">
+              </p-tag>
+              <span *ngIf="getDishMenuTypes(dish).length === 0" class="no-menus-label">
+                <i class="pi pi-exclamation-circle text-orange-400"></i>
+              </span>
+            </div>
+          </td>
+
+          <!-- Actions -->
+          <td *ngIf="!isEventMode" (click)="$event.stopPropagation()">
+            <div class="action-buttons">
+              <p-button icon="pi pi-pencil" [outlined]="true" size="small" pTooltip="עריכה" (onClick)="handleEditDish(dish)"></p-button>
+              <p-button icon="pi pi-trash" severity="danger" [outlined]="true" size="small" pTooltip="מחיקה" (onClick)="confirmDelete(dish.id)"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="isEventMode ? 7 : 8" class="empty-message">
+            <i class="pi pi-inbox"></i>
+            <span>לא נמצאו מנות</span>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+
+  <!-- ============================================ -->
+  <!-- Grid / Card View -->
+  <!-- ============================================ -->
+  <ng-container *ngIf="viewMode === 'grid'">
+    <div class="dishes-grid" *ngIf="(filteredDishes$ | async) as dishes">
+      <div *ngIf="dishes.length === 0" class="empty-state">
+        <i class="pi pi-inbox"></i>
+        <h3>לא נמצאו מנות</h3>
+      </div>
+
+      <div class="grid-cards">
+        <p-card *ngFor="let dish of dishes"
+                [class.selected-card]="isEventMode && isDishSelected(dish.id)"
+                [class.no-products-card]="dish.hasNoProducts"
+                styleClass="dish-card">
+          <ng-template pTemplate="header">
+            <div class="card-header">
+              <span class="kosher-badge small" [ngClass]="getKosherClass(dish.kosherType)">{{ dish.kosherType }}</span>
+              <i *ngIf="dish.hasNoProducts" class="pi pi-exclamation-triangle text-orange-500" pTooltip="ללא מוצרים"></i>
+              <p-checkbox *ngIf="isEventMode" [binary]="true" [ngModel]="isDishSelected(dish.id)" (ngModelChange)="toggleDishSelection(dish)"></p-checkbox>
+            </div>
+          </ng-template>
+
+          <div class="card-body" (click)="handleEditDish(dish)">
+            <h4>{{ dish.name }}</h4>
+            <div class="card-prices">
+              <span class="price-label">עלות: <strong>{{ dish.basePrice | number:'1.0-2' }} ₪</strong></span>
+              <span class="price-label">ללקוח: <strong>{{ dish.clientPrice | number:'1.0-2' }} ₪</strong></span>
+            </div>
+            <div class="card-meta" *ngIf="dish.ingredients?.length">
+              <small>{{ dish.ingredients.length }} מרכיבים</small>
+            </div>
+            <div class="card-menu-tags" *ngIf="getDishMenuTypes(dish).length > 0">
+              <p-tag *ngFor="let menuType of getDishMenuTypes(dish)"
+                [value]="menuType"
+                [severity]="getMenuTypeSeverity(menuType)"
+                styleClass="menu-tag-small">
+              </p-tag>
+            </div>
+          </div>
+
+          <ng-template pTemplate="footer" *ngIf="!isEventMode">
+            <div class="card-actions">
+              <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" (onClick)="handleEditDish(dish)" pTooltip="עריכה"></p-button>
+              <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" (onClick)="confirmDelete(dish.id)" pTooltip="מחיקה"></p-button>
+            </div>
+          </ng-template>
+        </p-card>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<!-- ============================================ -->
+<!-- Edit / Create Dish Dialog -->
+<!-- ============================================ -->
+<p-dialog
+  [visible]="isDialogOpen"
+  (visibleChange)="isDialogOpen = $event"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '85vw', maxWidth: '900px', direction: 'rtl' }"
+  [contentStyle]="{ 'max-height': '75vh', 'overflow': 'auto' }"
+  (onHide)="editingDish = null"
+  styleClass="custom-dialog">
+
+  <ng-template pTemplate="header">
+    <div class="dialog-header-content">
+        <span class="dialog-title">{{ editingDish?.id ? 'עריכת מנה' : 'מנה חדשה' }}</span>
+    </div>
+  </ng-template>
+
+  <ng-container *ngIf="editingDish">
+    <p-tabs value="0">
+      <p-tablist>
+        <p-tab value="0"><i class="pi pi-file-edit ml-2"></i> פרטי מנה</p-tab>
+        <p-tab value="1"><i class="pi pi-box ml-2"></i> מרכיבים ({{ editingDish.ingredients.length }})</p-tab>
+        <p-tab value="2"><i class="pi pi-objects-column ml-2"></i> קישורי כלים קודמים ({{ editingDish.servingDishes?.length || 0 }})</p-tab>
+        <p-tab value="3"><i class="pi pi-book ml-2"></i> שיוך לתפריטים ({{ getMenuMappingsCount() }})</p-tab>
+        <p-tab value="4"><i class="pi pi-calculator ml-2"></i> הכלים הנדרשים להגשת המנה</p-tab>
+      </p-tablist>
+      <p-tabpanels>
+        <!-- ============================================ -->
+        <!-- Tab 0: Basic Details -->
+        <!-- ============================================ -->
+        <p-tabpanel value="0">
+          <div class="dialog-content p-fluid">
+
+            <!-- שם המנה - בולט -->
+            <div class="form-section highlight-section mb-4">
+              <div class="form-field full-width">
+                <label for="dishName" class="field-label required">שם מנה</label>
+                <input pInputText id="dishName" [(ngModel)]="editingDish.name"
+                  placeholder="הזן שם מנה (לדוגמא: פסטה ברוטב)"
+                  class="field-input primary-input p-inputtext-lg" />
+              </div>
+            </div>
+
+            <div class="form-grid-layout">
+
+              <!-- קבוצה 1: כשרות ומידות -->
+              <div class="form-group-card">
+                <h3 class="group-title"><i class="pi pi-star"></i> כשרות ומידות</h3>
+
+                <div class="form-field">
+                  <label for="kosherType" class="field-label">כשרות</label>
+                  <p-select id="kosherType"
+                    [options]="kosherTypes"
+                    [(ngModel)]="editingDish.kosherType"
+                    appendTo="body"
+                    styleClass="field-select w-full">
+                  </p-select>
+                </div>
+
+                <div class="form-field">
+                  <label for="servingSize" class="field-label">גודל מנה (מספר סועדים)</label>
+                  <p-inputNumber id="servingSize" [(ngModel)]="editingDish.servingSize" [min]="1" [showButtons]="true" styleClass="field-input w-full"></p-inputNumber>
+                </div>
+
+                <div class="form-field">
+                  <p-checkbox [(ngModel)]="editingDish.isActive" [binary]="true" label="מנה פעילה"></p-checkbox>
+                </div>
+              </div>
+
+              <!-- קבוצה 2: מחירים -->
+              <div class="form-group-card">
+                <h3 class="group-title"><i class="pi pi-dollar"></i> מחירים</h3>
+
+                <div class="form-field estimated-price-display">
+                  <label class="field-label">מחיר עלות (₪)</label>
+                  <div class="cost-display-box">
+                    <i class="pi pi-calculator"></i>
+                    <span class="cost-value">{{ calculateBasePrice() | number:'1.0-2' }} ₪</span>
+                  </div>
+                  <small class="price-hint">מחושב אוטומטית מסכום המרכיבים</small>
+                </div>
+
+                <div class="form-field">
+                  <label for="clientPrice" class="field-label">מחיר ללקוח (₪)</label>
+                  <p-inputNumber id="clientPrice" [(ngModel)]="editingDish.clientPrice"
+                    mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
+                    styleClass="field-input w-full"></p-inputNumber>
+                </div>
+              </div>
+
+              <!-- קבוצה 3: תיאורים - רוחב מלא -->
+              <div class="form-group-card full-width">
+                <h3 class="group-title"><i class="pi pi-align-right"></i> תיאורים והערות</h3>
+
+                <div class="form-grid-inner">
+                  <div class="form-field">
+                    <label for="servingDesc" class="field-label">תיאור הגשה</label>
+                    <textarea pTextarea id="servingDesc" [(ngModel)]="editingDish.servingDescription"
+                      rows="2" class="field-textarea w-full" placeholder="תיאור אופן ההגשה..."></textarea>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="waiterNotes" class="field-label">הערות למלצר</label>
+                    <textarea pTextarea id="waiterNotes" [(ngModel)]="editingDish.waiterNotes"
+                      rows="2" class="field-textarea w-full" placeholder="הערות מיוחדות למלצר..."></textarea>
+                  </div>
+
+                  <div class="form-field full-width">
+                    <label for="description" class="field-label">תיאור כללי</label>
+                    <textarea pTextarea id="description" [(ngModel)]="editingDish.description"
+                      rows="2" class="field-textarea w-full" placeholder="תיאור המנה..."></textarea>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- ============================================ -->
+        <!-- Tab 1: Ingredients -->
+        <!-- ============================================ -->
+        <p-tabpanel value="1">
+          <div class="tab-header-actions">
+            <p-button label="הוסף מרכיב" icon="pi pi-plus" severity="success" [outlined]="true" (onClick)="handleAddIngredient()"></p-button>
+          </div>
+
+          <!-- No-products warning -->
+          <div *ngIf="editingDish.ingredients.length === 0" class="empty-tab-message warn">
+            <i class="pi pi-exclamation-triangle"></i>
+            <span>אין מרכיבים מוגדרים למנה זו. ניתן להוסיף מוצרים מאוחר יותר.</span>
+          </div>
+
+          <div class="ingredients-list" *ngIf="editingDish.ingredients.length > 0">
+            <div class="ingredient-row" *ngFor="let ingredient of editingDish.ingredients; let i = index; trackBy: trackByIndex">
+              <!-- Product Select -->
+              <div class="ing-field product-select">
+                <label>מוצר</label>
+                <p-select
+                  [options]="products"
+                  [ngModel]="ingredient.productId"
+                  (ngModelChange)="handleIngredientProductChange(i, $event)"
+                  optionLabel="name"
+                  optionValue="id"
+                  [filter]="true"
+                  filterBy="name"
+                  placeholder="בחר מוצר..."
+                  [showClear]="true"
+                  [style]="{'width': '100%'}">
+                </p-select>
+              </div>
+
+              <!-- Quantity -->
+              <div class="ing-field quantity-field">
+                <label>כמות</label>
+                <p-inputNumber
+                  [ngModel]="ingredient.quantity"
+                  (ngModelChange)="handleUpdateIngredient(i, 'quantity', $event)"
+                  [min]="0"
+                  [maxFractionDigits]="3"
+                  mode="decimal"
+                  [style]="{'width': '100%'}">
+                </p-inputNumber>
+              </div>
+
+              <!-- Unit -->
+              <div class="ing-field unit-field">
+                <label>יחידה</label>
+                <p-select
+                  [options]="units"
+                  [ngModel]="ingredient.unit"
+                  (ngModelChange)="handleUpdateIngredient(i, 'unit', $event)"
+                  [style]="{'width': '100%'}">
+                </p-select>
+              </div>
+
+              <!-- Is Serving Component -->
+              <div class="ing-field serving-component-field">
+                <label>רכיב הגשה</label>
+                <p-checkbox
+                  [binary]="true"
+                  [ngModel]="ingredient.isServingComponent"
+                  (ngModelChange)="handleUpdateIngredient(i, 'isServingComponent', $event)"
+                  pTooltip="סמן אם המוצר הוא חלק מהגשת המנה ולא מרכיב גלם">
+                </p-checkbox>
+              </div>
+
+              <!-- Price info -->
+              <div class="ing-field price-info">
+                <ng-container *ngIf="getIngredientPriceInfo(ingredient) as priceInfo">
+                  <div class="ingredient-price-breakdown">
+                    <small class="price-calc">{{ priceInfo.pricePerUnit | number:'1.0-2' }} × {{ ingredient.quantity | number:'1.0-3' }}</small>
+                    <strong class="price-total">= {{ priceInfo.totalPrice | number:'1.0-2' }} ₪</strong>
+                  </div>
+                </ng-container>
+              </div>
+
+              <!-- Remove -->
+              <div class="ing-field remove-field">
+                <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" (onClick)="handleRemoveIngredient(i)" pTooltip="הסר"></p-button>
+              </div>
+            </div>
+
+            <p-divider></p-divider>
+            <div class="ingredients-summary">
+              <span style="font-weight: bold; background-color: #e5ff21; padding: 5px;">עלות מרכיבים מחושבת: <strong>{{ calculateBasePrice() | number:'1.0-2' }} ₪</strong></span>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- ============================================ -->
+        <!-- Tab 2: Serving Dishes -->
+        <!-- ============================================ -->
+        <p-tabpanel value="2">
+          <div class="tab-header-actions">
+            <p-button label="הוסף כלי הגשה" icon="pi pi-plus" severity="success" [outlined]="true" (onClick)="handleAddServingDish()"></p-button>
+          </div>
+
+          <div *ngIf="!editingDish.servingDishes?.length" class="empty-tab-message">
+            <i class="pi pi-info-circle"></i>
+            <span>אין כלי הגשה מוגדרים למנה זו</span>
+          </div>
+
+          <div class="serving-list" *ngIf="editingDish.servingDishes?.length">
+            <div class="serving-row" *ngFor="let sd of editingDish.servingDishes; let i = index; trackBy: trackByIndex">
+              <!-- Tool Select -->
+              <div class="sd-field tool-select">
+                <label>כלי הגשה</label>
+                <p-select
+                  [options]="tools"
+                  [ngModel]="sd.toolId"
+                  (ngModelChange)="handleServingDishToolChange(i, $event)"
+                  optionLabel="name"
+                  optionValue="id"
+                  [filter]="true"
+                  filterBy="name"
+                  placeholder="בחר כלי הגשה..."
+                  [showClear]="true"
+                  [style]="{'width': '100%'}">
+                </p-select>
+              </div>
+
+              <!-- Quantity -->
+              <div class="sd-field quantity-field">
+                <label>כמות</label>
+                <p-inputNumber
+                  [ngModel]="sd.quantity"
+                  (ngModelChange)="handleUpdateServingDish(i, 'quantity', $event)"
+                  [min]="1"
+                  [showButtons]="true"
+                  [style]="{'width': '100%'}">
+                </p-inputNumber>
+              </div>
+
+              <!-- Remove -->
+              <div class="sd-field remove-field">
+                <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" (onClick)="handleRemoveServingDish(i)" pTooltip="הסר"></p-button>
+              </div>
+            </div>
+          </div>
+        </p-tabpanel>
+
+        <!-- ============================================ -->
+        <!-- Tab 3: Menu Mappings (שיוך לתפריטים) -->
+        <!-- ============================================ -->
+        <p-tabpanel value="3">
+          <div *ngIf="allCategoriesGrouped.length === 0" class="empty-tab-message">
+            <i class="pi pi-info-circle"></i>
+            <span>אין תבניות תפריט. יש ליצור תפריטים תחילה מדף ניהול התפריטים.</span>
+          </div>
+
+          <div *ngIf="allCategoriesGrouped.length > 0" class="menu-mappings-container">
+            <p class="mapping-instructions">
+              <i class="pi pi-info-circle"></i>
+              סמנו את הקטגוריות שאליהן שייכת מנה זו. מנה יכולה להופיע בכמה תפריטים.
+            </p>
+
+            <p-accordion [multiple]="true">
+              <p-accordion-panel *ngFor="let group of allCategoriesGrouped" [value]="group.menu_type">
+                <p-accordion-header>
+                  <div class="menu-group-header">
+                    <p-tag [value]="group.menu_type" [severity]="getMenuTypeSeverity(group.menu_type)"></p-tag>
+                    <span class="menu-template-name">{{ group.template_name }}</span>
+                    <span class="mapping-count-badge" *ngIf="getCategoryCountForTemplate(group) > 0">
+                      {{ getCategoryCountForTemplate(group) }} משויכות
+                    </span>
+                  </div>
+                </p-accordion-header>
+                <p-accordion-content>
+                  <div class="categories-checklist">
+                    <div class="category-check-item" *ngFor="let cat of group.categories">
+                      <div class="category-main-row">
+                        <p-checkbox
+                          [binary]="true"
+                          [ngModel]="isCategorySelected(cat.id)"
+                          (ngModelChange)="toggleCategoryMapping(cat.id)">
+                        </p-checkbox>
+                        <span class="category-label" (click)="toggleCategoryMapping(cat.id)">
+                          <span class="category-name">{{ cat.name_hebrew }}</span>
+                          <small class="sub-meal-label" *ngIf="cat.sub_meal_name"> ({{ cat.sub_meal_name }})</small>
+                        </span>
+                      </div>
+                      
+                      <!-- Upgrade options - shown only when category is selected -->
+                      <div class="upgrade-options" *ngIf="isCategorySelected(cat.id)">
+                        <div class="upgrade-checkbox-row">
+                          <p-checkbox
+                            [binary]="true"
+                            [ngModel]="getCategoryIsUpgrade(cat.id)"
+                            (ngModelChange)="setCategoryIsUpgrade(cat.id, $event)"
+                            inputId="upgrade-{{cat.id}}">
+                          </p-checkbox>
+                          <label for="upgrade-{{cat.id}}" class="upgrade-label">מנת שדרוג</label>
+                        </div>
+                        
+                        <!-- Extra charge input - shown only when upgrade is checked -->
+                        <div class="extra-charge-row" *ngIf="getCategoryIsUpgrade(cat.id)">
+                          <label class="extra-charge-label">תוספת מחיר:</label>
+                          <p-inputNumber
+                            [ngModel]="getCategoryExtraCharge(cat.id)"
+                            (ngModelChange)="setCategoryExtraCharge(cat.id, $event)"
+                            [min]="0"
+                            [showButtons]="true"
+                            mode="currency"
+                            currency="ILS"
+                            locale="he-IL"
+                            [inputStyle]="{'width': '120px'}"
+                            placeholder="0">
+                          </p-inputNumber>
+                          <span class="currency-suffix">₪</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </p-accordion-content>
+              </p-accordion-panel>
+            </p-accordion>
+          </div>
+        </p-tabpanel>
+
+        <p-tabpanel value="4">
+          <div class="calculation-admin" *ngIf="editingDish.id; else saveDishFirst">
+            <div class="tab-header-actions">
+              <p-button label="הוסף אפשרות הגשה" icon="pi pi-plus" [outlined]="true" (onClick)="addDishServingSet('serving')"></p-button>
+              <p-button label="הוסף סט אריזה" icon="pi pi-plus" [outlined]="true" (onClick)="addDishServingSet('packaging')"></p-button>
+              <p-button label="הוסף חוק חישוב" icon="pi pi-plus" [outlined]="true" (onClick)="addDishCalculationRule()"></p-button>
+            </div>
+
+            <p>הגדירו אפשרות לחד פעמי ואפשרות לאמיתי. לכל סוג ניתן להגדיר הגשה אישית ומרכזית ולסמן ברירת מחדל. סוג הכלים באירוע יבחר אוטומטית את האפשרות המתאימה. כל אפשרות נשמרת בכפתור שלה.</p>
+            <div class="calculation-admin-card" *ngFor="let set of dishServingSets">
+              <div class="calculation-admin-row">
+                <input pInputText [(ngModel)]="set.name" placeholder="שם האפשרות (לא חובה)">
+                <select [(ngModel)]="set.set_type"><option value="serving">כלי הגשה</option><option value="packaging">אריזה</option></select>
+                <ng-container *ngIf="set.set_type === 'serving'">
+                  <label>סוג כלים באירוע <select [(ngModel)]="set.dishware_type"><option value="disposable">חד פעמי</option><option value="real">אמיתי</option></select></label>
+                  <label>צורת הגשה <select [(ngModel)]="set.serving_mode"><option value="personal">אישית</option><option value="central">במרכז השולחן</option></select></label>
+                </ng-container>
+                <label><input type="checkbox" [(ngModel)]="set.is_default"> ברירת מחדל לסוג הכלים הזה</label>
+                <button type="button" (click)="addDishServingSetItem(set)">הוסף כלי</button>
+              </div>
+              <div class="calculation-admin-row" *ngFor="let item of set.items; let itemIndex = index">
+                <select [(ngModel)]="item.tool_id"><option [ngValue]="undefined">ללא כלי מקושר</option><option *ngFor="let tool of tools" [ngValue]="tool.id">{{ tool.name }} — {{ tool.subCategory }}</option></select>
+                <input pInputText [(ngModel)]="item.name" placeholder="שם חלופי">
+                <input type="number" min="0" [(ngModel)]="item.quantity">
+                <select [(ngModel)]="item.quantity_basis"><option value="event">לאירוע</option><option value="table">לשולחן (הגדרה ישנה)</option><option value="serving_group">לכל 8 מקומות ערוכים</option><option value="place_setting">לכל מקום ערוך</option><option value="guest">לכל מנה שהוזמנה באירוע</option><option value="dish_unit">ליחידת מנה</option><option value="tray">למגש</option></select><button type="button" (click)="set.items.splice(itemIndex, 1)">הסר כלי</button>
+              </div>
+              <div class="calculation-admin-row"><button type="button" (click)="saveDishServingSet(set)">שמור אפשרות</button><button type="button" (click)="deleteDishServingSet(set)">מחק</button></div>
+            </div>
+
+            <h3>חישובי תוספות וסלטים מהאקסל</h3>
+            <p>בחרו רק את התוספות והחישובים ששייכים למנה. בסלטים חיים יש להשלים יחידת מידה; בסלט לשליחה בחרו למנה המתאימה בלבד. חצי במתוק מחושב אוטומטית.</p>
+            <select [(ngModel)]="workbookPresetKey" aria-label="נוסחה מהאקסל"><option value="">בחרו נוסחה</option><option *ngFor="let preset of workbookPresets" [value]="preset.key">{{ preset.group }} — {{ preset.name }} ({{ preset.cell }})</option></select>
+            <button type="button" (click)="addWorkbookRule()" [disabled]="!workbookPresetKey">הוסף חישוב מהאקסל</button>
+            <div class="calculation-admin-card" *ngFor="let rule of dishCalculationRules">
+              <div class="calculation-admin-row">
+                <select [(ngModel)]="rule.rule_type"><option value="workbook">נוסחה מהאקסל</option><option value="salad_garnish">תוספת לסלט</option><option value="meat">בשר</option><option value="custom_product">מוצר מותאם</option></select>
+                <input pInputText [(ngModel)]="rule.name" placeholder="שם החוק / המוצר">
+                <select [(ngModel)]="rule.product_id"><option [ngValue]="undefined">ללא מוצר</option><option *ngFor="let product of products" [ngValue]="product.id">{{ product.name }}</option></select>
+                <select [(ngModel)]="rule.replaces_ingredient_product_id"><option [ngValue]="undefined">לא מחליף מרכיב</option><option *ngFor="let product of products" [ngValue]="product.id">מחליף: {{ product.name }}</option></select>
+                <label><input type="checkbox" [(ngModel)]="rule.is_active"> פעיל</label>
+              </div>
+              <div *ngIf="rule.rule_type === 'workbook' && rule.params as params" class="calculation-admin-card">
+                <p>מקור: {{ params['source_sheet'] }} · {{ params['source_cell'] }}</p>
+                <label>כמות בסיס <input type="number" min="0" step="any" [(ngModel)]="params['factor']"></label>
+                <label>חלקי כמה מנות <input type="number" min="0.001" step="any" [(ngModel)]="params['divisor']"></label>
+                <label>יחידה <select [(ngModel)]="params['unit']"><option value="">טרם הוגדרה — החישוב לא יופעל</option><option *ngFor="let unit of units" [value]="unit">{{ unit }}</option><option value="מ״ל">מ״ל</option></select></label>
+                <label>חלק מהקהל (1 = כולם, 0.5 = חצי) <input type="number" min="0" max="1" step="0.01" [(ngModel)]="params['audience_fraction']"></label>
+                <label><input type="checkbox" [(ngModel)]="params['round_up']"> עיגול הכמות הסופית למעלה</label>
+              </div>
+              <textarea *ngIf="rule.rule_type !== 'workbook'" pTextarea [(ngModel)]="rule.paramsJson" rows="3" placeholder='פרמטרים JSON, לדוגמה {"formula":"main_beef"}'></textarea>
+              <div class="calculation-admin-row"><button type="button" (click)="saveDishCalculationRule(rule)">שמור חוק</button><button type="button" (click)="deleteDishCalculationRule(rule)">מחק</button></div>
+            </div>
+          </div>
+          <ng-template #saveDishFirst><div class="empty-tab-message">יש לשמור את המנה לפני הגדרת הכלים הנדרשים להגשת המנה.</div></ng-template>
+        </p-tabpanel>
+
+      </p-tabpanels>
+    </p-tabs>
+  </ng-container>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <p-button label="ביטול" icon="pi pi-times" severity="secondary" [outlined]="true" (onClick)="isDialogOpen = false"></p-button>
+      <p-button label="שמור" icon="pi pi-check" (onClick)="handleSaveDish()"></p-button>
+    </div>
+  </ng-template>
+</p-dialog>

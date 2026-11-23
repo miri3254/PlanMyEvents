@@ -1,0 +1,128 @@
+<h2 mat-dialog-title>סריקת קבלה באמצעות AI</h2>
+
+<mat-dialog-content>
+  <!-- Hidden file input -->
+  <input
+    type="file"
+    id="pdfFileInput"
+    accept=".pdf"
+    (change)="onFileSelected($event)"
+    hidden
+  />
+
+  <!-- Empty State - Upload Area -->
+  <div
+    *ngIf="!isLoading && !hasScanned && !errorMessage"
+    class="upload-area"
+    (click)="triggerFileInput()"
+  >
+    <mat-icon class="upload-icon">cloud_upload</mat-icon>
+    <span class="upload-text">לחץ לבחירת קובץ PDF של קבלה</span>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="48"></mat-spinner>
+    <span class="loading-text">AI סורק את הקבלה...</span>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="error-container">
+    <mat-icon class="error-icon">error_outline</mat-icon>
+    <span class="error-text">{{ errorMessage }}</span>
+    <button mat-stroked-button color="primary" (click)="triggerFileInput()" class="retry-btn">
+      <mat-icon>refresh</mat-icon>
+      נסה שוב
+    </button>
+  </div>
+
+  <!-- Results State - Editable Table -->
+  <div *ngIf="hasScanned && !isLoading" class="results-container">
+    <table mat-table [dataSource]="scannedItems" class="scanned-items-table">
+      
+      <!-- Name Column -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>שם מוצר</th>
+        <td mat-cell *matCellDef="let item; let i = index" [class.new-product-row]="item.is_new">
+          <mat-form-field appearance="outline" class="compact-field">
+            <input
+              matInput
+              [(ngModel)]="item.edited_name"
+              (ngModelChange)="onNameChange(i, $event)"
+            />
+            <mat-spinner
+              *ngIf="item.nameMatchLoading"
+              matSuffix
+              diameter="16"
+            ></mat-spinner>
+          </mat-form-field>
+          <mat-chip *ngIf="item.is_new" class="new-chip">חדש</mat-chip>
+        </td>
+      </ng-container>
+
+      <!-- Quantity Column -->
+      <ng-container matColumnDef="quantity">
+        <th mat-header-cell *matHeaderCellDef>כמות</th>
+        <td mat-cell *matCellDef="let item" [class.new-product-row]="item.is_new">
+          <mat-form-field appearance="outline" class="compact-field quantity-field">
+            <input
+              matInput
+              type="number"
+              [(ngModel)]="item.quantity"
+              min="0"
+            />
+          </mat-form-field>
+        </td>
+      </ng-container>
+
+      <!-- Unit Price Column -->
+      <ng-container matColumnDef="unitPrice">
+        <th mat-header-cell *matHeaderCellDef>מחיר ליחידה</th>
+        <td mat-cell *matCellDef="let item" [class.new-product-row]="item.is_new">
+          <mat-form-field appearance="outline" class="compact-field price-field">
+            <input
+              matInput
+              type="number"
+              [(ngModel)]="item.unit_price"
+              min="0"
+              step="0.01"
+            />
+            <span matPrefix>₪&nbsp;</span>
+          </mat-form-field>
+        </td>
+      </ng-container>
+
+      <!-- Stock Column -->
+      <ng-container matColumnDef="stock">
+        <th mat-header-cell *matHeaderCellDef>מלאי נוכחי</th>
+        <td mat-cell *matCellDef="let item" [class.new-product-row]="item.is_new">
+          <span *ngIf="!item.is_new" class="stock-text">
+            יש במלאי: {{ item.current_stock }}
+          </span>
+          <span *ngIf="item.is_new" class="stock-text new-product-stock">
+            מוצר חדש
+          </span>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: displayedColumns"
+        [class.new-product-row]="row.is_new"
+      ></tr>
+    </table>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">ביטול</button>
+  <button
+    mat-raised-button
+    color="primary"
+    [disabled]="!canConfirm"
+    (click)="onConfirm()"
+  >
+    ✅ אישור ועדכון מלאי
+  </button>
+</mat-dialog-actions>

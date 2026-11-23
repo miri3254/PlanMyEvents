@@ -1,43 +1,37 @@
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# Secrets
+.env
+.env.*
+!.env.example
 
-# Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
-
-# Node
-/node_modules
-npm-debug.log
-yarn-error.log
-
-# IDEs and editors
+# Dependencies / environments
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
 .idea/
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
 
-# Visual Studio Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.history/*
+# Databases, backups, business data (never public)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+FastAPI/data/
+FastAPI/app_backup_*/
+private_copy_data_all/
 
-# Miscellaneous
-/.angular/cache
-.sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
-testem.log
-/typings
-__screenshots__/
+# Logs, temp and generated output
+*.log
+tmp/
+output/
+.playwright-mcp/
+temp_*.txt
+*_temp.txt
+FastAPI/uninstall_list.txt
 
-# System files
-.DS_Store
-Thumbs.db
+# Local Claude settings
+.claude/settings.local.json
+
+# Client recipes (private business content)
+/מתכונים/

@@ -1,0 +1,203 @@
+// Receipt Scan Dialog Styles
+
+:host {
+  display: block;
+}
+
+::ng-deep .mat-mdc-dialog-container {
+  min-width: 700px;
+}
+
+// Upload Area
+.upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 40px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+
+  &:hover {
+    border-color: #1976d2;
+    background-color: rgba(25, 118, 210, 0.04);
+  }
+
+  .upload-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #757575;
+    margin-bottom: 16px;
+  }
+
+  .upload-text {
+    font-size: 16px;
+    color: #616161;
+  }
+}
+
+// Loading State
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px;
+
+  .loading-text {
+    font-size: 16px;
+    color: #616161;
+  }
+}
+
+// Error State
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px;
+  background-color: #fbe9e7;
+  border-radius: 8px;
+  border: 1px solid #ffccbc;
+
+  .error-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #d32f2f;
+  }
+
+  .error-text {
+    font-size: 16px;
+    color: #c62828;
+    text-align: center;
+    max-width: 400px;
+  }
+
+  .retry-btn {
+    margin-top: 8px;
+    
+    mat-icon {
+      margin-left: 4px;
+    }
+  }
+}
+
+// Results Table
+.results-container {
+  overflow-x: auto;
+}
+
+.scanned-items-table {
+  width: 100%;
+  
+  th.mat-header-cell {
+    font-weight: 600;
+    color: #424242;
+    padding: 8px;
+  }
+
+  td.mat-cell {
+    padding: 4px 8px;
+    vertical-align: middle;
+  }
+
+  tr.mat-row {
+    &.new-product-row {
+      background-color: #e8f5e9;
+    }
+  }
+}
+
+// Compact form fields
+.compact-field {
+  width: 100%;
+  
+  ::ng-deep {
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+
+    .mat-mdc-text-field-wrapper {
+      padding: 0 8px;
+    }
+
+    .mat-mdc-form-field-infix {
+      padding: 4px 0;
+      min-height: 32px;
+    }
+
+    input.mat-mdc-input-element {
+      font-size: 13px;
+    }
+  }
+}
+
+.quantity-field {
+  max-width: 80px;
+}
+
+.price-field {
+  max-width: 100px;
+}
+
+// Stock text
+.stock-text {
+  font-size: 12px;
+  color: #757575;
+
+  &.new-product-stock {
+    color: #388e3c;
+    font-style: italic;
+  }
+}
+
+// New product chip
+.new-chip {
+  background-color: #4caf50 !important;
+  color: white !important;
+  font-size: 11px;
+  margin-right: 8px;
+  height: 20px;
+  
+  ::ng-deep .mat-mdc-chip-action-label {
+    padding: 0 8px;
+  }
+}
+
+// Dialog actions
+mat-dialog-actions {
+  padding: 16px 24px;
+  margin: 0;
+  
+  button {
+    margin-right: 8px;
+    
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+}
+
+// RTL adjustments for Hebrew
+:host-context([dir="rtl"]) {
+  .new-chip {
+    margin-right: 0;
+    margin-left: 8px;
+  }
+
+  mat-dialog-actions button {
+    margin-right: 0;
+    margin-left: 8px;
+    
+    &:last-child {
+      margin-left: 0;
+    }
+  }
+}

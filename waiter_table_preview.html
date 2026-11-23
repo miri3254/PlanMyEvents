@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>תצוגת עיצוב - הוראות הגשה</title>
+  <style>
+    @font-face {
+      font-family: HeeboLocal;
+      src: url("FastAPI/app/assets/fonts/Heebo-Regular.ttf") format("truetype");
+      font-weight: 400;
+    }
+
+    @font-face {
+      font-family: HeeboLocal;
+      src: url("FastAPI/app/assets/fonts/Heebo-Bold.ttf") format("truetype");
+      font-weight: 700;
+    }
+
+    :root {
+      --ink: #15192d;
+      --muted: #5c6474;
+      --line: #d9dee8;
+      --soft: #f6f8fb;
+      --brand: #f28c21;
+      --red: #9d2c20;
+      --warm: #fff5e8;
+      --warm-line: #ead8c3;
+      --warm-text: #7b3f00;
+      --neutral: #e9edf7;
+      --neutral-line: #d5dbe8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #eef1f5;
+      color: var(--ink);
+      font-family: HeeboLocal, Arial, sans-serif;
+      line-height: 1.45;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 18px auto;
+      padding: 18mm 16mm 16mm;
+      background: #fff;
+      box-shadow: 0 8px 30px rgba(18, 28, 45, 0.13);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-top: 7px solid var(--brand);
+      pointer-events: none;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 150px 1fr 150px;
+      align-items: start;
+      gap: 18px;
+      margin-bottom: 16px;
+      direction: ltr;
+    }
+
+    .logo {
+      width: 142px;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .title {
+      text-align: center;
+      direction: rtl;
+    }
+
+    h1 {
+      margin: 10px 0 4px;
+      font-size: 31px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .bsd {
+      text-align: left;
+      direction: rtl;
+      font-size: 13px;
+      color: var(--muted);
+      padding-top: 6px;
+    }
+
+    .event-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+      margin: 12px 0 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--soft);
+    }
+
+    .event-strip div {
+      min-height: 50px;
+      padding: 8px 10px;
+      border-left: 1px solid var(--line);
+    }
+
+    .event-strip div:last-child {
+      border-left: 0;
+    }
+
+    .event-strip span {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .event-strip strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .setup-box {
+      margin-bottom: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .setup-title {
+      padding: 7px 10px;
+      background: var(--warm);
+      color: var(--warm-text);
+      font-weight: 700;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .setup-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+
+    .setup-grid div {
+      padding: 7px 9px;
+      border-left: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+    }
+
+    .setup-grid div:nth-child(4n) {
+      border-left: 0;
+    }
+
+    .setup-grid div:nth-last-child(-n + 4) {
+      border-bottom: 0;
+    }
+
+    .section {
+      margin-top: 13px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      break-inside: avoid;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 7px 10px;
+      font-weight: 700;
+      font-size: 15px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .section-heading small {
+      color: rgba(21, 25, 45, 0.68);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .section .section-heading {
+      background: var(--neutral);
+      color: var(--ink);
+      border-bottom-color: var(--neutral-line);
+    }
+
+    .section {
+      border-color: var(--neutral-line);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      direction: rtl;
+    }
+
+    th,
+    td {
+      border-left: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      padding: 7px 9px;
+      vertical-align: top;
+      font-size: 12px;
+    }
+
+    th:last-child,
+    td:last-child {
+      border-left: 0;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #343b4c;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .col-cutlery { width: 18%; }
+    .col-serving { width: 24%; }
+    .col-dish { width: 46%; }
+    .col-note { width: 12%; }
+
+    .dish-name {
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .dish-details {
+      margin-top: 2px;
+      color: #3e4657;
+      font-size: 11.5px;
+    }
+
+    .note {
+      color: var(--red);
+      font-weight: 700;
+      font-size: 11.5px;
+    }
+
+    .compact-note {
+      margin-top: 12px;
+      padding: 8px 10px;
+      border: 1px solid var(--warm-line);
+      border-radius: 8px;
+      background: var(--warm);
+      color: var(--warm-text);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        margin: 0;
+        box-shadow: none;
+        width: auto;
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <img class="logo" src="Angular/src/assets/logo.png" alt="Ginsberger" />
+      <div class="title">
+        <h1>הוראות הגשה</h1>
+        <div class="subtitle">תפריט בשרי יום ד׳ | מבנה טבלאי למלצר</div>
+      </div>
+      <div class="bsd">בס״ד</div>
+    </header>
+
+    <section class="event-strip" aria-label="פרטי אירוע">
+      <div><span>אירוע</span><strong>בר מצווה משפחת כהן</strong></div>
+      <div><span>תאריך</span><strong>12/07/2026</strong></div>
+      <div><span>מקום</span><strong>אולם לדוגמה, ירושלים</strong></div>
+      <div><span>סועדים</span><strong>180</strong></div>
+      <div><span>כלים</span><strong>אמיתיים</strong></div>
+    </section>
+
+    <section class="setup-box">
+      <div class="setup-title">כלים עריכה לשולחן</div>
+      <div class="setup-grid">
+        <div>2 מזלג ורסאי</div>
+        <div>2 סכין ורסאי</div>
+        <div>צלחת כלנית שחור קטן</div>
+        <div>צלחת כלנית שחור גדול</div>
+        <div>כוס יהלום</div>
+        <div>מפית פרחוני מלבן צר</div>
+        <div>מחבק צלחת</div>
+        <div>לחמניות לכל שולחן</div>
+      </div>
+    </section>
+
+    <section class="section bread">
+      <div class="section-heading">
+        <span>המוציא</span>
+        <small>מוגש בתחילת הסעודה</small>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="col-cutlery">סכו״ם</th>
+            <th class="col-serving">כלי הגשה</th>
+            <th class="col-dish">מנה / הוראות</th>
+            <th class="col-note">דגש</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td></td>
+            <td>סלסלה / מגש לחם</td>
+            <td><span class="dish-name">לחמניות</span><div class="dish-details">להוציא לשולחנות לפני תחילת הסעודה.</div></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section salads">
+      <div class="section-heading">
+        <span>סלטים</span>
+        <small>להניח מסודר במרכז שולחן / בופה</small>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="col-cutlery">סכו״ם</th>
+            <th class="col-serving">כלי הגשה</th>
+            <th class="col-dish">מנה / הוראות</th>
+            <th class="col-note">דגש</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>כף</td>
+            <td>קערה גלאס</td>
+            <td><span class="dish-name">כרוב לבן + כרוב סגול</span><div class="dish-details">בצל ירוק, רוטב חום, חמניה פיקנטי מעל.</div></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>כף</td>
+            <td>קערה</td>
+            <td><span class="dish-name">חסה + שרי</span><div class="dish-details">נבטים, בצל סגול, רוטב צהוב ונשנושים.</div></td>
+            <td class="note">רוטב סמוך להגשה</td>
+          </tr>
+          <tr>
+            <td>סכין וכף</td>
+            <td>צלחת גדולה</td>
+            <td><span class="dish-name">חציל סירות</span><div class="dish-details">טחינה, פטרוזיליה ומעט צנוברים למעלה.</div></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>כפית</td>
+            <td>צלחת קטנה</td>
+            <td><span class="dish-name">חומוס</span><div class="dish-details">באמצע גרגרי חומוס מעורבים היטב בסחוג.</div></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section starter">
+      <div class="section-heading">
+        <span>מנה ראשונה</span>
+        <small>הגשה אישית</small>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="col-cutlery">סכו״ם</th>
+            <th class="col-serving">כלי הגשה</th>
+            <th class="col-dish">מנה / הוראות</th>
+            <th class="col-note">דגש</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td></td>
+            <td>הגשה אישית</td>
+            <td><span class="dish-name">פילו</span><div class="dish-details">להגיש עם רוטב פטריות בצד או מעל לפי בחירת המקור.</div></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td></td>
+            <td>הגשה אישית</td>
+            <td><span class="dish-name">טורטיות</span><div class="dish-details">להגיש חם עם רוטב פטריות.</div></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section main">
+      <div class="section-heading">
+        <span>מנה עיקרית</span>
+        <small>יוצא לאחר פינוי מנה ראשונה</small>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="col-cutlery">סכו״ם</th>
+            <th class="col-serving">כלי הגשה</th>
+            <th class="col-dish">מנה / הוראות</th>
+            <th class="col-note">דגש</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td></td>
+            <td>הגשה אישית</td>
+            <td><span class="dish-name">שניצל</span><div class="dish-details">לוודא חימום מלא לפני הוצאה.</div></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td></td>
+            <td>הגשה אישית</td>
+            <td><span class="dish-name">עוף</span><div class="dish-details">להוציא במקביל לתוספות.</div></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section sides">
+      <div class="section-heading">
+        <span>תוספות</span>
+        <small>לרכז עם המנה העיקרית</small>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="col-cutlery">סכו״ם</th>
+            <th class="col-serving">כלי הגשה</th>
+            <th class="col-dish">מנה / הוראות</th>
+            <th class="col-note">דגש</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>כף ורסאי</td>
+            <td>אובל שחור גדול כלנית</td>
+            <td><span class="dish-name">אורז + תוספת</span><div class="dish-details">למלא מחדש לפי קצב השולחנות.</div></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>כף ורסאי</td>
+            <td>אובל שחור גדול כלנית</td>
+            <td><span class="dish-name">תפוחי אדמה</span></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>כף ורסאי</td>
+            <td>מרקית</td>
+            <td><span class="dish-name">אנטיפסטי ירקות</span></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section dessert">
+      <div class="section-heading">
+        <span>מנה אחרונה</span>
+        <small>לאחר פינוי מלא</small>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="col-cutlery">סכו״ם</th>
+            <th class="col-serving">כלי הגשה</th>
+            <th class="col-dish">מנה / הוראות</th>
+            <th class="col-note">דגש</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td></td>
+            <td>מגש קינוחים</td>
+            <td><span class="dish-name">מיקס</span><div class="dish-details">להוציא רק אחרי אישור מנהלת האירוע.</div></td>
+            <td class="note">לא להקדים</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section drinks">
+      <div class="section-heading">
+        <span>שתיה</span>
+        <small>מחושב לפי כמות הסועדים והגדרות האירוע</small>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="col-cutlery">סכו״ם</th>
+            <th class="col-serving">כלי הגשה</th>
+            <th class="col-dish">מנה / הוראות</th>
+            <th class="col-note">דגש</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td></td>
+            <td>בקבוקי שתיה</td>
+            <td><span class="dish-name">פפסי - 6 יחידות</span><div class="dish-details">לוודא שהשתיה נמצאת באירוע ומסודרת במקום נגיש למלצרים.</div></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td></td>
+            <td>בקבוקי שתיה</td>
+            <td><span class="dish-name">מים - 5 יחידות</span><div class="dish-details">להוציא לפי צורך ולשמור רזרבה בצד.</div></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td></td>
+            <td>בקבוקי שתיה</td>
+            <td><span class="dish-name">תפוזים / מים בטעמים - 6 יחידות</span><div class="dish-details">לסדר בעמדת השתיה או על השולחנות לפי הנחיית האירוע.</div></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div class="compact-note">
+      הערות כלליות: בחירה לפי תפריט המקור, לשמור על סדר קטגוריות, ולרכז הוראות מיוחדות בעמודת “דגש” במקום לפזר טקסט ארוך.
+    </div>
+  </main>
+</body>
+</html>

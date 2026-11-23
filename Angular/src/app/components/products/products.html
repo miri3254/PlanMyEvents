@@ -1,0 +1,499 @@
+<app-loading-overlay [visible]="isLoading"></app-loading-overlay>
+<div class="products-container p-6">
+    <!-- כותרת ואזור פעולות עליון -->
+    <div class="top-section mb-5">
+        <div class="header-card">
+            <div class="header-inner">
+                <!-- צד ימין - כותרת -->
+                <div class="header-content">
+                    <div class="title-wrapper">
+                        <div class="title-icon">
+                            <i class="pi pi-box"></i>
+                        </div>
+                        <div class="title-text">
+                            <h1 class="gradient-title">ניהול מוצרים</h1>
+                            <p class="subtitle">מאגר מוצרים ומרכיבים למנות</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- צד שמאל - כפתורי פעולות -->
+                <div class="header-actions">
+                    <p-button 
+                        label="ייצוא חוסרים לאקסל" 
+                        icon="pi pi-file-excel" 
+                        severity="success"
+                        [outlined]="true"
+                        (onClick)="exportShortages()"
+                        pTooltip="ייצא את רשימת המוצרים החסרים לקובץ Excel"
+                        tooltipPosition="bottom"
+                        styleClass="export-shortages-btn">
+                    </p-button>
+                    <p-button 
+                        label="מוצר חדש" 
+                        icon="pi pi-plus" 
+                        (onClick)="openNew()"
+                        styleClass="add-product-btn">
+                    </p-button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- אזור חיפוש וסינון -->
+        <div class="filters-card">
+            <div class="filters-inner">
+                <!-- שורה עליונה - חיפוש וסטטיסטיקות -->
+                <div class="filters-row">
+                    <!-- חיפוש -->
+                    <div class="search-section">
+                        <span class="p-input-icon-right search-input-wrapper">
+                            <i class="pi pi-search"></i>
+                            <input 
+                                pInputText 
+                                [(ngModel)]="searchValue" 
+                                placeholder="חיפוש מוצרים, מותגים או ספקים..."
+                                (input)="onSearch()"
+                                class="search-input">
+                        </span>
+                    </div>
+                    
+                    <!-- כפתורי סינון סטטוס -->
+                    <div class="status-filters">
+                        <div 
+                            class="filter-stat-card"
+                            *ngFor="let summary of inventorySummary"
+                            [ngClass]="[summary.badgeClass, filterInventoryStatus === summary.value ? 'active' : '']"
+                            (click)="filterByInventoryStatus(summary.value)">
+                            <i [class]="summary.icon"></i>
+                            <span class="filter-label">{{ summary.label }}</span>
+                            <span class="stat-number">{{ summary.count }}</span>
+                        </div>
+                        
+                        <p-button 
+                            label="ניקוי סינונים"
+                            icon="pi pi-filter-slash"
+                            [outlined]="true"
+                            size="small"
+                            styleClass="clear-btn"
+                            (onClick)="clearFilters()">
+                        </p-button>
+                    </div>
+                    
+                    <!-- מעבר תצוגה -->
+                    <div class="filter-actions">
+                        <div class="view-toggle-group">
+                            <p-button 
+                                label="טבלה"
+                                icon="pi pi-list" 
+                                [outlined]="viewMode !== 'table'"
+                                [text]="viewMode !== 'table'"
+                                size="small"
+                                (onClick)="setViewMode('table')">
+                            </p-button>
+                            <p-button 
+                                label="כרטיסיות"
+                                icon="pi pi-th-large" 
+                                [outlined]="viewMode !== 'grid'"
+                                [text]="viewMode !== 'grid'"
+                                size="small"
+                                (onClick)="setViewMode('grid')">
+                            </p-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- תצוגת טבלה -->
+    <p-card *ngIf="viewMode === 'table'">
+        <p-table [value]="filteredProducts" [tableStyle]="{'min-width': '60rem'}">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th class="sortable-header" (click)="sortBy('name')">
+                        <div class="flex align-items-center gap-2">
+                            <span>מוצר</span>
+                            <i [class]="getSortIcon('name')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('brand')">
+                        <div class="flex align-items-center gap-2">
+                            <span>מותג</span>
+                            <i [class]="getSortIcon('brand')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('supplier')">
+                        <div class="flex align-items-center gap-2">
+                            <span>ספק</span>
+                            <i [class]="getSortIcon('supplier')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('category')">
+                        <div class="flex align-items-center gap-2">
+                            <span>קטגוריה</span>
+                            <i [class]="getSortIcon('category')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('packageQuantity')">
+                        <div class="flex align-items-center gap-2">
+                            <span>כמות באריזה</span>
+                            <i [class]="getSortIcon('packageQuantity')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('estimatedPrice')">
+                        <div class="flex align-items-center gap-2">
+                            <span>מחיר משוער</span>
+                            <i [class]="getSortIcon('estimatedPrice')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('quantityInStock')">
+                        <div class="flex align-items-center gap-2">
+                            <span>במלאי</span>
+                            <i [class]="getSortIcon('quantityInStock')"></i>
+                        </div>
+                    </th>
+                    <th class="sortable-header" (click)="sortBy('inventoryStatus')">
+                        <div class="flex align-items-center gap-2">
+                            <span>סטטוס</span>
+                            <i [class]="getSortIcon('inventoryStatus')"></i>
+                        </div>
+                    </th>
+                    <th>פעולות</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-product>
+                <tr 
+                    (click)="editProduct(product)"
+                    style="cursor: pointer">
+                    <td><h3>{{product.name}}</h3></td>
+                    <td>{{product.brand}}</td>
+                    <td>{{product.supplier}}</td>
+                    <td>
+                        <p-tag [value]="product.category" severity="secondary"></p-tag>
+                    </td>
+                    <td>{{product.packageQuantity}}</td>
+                    <td>
+                        <span>₪{{product.estimatedPrice}}</span>
+                    </td>
+                    <td>
+                        <span class="font-bold" [class.text-danger]="product.quantityInStock <= product.minStockLevel">
+                            {{product.quantityInStock | number:'1.1-3'}} {{product.unit}}
+                        </span>
+                    </td>
+                    <td>
+                        <p-tag 
+                            [value]="product.inventoryStatus" 
+                            [severity]="getStatusSeverity(product.inventoryStatus)"
+                            [icon]="getStatusIcon(product.inventoryStatus)">
+                        </p-tag>
+                    </td>
+                    <td>
+                        <div class="flex gap-2">
+                            <p-button 
+                                icon="pi pi-pencil" 
+                                [outlined]="true"
+                                size="small"
+                                (onClick)="editProduct(product); $event.stopPropagation()">
+                            </p-button>
+                            <p-button 
+                                icon="pi pi-trash" 
+                                severity="danger"
+                                [outlined]="true"
+                                size="small"
+                                (onClick)="deleteProduct(product); $event.stopPropagation()">
+                            </p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="8" class="text-center py-6">
+                        <p class="text-muted">לא נמצאו מוצרים</p>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
+
+    <!-- תצוגת גריד -->
+    <div *ngIf="viewMode === 'grid'" class="products-grid">
+        <div class="product-card-wrapper" *ngFor="let product of filteredProducts; trackBy: trackByProduct">
+            <p-card styleClass="product-card hover-card h-full">
+                <ng-template pTemplate="header">
+                    <div class="card-header-wrapper">
+                        <h1 class="card-title">{{product.name}}</h1>
+                        <p-tag 
+                            class="card-status"
+                            [value]="product.inventoryStatus"
+                            [severity]="getStatusSeverity(product.inventoryStatus)"
+                            [icon]="getStatusIcon(product.inventoryStatus)">
+                        </p-tag>
+                    </div>
+                    <!-- <p class="card-brand">{{product.brand}}</p> -->
+                </ng-template>
+                <div class="product-details">
+                    <div class="detail-row">
+                        <span class="text-muted">ספק:</span>
+                        <span>{{product.supplier}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="text-muted">קטגוריה:</span>
+                        <p-tag [value]="product.category" severity="secondary"></p-tag>
+                    </div>
+                    <div class="detail-row">
+                        <span class="text-muted">כמות באריזה:</span>
+                        <span>{{product.packageQuantity}}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="text-muted font-bold">מלאי נוכחי:</span>
+                        <span class="font-bold underline">{{product.quantityInStock | number:'1.1-3'}} {{product.unit}}</span>
+                    </div>
+                    <div class="detail-row" *ngIf="isDisposableProduct(product)">
+                        <span class="text-muted">מחיר:</span>
+                        <span>₪{{product.estimatedPrice}}</span>
+                    </div>
+                </div>
+                <ng-template pTemplate="footer">
+                    <div class="flex gap-2">
+                        <p-button 
+                            label="ערוך"
+                            icon="pi pi-pencil" 
+                            [outlined]="true"
+                            class="flex-1"
+                            (onClick)="editProduct(product)">
+                        </p-button>
+                        <p-button 
+                            icon="pi pi-trash" 
+                            severity="danger"
+                            [outlined]="true"
+                            (onClick)="deleteProduct(product)">
+                        </p-button>
+                    </div>
+                </ng-template>
+            </p-card>
+        </div>
+
+    </div>
+
+    <p-card *ngIf="viewMode === 'grid' && filteredProducts.length === 0">
+        <div class="text-center py-6">
+            <p class="text-muted">לא נמצאו מוצרים</p>
+        </div>
+    </p-card>
+
+    <!-- דיאלוג עריכת מוצר -->
+    <p-dialog 
+        [(visible)]="productDialog" 
+        [modal]="true" 
+        [style]="{width: '50rem', maxWidth: '90vw'}"
+        [contentStyle]="{overflow: 'auto', maxHeight: '70vh'}"
+        [draggable]="false" 
+        [resizable]="false"
+        styleClass="custom-dialog">
+        
+        <ng-template pTemplate="header">
+            <div class="dialog-header-content">
+                <span class="dialog-title">{{ product.id ? 'עריכת ' + product.name : 'מוצר חדש' }}</span>
+            </div>
+        </ng-template>
+        
+        <div class="dialog-content p-fluid">
+            <div class="form-field mb-3">
+                <label for="drinkType" class="field-label">סוג שתייה לחישוב אירועים</label>
+                <p-select inputId="drinkType" [options]="drinkTypes" optionLabel="label" optionValue="value"
+                    [(ngModel)]="product.drinkType" (ngModelChange)="onDrinkTypeChange()" class="w-full"></p-select>
+                <small *ngIf="product.drinkType">מוצר אחד לכל סוג. הכמות במלאי היא מספר בקבוקים; מיץ כולל את כל הטעמים יחד. להוספת מלאי יש לעדכן את המוצר הקיים.</small>
+            </div>
+            <!-- מוצר - שם בלבד למעלה בולט -->
+            <div class="form-section highlight-section mb-4">
+                <div class="form-field full-width">
+                    <label for="name" class="field-label required">שם המוצר</label>
+                    <input 
+                        pInputText 
+                        id="name" 
+                        [(ngModel)]="product.name"
+                        placeholder="הזן שם מוצר (לדוגמה: עגבניות חממה, צלחות פלסטיק)"
+                        [class.ng-invalid]="submitted && !product.name"
+                        class="field-input primary-input w-full">
+                </div>
+            </div>
+
+            <p-tabs value="0">
+                <p-tablist>
+                    <p-tab value="0"><i class="pi pi-info-circle ml-2"></i> מידע כללי</p-tab>
+                    <p-tab value="1"><i class="pi pi-box ml-2"></i> מידות ומחיר</p-tab>
+                    <p-tab value="2"><i class="pi pi-warehouse ml-2"></i> מלאי</p-tab>
+                </p-tablist>
+
+                <p-tabpanels>
+                    <!-- קבוצה 1: מידע כללי -->
+                    <p-tabpanel value="0">
+                        <div class="form-group-card">
+                            <div class="form-field mb-3">
+                                <label for="brand" class="field-label">מותג</label>
+                                <input 
+                                    pInputText 
+                                    id="brand" 
+                                    [(ngModel)]="product.brand"
+                                    placeholder="שם המותג (אופציונלי)"
+                                    class="field-input w-full">
+                            </div>
+            
+                            <div class="form-field mb-3">
+                                <label for="supplier" class="field-label">ספק</label>
+                                <input 
+                                    pInputText 
+                                    id="supplier" 
+                                    [(ngModel)]="product.supplier"
+                                    placeholder="שם הספק"
+                                    class="field-input w-full">
+                            </div>
+            
+                            <div class="form-field mb-3">
+                                <label for="category" class="field-label">קטגוריה</label>
+                                <p-select 
+                                    id="category"
+                                    [options]="categories" 
+                                    [(ngModel)]="product.category"
+                                    placeholder="בחר קטגוריה"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                    appendTo="body"
+                                    styleClass="field-select w-full">
+                                </p-select>
+                            </div>
+                        </div>
+                    </p-tabpanel>
+
+                    <!-- קבוצה 2: מידות, מחיר ושונות -->
+                    <p-tabpanel value="1">
+                        <div class="form-group-card">
+                            <div class="flex gap-3 mb-3">
+                                <div class="form-field flex-1">
+                                    <label for="unit" class="field-label">יחידת מידה</label>
+                                    <p-select 
+                                        id="unit"
+                                        [options]="measurementUnits" 
+                                        [(ngModel)]="product.unit"
+                                        [disabled]="!!product.drinkType"
+                                        placeholder="בחר יחידה"
+                                        optionLabel="label"
+                                        optionValue="value"
+                                        appendTo="body"
+                                        styleClass="field-select w-full">
+                                    </p-select>
+                                </div>
+                
+                                <div class="form-field flex-1">
+                                    <label for="packageQuantity" class="field-label">כמות באריזה</label>
+                                    <p-inputNumber 
+                                        id="packageQuantity"
+                                        [(ngModel)]="product.packageQuantity"
+                                        [min]="1"
+                                        placeholder="לדוגמה: 1"
+                                        [showButtons]="true"
+                                        styleClass="field-input w-full">
+                                    </p-inputNumber>
+                                </div>
+                            </div>
+
+                            <div class="form-field mb-3">
+                                <label for="estimatedPrice" class="field-label">מחיר למוצר (משוער)</label>
+                                <p-inputNumber 
+                                    id="estimatedPrice"
+                                    [(ngModel)]="product.estimatedPrice"
+                                    [min]="0"
+                                    mode="currency"
+                                    currency="ILS"
+                                    locale="he-IL"
+                                    styleClass="field-input w-full">
+                                </p-inputNumber>
+                            </div>
+
+                            <div class="form-field mb-3 full-height-textarea">
+                                <label for="description" class="field-label">תיאור / הערות</label>
+                                <textarea 
+                                    pTextarea
+                                    id="description" 
+                                    [(ngModel)]="product.description"
+                                    placeholder="הזן תיאור או הערות רלוונטיות..."
+                                    rows="3"
+                                    class="field-textarea w-full"
+                                    style="resize: none;">
+                                </textarea>
+                            </div>
+                        </div>
+                    </p-tabpanel>
+
+                    <!-- קבוצה 3: ניהול מלאי -->
+                    <p-tabpanel value="2">
+                        <div class="form-group-card stock-section">
+                            <div class="form-field mb-3">
+                                <label for="quantityInStock" class="field-label font-bold text-primary">כמות מדויקת במלאי</label>
+                                <div class="p-inputgroup border-inputgroup rounded-lg overflow-hidden">
+                                    <p-inputNumber 
+                                        id="quantityInStock"
+                                        [(ngModel)]="product.quantityInStock"
+                                        [min]="0"
+                                        [minFractionDigits]="0"
+                                        [maxFractionDigits]="3"
+                                        [showButtons]="false"
+                                        placeholder="0.000"
+                                        styleClass="field-input w-full font-bold">
+                                    </p-inputNumber>
+                                    <span class="p-inputgroup-addon bg-gray-50 border-gray-300 font-bold" style="border-radius: 6px 0 0 6px;">{{product.unit || 'יח׳'}}</span>
+                                </div>
+                            </div>
+            
+                            <div class="form-field mb-3">
+                                <label for="minStockLevel" class="field-label">מלאי מינימלי (התראה)</label>
+                                <p-inputNumber 
+                                    id="minStockLevel"
+                                    [(ngModel)]="product.minStockLevel"
+                                    [min]="0"
+                                    [minFractionDigits]="0"
+                                    [maxFractionDigits]="2"
+                                    placeholder="0"
+                                    [showButtons]="true"
+                                    styleClass="field-input w-full">
+                                </p-inputNumber>
+                            </div>
+
+                            <div class="form-field status-field mb-3">
+                                <label class="field-label">סטטוס מלאי נוכחי</label>
+                                <div class="status-badge-container mt-2">
+                                    <p-tag 
+                                        [value]="getComputedInventoryStatus(product)"
+                                        [severity]="getStatusSeverity(getComputedInventoryStatus(product))"
+                                        [icon]="getStatusIcon(getComputedInventoryStatus(product))"
+                                        styleClass="status-tag-large px-4 py-2 text-base shadow-sm">
+                                    </p-tag>
+                                </div>
+                            </div>
+                        </div>
+                    </p-tabpanel>
+                </p-tabpanels>
+            </p-tabs>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <p-button 
+                label="ביטול" 
+                icon="pi pi-times" 
+                [outlined]="true"
+                (onClick)="hideDialog()">
+            </p-button>
+            <p-button 
+                label="שמור מוצר" 
+                icon="pi pi-check" 
+                (onClick)="saveProduct()">
+            </p-button>
+        </ng-template>
+    </p-dialog>
+
+    <p-confirmDialog></p-confirmDialog>
+    <p-toast position="top-right"></p-toast>
+</div>
