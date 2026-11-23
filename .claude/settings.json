@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./FastAPI/.env)",
+      "Read(./**/node_modules/**)",
+      "Read(./FastAPI/.venv/**)",
+      "Read(./FastAPI/app_backup_*/**)",
+      "Read(./private_copy_data_all/**)",
+      "Read(./FastAPI/data/**/*.db)"
+    ]
+  }
+}

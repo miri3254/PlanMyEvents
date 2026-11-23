@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>תצוגת עיצוב - רשימת קניות</title>
+  <style>
+    @font-face {
+      font-family: HeeboLocal;
+      src: url("FastAPI/app/assets/fonts/Heebo-Regular.ttf") format("truetype");
+      font-weight: 400;
+    }
+
+    @font-face {
+      font-family: HeeboLocal;
+      src: url("FastAPI/app/assets/fonts/Heebo-Bold.ttf") format("truetype");
+      font-weight: 700;
+    }
+
+    :root {
+      --ink: #15192d;
+      --muted: #5c6474;
+      --line: #d5dbe8;
+      --soft: #f8fafc;
+      --section: #eef1f5;
+      --warm: #f7f7f7;
+      --warm-line: #d9dee8;
+      --warm-text: #343b4c;
+      --buy: #15192d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #eef1f5;
+      color: var(--ink);
+      font-family: HeeboLocal, Arial, sans-serif;
+      line-height: 1.45;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 18px auto;
+      padding: 17mm 15mm 16mm;
+      background: #fff;
+      box-shadow: 0 8px 30px rgba(18, 28, 45, 0.13);
+      position: relative;
+    }
+
+    .page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-top: 4px solid #d9dee8;
+      pointer-events: none;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 150px 1fr 150px;
+      align-items: start;
+      gap: 18px;
+      margin-bottom: 15px;
+      direction: ltr;
+    }
+
+    .logo {
+      width: 142px;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .title {
+      text-align: center;
+      direction: rtl;
+    }
+
+    h1 {
+      margin: 10px 0 4px;
+      font-size: 30px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .bsd {
+      text-align: left;
+      direction: rtl;
+      color: var(--muted);
+      font-size: 13px;
+      padding-top: 6px;
+    }
+
+    .event-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--soft);
+      margin: 12px 0 15px;
+    }
+
+    .event-strip div {
+      min-height: 48px;
+      padding: 8px 10px;
+      border-left: 1px solid var(--line);
+    }
+
+    .event-strip div:last-child {
+      border-left: 0;
+    }
+
+    .event-strip span {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .event-strip strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .section {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      break-inside: avoid;
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 8px 10px;
+      background: var(--section);
+      border-bottom: 1px solid var(--line);
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .section-heading small {
+      color: rgba(21, 25, 45, 0.68);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      direction: rtl;
+    }
+
+    th,
+    td {
+      border-left: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      padding: 7px 8px;
+      vertical-align: top;
+      font-size: 11.5px;
+      text-align: right;
+    }
+
+    th:last-child,
+    td:last-child {
+      border-left: 0;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    th {
+      background: var(--soft);
+      color: #343b4c;
+      font-size: 10.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tbody tr:nth-child(even) td {
+      background: #fbfcfe;
+    }
+
+    .col-product { width: 28%; }
+    .col-category { width: 15%; }
+    .col-qty { width: 12%; }
+    .col-stock { width: 12%; }
+    .col-package { width: 15%; }
+    .col-buy { width: 18%; }
+
+    .product {
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .hint {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 10.5px;
+    }
+
+    .number {
+      text-align: center;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .buy {
+      color: var(--ink);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .done {
+      color: var(--muted);
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .note {
+      margin-top: 12px;
+      padding: 8px 10px;
+      border: 1px solid var(--warm-line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--warm-text);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        margin: 0;
+        box-shadow: none;
+        width: auto;
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <img class="logo" src="Angular/src/assets/logo.png" alt="Ginsberger" />
+      <div class="title">
+        <h1>רשימת קניות לאירוע</h1>
+      </div>
+      <div class="bsd">בס״ד</div>
+    </header>
+
+    <section class="event-strip" aria-label="פרטי אירוע">
+      <div><span>אירוע</span><strong>בר מצווה משפחת כהן</strong></div>
+      <div><span>תאריך</span><strong>12/07/2026</strong></div>
+      <div><span>סועדים</span><strong>180</strong></div>
+      <div><span>סוג תפריט</span><strong>בשרי</strong></div>
+      <div><span>סטטוס</span><strong>לפני קנייה</strong></div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <span>חומרי גלם</span>
+        <small>מוצר, כמות נדרשת, מלאי ומה לקנות בפועל</small>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="col-product">מוצר</th>
+            <th class="col-category">קטגוריה</th>
+            <th class="col-qty">נדרש</th>
+            <th class="col-stock">במלאי</th>
+            <th class="col-package">גודל אריזה</th>
+            <th class="col-buy">לקנות</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="product">חזה עוף</div><div class="hint">למנות עיקריות</div></td>
+            <td>בשרי</td>
+            <td class="number">18 ק״ג</td>
+            <td class="number">4 ק״ג</td>
+            <td class="number">1 ק״ג</td>
+            <td class="buy">14 יח׳</td>
+          </tr>
+          <tr>
+            <td><div class="product">אורז</div><div class="hint">תוספות</div></td>
+            <td>יבשים</td>
+            <td class="number">12 ק״ג</td>
+            <td class="number">5 ק״ג</td>
+            <td class="number">5 ק״ג</td>
+            <td class="buy">2 שקיות</td>
+          </tr>
+          <tr>
+            <td><div class="product">חסה</div><div class="hint">סלט חסה ושרי</div></td>
+            <td>ירקות</td>
+            <td class="number">18 יח׳</td>
+            <td class="number">0</td>
+            <td class="number">יחידה</td>
+            <td class="buy">18 יח׳</td>
+          </tr>
+          <tr>
+            <td><div class="product">עגבניות שרי</div><div class="hint">סלטים וקישוט</div></td>
+            <td>ירקות</td>
+            <td class="number">9 קופסאות</td>
+            <td class="number">2</td>
+            <td class="number">קופסה</td>
+            <td class="buy">7 קופסאות</td>
+          </tr>
+          <tr>
+            <td><div class="product">טחינה</div><div class="hint">חציל סירות וחומוס</div></td>
+            <td>רטבים</td>
+            <td class="number">4 ל׳</td>
+            <td class="number">1 ל׳</td>
+            <td class="number">1 ל׳</td>
+            <td class="buy">3 בקבוקים</td>
+          </tr>
+          <tr>
+            <td><div class="product">פפסי</div><div class="hint">שתייה לאירוע</div></td>
+            <td>שתייה</td>
+            <td class="number">6 יח׳</td>
+            <td class="number">0</td>
+            <td class="number">בקבוק</td>
+            <td class="buy">6 בקבוקים</td>
+          </tr>
+          <tr>
+            <td><div class="product">מים</div><div class="hint">שתייה לאירוע</div></td>
+            <td>שתייה</td>
+            <td class="number">5 יח׳</td>
+            <td class="number">5</td>
+            <td class="number">בקבוק</td>
+            <td class="done">אין חוסר</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <span>כלים וציוד</span>
+        <small>כלים חד-פעמיים, כלי הגשה וציוד נלווה</small>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="col-product">פריט</th>
+            <th class="col-category">סוג</th>
+            <th class="col-qty">נדרש</th>
+            <th class="col-stock">במלאי</th>
+            <th class="col-package">יחידה</th>
+            <th class="col-buy">להשלים</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="product">קערה גלאס</div><div class="hint">לסלטים</div></td>
+            <td>כלי הגשה</td>
+            <td class="number">12</td>
+            <td class="number">8</td>
+            <td class="number">יחידה</td>
+            <td class="buy">4</td>
+          </tr>
+          <tr>
+            <td><div class="product">כף ורסאי</div><div class="hint">לתוספות</div></td>
+            <td>סכו״ם הגשה</td>
+            <td class="number">16</td>
+            <td class="number">16</td>
+            <td class="number">יחידה</td>
+            <td class="done">אין חוסר</td>
+          </tr>
+          <tr>
+            <td><div class="product">מפות</div><div class="hint">לשולחנות אורחים</div></td>
+            <td>ציוד</td>
+            <td class="number">23</td>
+            <td class="number">10</td>
+            <td class="number">יחידה</td>
+            <td class="buy">13</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div class="note">
+      הערה לתצוגה: ב-PDF האמיתי הערכים יגיעו מחישובי האירוע, מלאי קיים, גודל אריזה וכמות לקנייה בפועל.
+    </div>
+  </main>
+</body>
+</html>

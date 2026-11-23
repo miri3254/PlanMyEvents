@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PlanMyEvents - הסבר חישובי מערכת</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #5b6577;
+      --line: #d9e0ea;
+      --soft: #f5f7fa;
+      --blue: #2457a6;
+      --green: #227447;
+      --amber: #9a5b00;
+      --red: #9d2d2d;
+      --white: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, "Noto Sans Hebrew", sans-serif;
+      color: var(--ink);
+      background: #eef2f6;
+      line-height: 1.65;
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 22px 56px;
+    }
+
+    header {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 28px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      line-height: 1.25;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 22px;
+      color: #111827;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      color: #1f2937;
+    }
+
+    p {
+      margin: 0 0 10px;
+    }
+
+    .lead {
+      max-width: 880px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .section {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+      margin-top: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      background: #fff;
+    }
+
+    .business {
+      border-right: 5px solid var(--green);
+    }
+
+    .dev {
+      border-right: 5px solid var(--blue);
+    }
+
+    .warning {
+      border-right: 5px solid var(--amber);
+      background: #fffaf0;
+    }
+
+    .risk {
+      border-right: 5px solid var(--red);
+      background: #fff5f5;
+    }
+
+    .tag {
+      display: inline-block;
+      margin: 0 0 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      background: var(--soft);
+      color: var(--muted);
+    }
+
+    .tag.business-tag {
+      background: #e8f5ee;
+      color: var(--green);
+    }
+
+    .tag.dev-tag {
+      background: #eaf1ff;
+      color: var(--blue);
+    }
+
+    ul {
+      margin: 8px 0 0;
+      padding: 0 20px 0 0;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: right;
+    }
+
+    th {
+      background: #f0f4f8;
+      font-weight: 700;
+    }
+
+    code {
+      direction: ltr;
+      unicode-bidi: plaintext;
+      display: inline-block;
+      background: #f3f5f7;
+      border: 1px solid #e1e6ee;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .step {
+      min-height: 96px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      padding: 12px;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #111827;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 820px) {
+      .grid,
+      .flow {
+        grid-template-columns: 1fr;
+      }
+
+      .page {
+        padding: 18px 12px 36px;
+      }
+
+      header,
+      .section {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <h1>הסבר חישובי המערכת - PlanMyEvents</h1>
+      <p class="lead">
+        הדף הזה מסביר את החישובים שנוספו למערכת גם בשפה עסקית לבעל הקייטרינג
+        וגם בשפה טכנית למפתחת. המטרה היא להבין מה המערכת מחשבת, מתי זה קורה,
+        ואיפה הלוגיקה נמצאת בקוד.
+      </p>
+    </header>
+
+    <section class="section">
+      <h2>תמונה כללית</h2>
+      <div class="flow">
+        <div class="step">
+          <strong>1. אירוע</strong>
+          מספר אורחים, סוג אירוע, תפריט, סטטוס, כלים אמיתיים ופיצול בוקר.
+        </div>
+        <div class="step">
+          <strong>2. מנות</strong>
+          המנות שנבחרו, כמות המנה, רכיבים, כלי הגשה וחוקים מיוחדים.
+        </div>
+        <div class="step">
+          <strong>3. מנוע חישובים</strong>
+          שתייה, לחמניות, מפות, כלים, אריזות, אשראי ותוספות מיוחדות.
+        </div>
+        <div class="step">
+          <strong>4. רשימות</strong>
+          רשימת קניות, רשימת ציוד, חוסרים, מלאי וכמות לקנייה.
+        </div>
+        <div class="step">
+          <strong>5. אישור אירוע</strong>
+          הקפאת מחירים וחישובים כדי ששינוי עתידי לא ישנה אירוע שאושר.
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>חישובי אירוע</h2>
+      <div class="grid">
+        <article class="card business">
+          <span class="tag business-tag">לבעל הקייטרינג</span>
+          <h3>מה מחושב בפועל?</h3>
+          <ul>
+            <li>כמה שתייה צריך להביא לפי מספר אורחים וסוג האירוע.</li>
+            <li>כמה לחמניות צריך, כולל חלוקה בין סוגים אם הוגדרה.</li>
+            <li>כמה שולחנות ומפות צריך, כולל רזרבה.</li>
+            <li>כמה כלי הגשה, אריזות וקופסאות שאריות צריך.</li>
+            <li>האם יש חוסרים במלאי או בכלים שכבר משוריינים לאירועים אחרים.</li>
+            <li>עמלת אשראי אם הלקוח משלם באשראי.</li>
+          </ul>
+        </article>
+
+        <article class="card dev">
+          <span class="tag dev-tag">למפתחת</span>
+          <h3>איפה זה בקוד?</h3>
+          <p>
+            המנוע המרכזי נמצא ב:
+            <code>FastAPI/app/services/event_calculation_service.py</code>
+          </p>
+          <ul>
+            <li><code>summarize()</code> מרכז את כל תוצאות החישוב.</li>
+            <li><code>_calculate_drinks()</code> מחשב שתייה.</li>
+            <li><code>_calculate_rolls()</code> מחשב לחמניות.</li>
+            <li><code>_calculate_tablecloths()</code> מחשב מפות ושולחנות.</li>
+            <li><code>_calculate_serving_sets()</code> מחשב כלי הגשה.</li>
+            <li><code>_calculate_tray_packaging()</code> מחשב אריזות מגשים.</li>
+            <li><code>_calculate_credit_card_fee()</code> מחשב עמלת אשראי.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>פירוט החישובים</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>חישוב</th>
+            <th>הסבר עסקי</th>
+            <th>כלל מרכזי</th>
+            <th>מיקום בקוד</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>שתייה</td>
+            <td>המערכת מחשבת כמה בקבוקי שתייה להביא לפי סוג האירוע ומספר אורחים.</td>
+            <td>באירוע רגיל החלוקה לפי אורחים / 9. באירוע מתוק לפי אורחים / 15. בשבת לפי סעודות וחלוקה אחרת.</td>
+            <td><code>event_calculation_service.py::_calculate_drinks</code></td>
+          </tr>
+          <tr>
+            <td>לחמניות</td>
+            <td>המערכת מחשבת כמה לחמניות צריך, ואם יש כמה סוגים היא מחלקת לפי אחוזים.</td>
+            <td>רגיל: אורחים * 1.5. מתוק: אורחים * 0.375. שבת: לפי סעודות.</td>
+            <td><code>event_calculation_service.py::_calculate_rolls</code></td>
+          </tr>
+          <tr>
+            <td>שולחנות ומפות</td>
+            <td>המערכת מעריכה כמה שולחנות וכמה מפות צריך, כולל שתי מפות רזרבה.</td>
+            <td>ceil(אורחים אפקטיביים / קיבולת שולחן) + רזרבה. באירוע מתוק נספרים 60% מהאורחים.</td>
+            <td><code>event_calculation_service.py::_table_count</code>, <code>_calculate_tablecloths</code></td>
+          </tr>
+          <tr>
+            <td>כלי הגשה</td>
+            <td>לכל מנה אפשר להגדיר סט כלי הגשה, והמערכת מחשבת כמה צריך בפועל לאירוע.</td>
+            <td>הכמות יכולה להיות לפי אירוע, שולחן, אורח, או כמות מנה.</td>
+            <td><code>event_calculation_service.py::_calculate_serving_sets</code></td>
+          </tr>
+          <tr>
+            <td>אריזות מגשים</td>
+            <td>למגשים אפשר להגדיר סט אריזה, והמערכת מוסיפה גם קופסת שאריות לכל מגש.</td>
+            <td>כמות אריזה לפי כמות מגשים או לפי בסיס אחר שהוגדר.</td>
+            <td><code>event_calculation_service.py::_calculate_tray_packaging</code></td>
+          </tr>
+          <tr>
+            <td>חוקים מיוחדים למנה</td>
+            <td>למנות מסוימות יש חישובים שלא נובעים מהרכיבים הרגילים, למשל בשר, תוספות לסלטים או מוצר מיוחד.</td>
+            <td>כל חוק מוגדר במנה ונכנס לרשימת הדרישות של האירוע.</td>
+            <td><code>event_calculation_service.py::_calculate_dish_rules</code></td>
+          </tr>
+          <tr>
+            <td>מנות חמות באירוע מתוק</td>
+            <td>במבחר מנות חמות לאירוע מתוק, המערכת מחלקת כמויות לפי משקלים ומפצה אם לא כל הסוגים נבחרו.</td>
+            <td>הכמות מחושבת לפי משקל יחסי לכל מנה, ואז מחולקת מחדש בין המנות שנבחרו.</td>
+            <td><code>event_calculation_service.py::_calculate_sweet_hot_groups</code></td>
+          </tr>
+          <tr>
+            <td>עמלת אשראי</td>
+            <td>אם הלקוח משלם באשראי, המערכת מוסיפה עמלת סליקה למחיר.</td>
+            <td>סכום אשראי * 1.9% * מע"מ 1.18.</td>
+            <td><code>event_calculation_service.py::_calculate_credit_card_fee</code>, <code>event_service.py::_recalc_total</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>רשימת קניות</h2>
+      <div class="grid">
+        <article class="card business">
+          <span class="tag business-tag">לבעל הקייטרינג</span>
+          <h3>מה יוצא מזה?</h3>
+          <p>
+            רשימת הקניות אומרת כמה חומר גלם צריך בפועל לאירוע, כמה כבר יש במלאי,
+            כמה חסר, וכמה חבילות צריך לקנות.
+          </p>
+          <ul>
+            <li>המערכת מסכמת את כל הרכיבים מכל המנות.</li>
+            <li>היא ממירה יחידות, למשל גרם לק"ג או כוס למ"ל כשאפשר.</li>
+            <li>היא מחסרת את המלאי הקיים.</li>
+            <li>היא מחשבת כמות לקנייה וחבילות לקנייה.</li>
+            <li>היא מוסיפה גם מוצרים שחושבו אוטומטית, כמו שתייה ולחמניות.</li>
+          </ul>
+        </article>
+
+        <article class="card dev">
+          <span class="tag dev-tag">למפתחת</span>
+          <h3>איפה זה בקוד?</h3>
+          <p>
+            החישוב נמצא ב:
+            <code>FastAPI/app/services/event_service.py::get_shopping_list</code>
+          </p>
+          <ul>
+            <li>המרות יחידות מתבצעות דרך <code>UnitConversionService</code>.</li>
+            <li>מוצרים שהוחלפו על ידי חוק חישוב מיוחד לא נספרים פעמיים.</li>
+            <li>דרישות ממנוע החישובים מתווספות לרשימה אחרי רכיבי המנות.</li>
+            <li>בסוף יש איחוד פריטים דומים דרך <code>_merge_shopping_items</code>.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>מחירים ורווחיות</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>נושא</th>
+            <th>הסבר עסקי</th>
+            <th>מיקום בקוד</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>מחיר אירוע</td>
+            <td>מחיר האירוע מורכב ממחיר בסיס לאורח, תוספות מנות, כלים אמיתיים, מגשים, פיצול בוקר ועמלת אשראי.</td>
+            <td><code>FastAPI/app/services/event_service.py::_recalc_total</code></td>
+          </tr>
+          <tr>
+            <td>מחיר סופי והנחה</td>
+            <td>אם מכניסים מחיר סופי, המערכת מחשבת כמה הנחה ניתנה ביחס למחיר המחושב.</td>
+            <td><code>FastAPI/app/services/event_service.py::update_final_price</code></td>
+          </tr>
+          <tr>
+            <td>עלות מנה</td>
+            <td>בזמן עריכת מנה, המערכת מחשבת את עלות הרכיבים לפי מחיר מוצר, גודל אריזה והמרת יחידות.</td>
+            <td><code>Angular/src/app/components/dishes/dishes.component.ts::calculateBasePrice</code></td>
+          </tr>
+          <tr>
+            <td>רווחיות באירוע</td>
+            <td>הרווח הוא הכנסה פחות עלות מנות. במסך Angular משתמשים במחירי snapshot כדי לשמור דיוק היסטורי.</td>
+            <td><code>Angular/src/app/core/services/profit-calculator.service.ts</code></td>
+          </tr>
+          <tr>
+            <td>דשבורד רווחיות</td>
+            <td>בדשבורד מחושבים הכנסות, עלות מזון, עלות עבודה משוערת של 15%, רווח גולמי ואחוז רווח.</td>
+            <td><code>FastAPI/app/services/dashboard_service.py::_calculate_event_profitability</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Snapshot ושמירת נתונים אחרי אישור</h2>
+      <div class="grid">
+        <article class="card business">
+          <span class="tag business-tag">לבעל הקייטרינג</span>
+          <h3>למה זה חשוב?</h3>
+          <p>
+            כשאירוע מאושר, המערכת מקפיאה את המחירים והחישובים שלו. כך אם אחר כך
+            משנים מחיר של מנה, מלאי או כלל חישוב, האירוע שכבר אושר לא משתנה אחורה.
+          </p>
+        </article>
+
+        <article class="card dev">
+          <span class="tag dev-tag">למפתחת</span>
+          <h3>איפה זה קורה?</h3>
+          <ul>
+            <li>בעת מעבר לסטטוס <code>APPROVED</code>: <code>event_service.py::change_status</code>.</li>
+            <li>הקפאת מחירי מנות ומגשים: <code>event_service.py::_snapshot_prices</code>.</li>
+            <li>שמירת תוצאות חישובים: <code>event_calculation_service.py::snapshot_event</code>.</li>
+            <li>הטבלאות נמצאות ב: <code>FastAPI/app/models/calculation.py</code>.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>נקודות שחשוב לדעת</h2>
+      <div class="grid">
+        <article class="card warning">
+          <span class="tag">חשוב עסקית</span>
+          <h3>המערכת מחשבת לפי נתונים שהוזנו</h3>
+          <p>
+            אם מוצר מוגדר ביחידה לא נכונה, מחיר אריזה לא נכון, או מנה בלי רכיבים,
+            החישוב יהיה בהתאם. לכן חשוב לשמור נתוני מוצרים, יחידות, מלאי ומחירים מסודרים.
+          </p>
+        </article>
+
+        <article class="card risk">
+          <span class="tag">חשוב טכנית</span>
+          <h3>יש כמה מקורות חישוב</h3>
+          <p>
+            רוב חישובי האירוע נמצאים ב־Backend, אבל מחיר עלות מנה מחושב גם ב־Angular
+            בזמן עריכה, ויש סקריפט נפרד לחישוב מחדש של מחירי מנות קיימות.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>מפת API קצרה</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>פעולה</th>
+            <th>Endpoint</th>
+            <th>שימוש</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>סיכום חישובים</td>
+            <td><code>GET /events/{event_id}/calculations/summary</code></td>
+            <td>מחזיר שתייה, לחמניות, ציוד, חוסרים, חיובים ונוסחאות.</td>
+          </tr>
+          <tr>
+            <td>עדכון הגדרות חישוב</td>
+            <td><code>PUT /events/{event_id}/calculations/settings</code></td>
+            <td>מעדכן שתייה, לחמניות, מפות, אשראי וסעודות שבת.</td>
+          </tr>
+          <tr>
+            <td>בחירת סט כלי הגשה</td>
+            <td><code>PUT /events/{event_id}/calculations/dish-serving-selections</code></td>
+            <td>שומר איזה סט הגשה או אריזה נבחר למנה או מגש.</td>
+          </tr>
+          <tr>
+            <td>כלים ידניים</td>
+            <td><code>PUT /events/{event_id}/calculations/manual-tools</code></td>
+            <td>מוסיף שורות ציוד ידניות שלא נגזרות ממנה.</td>
+          </tr>
+          <tr>
+            <td>רשימת קניות</td>
+            <td><code>GET /events/{event_id}/shopping-list</code></td>
+            <td>מחזיר חומרי גלם, מלאי, חוסרים וחבילות לקנייה.</td>
+          </tr>
+          <tr>
+            <td>רשימת ציוד</td>
+            <td><code>GET /events/{event_id}/equipment-list</code></td>
+            <td>מחזיר כלים, אריזות, מפות, שריונים וחוסרים.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="small">
+        בצד Angular הקריאות נמצאות בעיקר ב:
+        <code>Angular/src/app/services/api-event.service.ts</code>
+      </p>
+    </section>
+  </main>
+</body>
+</html>

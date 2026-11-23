@@ -1,0 +1,210 @@
+{
+  "formulas_checked": 128,
+  "all_cached_match": true,
+  "rows": 176,
+  "cells": 545,
+  "observed": [
+    {
+      "case": "regular",
+      "products": [
+        {
+          "name": "פפסי",
+          "qty": 8.0
+        },
+        {
+          "name": "פפסי מקס",
+          "qty": 8.0
+        },
+        {
+          "name": "תפוזים",
+          "qty": 4.0
+        },
+        {
+          "name": "מים בטעמים",
+          "qty": 4.0
+        },
+        {
+          "name": "מים",
+          "qty": 7.0
+        },
+        {
+          "name": "סודה",
+          "qty": 7.0
+        },
+        {
+          "name": "לחמניות",
+          "qty": 105.0
+        }
+      ],
+      "cloths": [
+        11.0
+      ],
+      "tables": 9
+    },
+    {
+      "case": "sweet",
+      "products": [
+        {
+          "name": "פפסי",
+          "qty": 5.0
+        },
+        {
+          "name": "פפסי מקס",
+          "qty": 5.0
+        },
+        {
+          "name": "תפוזים",
+          "qty": 2.0
+        },
+        {
+          "name": "מים בטעמים",
+          "qty": 3.0
+        },
+        {
+          "name": "מים",
+          "qty": 4.0
+        },
+        {
+          "name": "סודה",
+          "qty": 4.0
+        },
+        {
+          "name": "לחמניות",
+          "qty": 27.0
+        }
+      ],
+      "cloths": [
+        8.0
+      ],
+      "tables": 6
+    },
+    {
+      "case": "shabbat",
+      "products": [
+        {
+          "name": "פפסי",
+          "qty": 12.0
+        },
+        {
+          "name": "פפסי מקס",
+          "qty": 12.0
+        },
+        {
+          "name": "תפוזים",
+          "qty": 6.0
+        },
+        {
+          "name": "מים בטעמים",
+          "qty": 6.0
+        },
+        {
+          "name": "מים",
+          "qty": 11.0
+        },
+        {
+          "name": "סודה",
+          "qty": 8.0
+        },
+        {
+          "name": "לחמניות",
+          "qty": 105.0
+        }
+      ],
+      "cloths": [
+        11.0
+      ],
+      "tables": 9
+    },
+    {
+      "case": "split",
+      "products": [
+        {
+          "name": "פפסי",
+          "qty": 12.0
+        },
+        {
+          "name": "פפסי מקס",
+          "qty": 12.0
+        },
+        {
+          "name": "תפוזים",
+          "qty": 6.0
+        },
+        {
+          "name": "מים בטעמים",
+          "qty": 6.0
+        },
+        {
+          "name": "מים",
+          "qty": 11.0
+        },
+        {
+          "name": "סודה",
+          "qty": 8.0
+        },
+        {
+          "name": "לחמניות",
+          "qty": 105.0
+        }
+      ],
+      "cloths": [
+        11.0
+      ],
+      "tables": 9
+    },
+    {
+      "case": "garnish אירוע רגיל",
+      "rows": [
+        {
+          "source_type": "salad_garnish",
+          "item_type": "product",
+          "name": "פקאן לבדיקה",
+          "quantity": 1920.0,
+          "unit": "גרם",
+          "formula_label": "תוספת: 32 קערות * 60",
+          "raw_quantity": 1920.0,
+          "product_id": null,
+          "tool_id": null,
+          "category": null,
+          "is_reusable": false,
+          "available_in_stock": 0,
+          "reserved_quantity": 0,
+          "available_after_reservations": 0,
+          "shortage": 0,
+          "estimated_price": 0,
+          "package_quantity": null,
+          "need_to_buy_quantity": 1920.0,
+          "packages_to_buy": 1920,
+          "details": null
+        }
+      ]
+    },
+    {
+      "case": "garnish שולחן מתוק",
+      "rows": [
+        {
+          "source_type": "salad_garnish",
+          "item_type": "product",
+          "name": "פקאן לבדיקה",
+          "quantity": 1140.0,
+          "unit": "גרם",
+          "formula_label": "תוספת: 19 קערות * 60",
+          "raw_quantity": 1140.0,
+          "product_id": null,
+          "tool_id": null,
+          "category": null,
+          "is_reusable": false,
+          "available_in_stock": 0,
+          "reserved_quantity": 0,
+          "available_after_reservations": 0,
+          "shortage": 0,
+          "estimated_price": 0,
+          "package_quantity": null,
+          "need_to_buy_quantity": 1140.0,
+          "packages_to_buy": 1140,
+          "details": null
+        }
+      ]
+    }
+  ]
+}

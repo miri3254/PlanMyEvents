@@ -1,0 +1,24 @@
+fastapi==0.109.0
+uvicorn==0.27.0
+sqlalchemy==2.0.25
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-multipart==0.0.6
+alembic==1.13.1
+python-dateutil>=2.8.2
+
+# PDF Generation
+reportlab>=4.0.0
+python-bidi>=0.4.2
+# לטיפול נכון בטקסט עברי
+arabic-reshaper==3.0.0
+
+# למיזוג שכבת הטקסט על גבי הבלנק הקיים
+pypdf==4.0.1
+
+# Local receipt scanning
+httpx>=0.27.0
+numpy>=1.26.0
+Pillow>=10.2.0
+paddleocr>=2.8.1
+paddlepaddle>=2.6.1

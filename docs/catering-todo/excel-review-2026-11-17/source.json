@@ -1,0 +1,6140 @@
+{
+  "source": "C:\\Users\\User\\Desktop\\Downloads\\© חישובים  קיטרינג גינסברגר  © (3).xlsx",
+  "sha256": "32d788fd1bf7056f3e6bf958545251729bf96a67cc6230361fe659e1b6992e5b",
+  "sheets": [
+    {
+      "name": "חישוב שתיה ",
+      "state": "visible",
+      "dimension": "A1:N16",
+      "rows": [
+        {
+          "row": 1,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A1",
+              "value": "בס\"ד ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 4,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B4",
+              "value": "כמות מנות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "C4",
+              "value": "פפסי ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "D4",
+              "value": "מקס ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "E4",
+              "value": "מיץ ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "F4",
+              "value": "מים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "G4",
+              "value": "סודה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "H4",
+              "value": "אחר ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "I4",
+              "value": "סה\"כ ללא מים וסודה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "J4",
+              "value": "סה\"כ ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            }
+          ]
+        },
+        {
+          "row": 5,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B5",
+              "value": "70",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "9"
+            }
+          ]
+        },
+        {
+          "row": 6,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B6",
+              "value": "אירוע רגיל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C6",
+              "value": "7.7777777777777777",
+              "formula": "B5/3/3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "3"
+            },
+            {
+              "ref": "D6",
+              "value": "7.7777777777777777",
+              "formula": "B5/3/3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "3"
+            },
+            {
+              "ref": "E6",
+              "value": "7.7777777777777777",
+              "formula": "B5/3/3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "3"
+            },
+            {
+              "ref": "F6",
+              "value": "4.6666666666666661",
+              "formula": "B5/3/5",
+              "formula_attrs": {},
+              "type": null,
+              "style": "7"
+            },
+            {
+              "ref": "G6",
+              "value": "4.6666666666666661",
+              "formula": "B5/3/5",
+              "formula_attrs": {},
+              "type": null,
+              "style": "7"
+            },
+            {
+              "ref": "I6",
+              "value": "23.333333333333332",
+              "formula": "E6+D6+C6",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "J6",
+              "value": "32.666666666666664",
+              "formula": "C6+D6+E6+F6+G6",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 7,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B7",
+              "value": "שולחן מתוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C7",
+              "value": "4.6666666666666661",
+              "formula": "B5/3/5",
+              "formula_attrs": {},
+              "type": null,
+              "style": "3"
+            },
+            {
+              "ref": "D7",
+              "value": "4.6666666666666661",
+              "formula": "B5/3/5",
+              "formula_attrs": {},
+              "type": null,
+              "style": "3"
+            },
+            {
+              "ref": "E7",
+              "value": "4.6666666666666661",
+              "formula": "B5/3/5",
+              "formula_attrs": {},
+              "type": null,
+              "style": "3"
+            },
+            {
+              "ref": "F7",
+              "value": "4.6666666666666661",
+              "formula": "B5/3/5",
+              "formula_attrs": {},
+              "type": null,
+              "style": "7"
+            },
+            {
+              "ref": "G7",
+              "value": "4.6666666666666661",
+              "formula": "B5/3/5",
+              "formula_attrs": {},
+              "type": null,
+              "style": "7"
+            },
+            {
+              "ref": "J7",
+              "value": "23.333333333333329",
+              "formula": "G7+F7+E7+D7+C7",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 8,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B8",
+              "value": "שבת ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C8",
+              "value": "17.5",
+              "formula": "B5/2/4*2",
+              "formula_attrs": {},
+              "type": null,
+              "style": "3"
+            },
+            {
+              "ref": "D8",
+              "value": "17.5",
+              "formula": "B5/2/4*2",
+              "formula_attrs": {},
+              "type": null,
+              "style": "3"
+            },
+            {
+              "ref": "E8",
+              "value": "17.5",
+              "formula": "B5/2/4*2",
+              "formula_attrs": {},
+              "type": null,
+              "style": "3"
+            },
+            {
+              "ref": "F8",
+              "value": "14",
+              "formula": "B5/2/5*2",
+              "formula_attrs": {},
+              "type": null,
+              "style": "7"
+            },
+            {
+              "ref": "G8",
+              "value": "14",
+              "formula": "B5/2/5*2",
+              "formula_attrs": {},
+              "type": null,
+              "style": "7"
+            },
+            {
+              "ref": "I8",
+              "value": "52.5",
+              "formula": "E8+D8+C8",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "J8",
+              "value": "80.5",
+              "formula": "G8+F8+E8+D8+C8",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 9,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B9",
+              "value": "שבת מפוצל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C9",
+              "value": "23.625",
+              "formula": "B5/2/4*2.7",
+              "formula_attrs": {},
+              "type": null,
+              "style": "3"
+            },
+            {
+              "ref": "D9",
+              "value": "23.625",
+              "formula": "B5/2/4*2.7",
+              "formula_attrs": {},
+              "type": null,
+              "style": "3"
+            },
+            {
+              "ref": "E9",
+              "value": "23.625",
+              "formula": "B5/2/4*2.7",
+              "formula_attrs": {},
+              "type": null,
+              "style": "3"
+            },
+            {
+              "ref": "F9",
+              "value": "18.900000000000002",
+              "formula": "B5/2/5*2.7",
+              "formula_attrs": {},
+              "type": null,
+              "style": "7"
+            },
+            {
+              "ref": "G9",
+              "value": "18.900000000000002",
+              "formula": "B5/2/5*2.7",
+              "formula_attrs": {},
+              "type": null,
+              "style": "7"
+            },
+            {
+              "ref": "I9",
+              "value": "70.875",
+              "formula": "E9+D9+C9",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "J9",
+              "value": "108.67500000000001",
+              "formula": "G9+F9+E9+D9+C9",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 11,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "E11",
+              "value": "לעגל ללמעלה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "3"
+            }
+          ]
+        },
+        {
+          "row": 12,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "E12",
+              "value": "לעגל ללמטה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "7"
+            }
+          ]
+        },
+        {
+          "row": 16,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "C16",
+              "value": "105",
+              "formula": "70*1.5",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            }
+          ]
+        }
+      ],
+      "merges": [],
+      "validations": [],
+      "columns": [
+        {
+          "min": "1",
+          "max": "1",
+          "width": "5.1640625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "2",
+          "max": "2",
+          "width": "10",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "3",
+          "max": "3",
+          "width": "12.9140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "4",
+          "max": "7",
+          "width": "12.9140625",
+          "customWidth": "1"
+        },
+        {
+          "min": "9",
+          "max": "9",
+          "width": "16.25",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "10",
+          "max": "10",
+          "width": "12.9140625",
+          "customWidth": "1"
+        },
+        {
+          "min": "13",
+          "max": "13",
+          "width": "5.1640625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "14",
+          "max": "14",
+          "width": "28.75",
+          "customWidth": "1"
+        },
+        {
+          "min": "15",
+          "max": "15",
+          "width": "12.9140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "16",
+          "max": "16",
+          "width": "10.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "17",
+          "max": "17",
+          "width": "22.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "18",
+          "max": "18",
+          "width": "12.9140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "19",
+          "max": "19",
+          "width": "13.83203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "21",
+          "max": "21",
+          "width": "10.9140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "22",
+          "max": "22",
+          "width": "12.9140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "24",
+          "max": "24",
+          "width": "17.5",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "25",
+          "max": "26",
+          "width": "4.25",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "28",
+          "max": "28",
+          "width": "14.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "29",
+          "max": "29",
+          "width": "9",
+          "bestFit": "1",
+          "customWidth": "1"
+        }
+      ]
+    },
+    {
+      "name": "חישוב מפות ",
+      "state": "visible",
+      "dimension": "A1:C8",
+      "rows": [
+        {
+          "row": 1,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A1",
+              "value": "בס\"ד ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 2,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B2",
+              "value": "כמות מנות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "C2",
+              "value": "70",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "9"
+            }
+          ]
+        },
+        {
+          "row": 3,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B3",
+              "value": "אירוע רגיל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C3",
+              "value": "8.75",
+              "formula": "C2/8",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 4,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B4",
+              "value": "שולחן מתוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C4",
+              "value": "4.375",
+              "formula": "C2/2/8",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 5,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B5",
+              "value": "שבת ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C5",
+              "value": "17.5",
+              "formula": "C2/8*2",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 6,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B6",
+              "value": "שבת מפוצל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C6",
+              "value": "26.25",
+              "formula": "C2/8*3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 8,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A8",
+              "value": "בחישוב מפות להזמנה תמיד להוסיף מפה אחת ספייר לכל 6 מפות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "3"
+            }
+          ]
+        }
+      ],
+      "merges": [],
+      "validations": [],
+      "columns": [
+        {
+          "min": "1",
+          "max": "1",
+          "width": "47.83203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "2",
+          "max": "2",
+          "width": "9.6640625",
+          "bestFit": "1",
+          "customWidth": "1"
+        }
+      ]
+    },
+    {
+      "name": "חישוב מציות ",
+      "state": "visible",
+      "dimension": "A1:C5",
+      "rows": [
+        {
+          "row": 1,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A1",
+              "value": "בס\"ד ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 2,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B2",
+              "value": "חישוב מציות שולחן מתוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            }
+          ]
+        },
+        {
+          "row": 3,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B3",
+              "value": "כמות מנות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "C3",
+              "value": "250",
+              "formula": "250",
+              "formula_attrs": {},
+              "type": null,
+              "style": "9"
+            }
+          ]
+        },
+        {
+          "row": 4,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B4",
+              "value": "עריכה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C4",
+              "value": "125",
+              "formula": "C3/2",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 5,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B5",
+              "value": "כמות החבילות שצריך ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C5",
+              "value": "15.625",
+              "formula": "C4/8",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        }
+      ],
+      "merges": [],
+      "validations": [],
+      "columns": [
+        {
+          "min": "2",
+          "max": "2",
+          "width": "19.33203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "3",
+          "max": "3",
+          "width": "16.58203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "4",
+          "max": "4",
+          "width": "6.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        }
+      ]
+    },
+    {
+      "name": "חישוב לחמניות ",
+      "state": "visible",
+      "dimension": "A1:C6",
+      "rows": [
+        {
+          "row": 1,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A1",
+              "value": "בס\"ד ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 2,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B2",
+              "value": "כמות מנות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "C2",
+              "value": "70",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "9"
+            }
+          ]
+        },
+        {
+          "row": 3,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B3",
+              "value": "אירוע רגיל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C3",
+              "value": "105",
+              "formula": "C2*1.5",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 4,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B4",
+              "value": "שולחן מתוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C4",
+              "value": "26.25",
+              "formula": "C2/2/2*1.5",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 5,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B5",
+              "value": "שבת ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C5",
+              "value": "224",
+              "formula": "C2*1.6*2",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 6,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B6",
+              "value": "שבת מפוצל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C6",
+              "value": "336",
+              "formula": "C2*1.6*3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        }
+      ],
+      "merges": [],
+      "validations": [],
+      "columns": [
+        {
+          "min": "2",
+          "max": "2",
+          "width": "9.6640625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "3",
+          "max": "3",
+          "width": "6.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        }
+      ]
+    },
+    {
+      "name": "חישוב מנות שולחן מתוק ",
+      "state": "visible",
+      "dimension": "A1:D19",
+      "rows": [
+        {
+          "row": 1,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A1",
+              "value": "בס\"ד ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 2,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "C2",
+              "value": "כמות מנות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "D2",
+              "value": "250",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "5"
+            }
+          ]
+        },
+        {
+          "row": 4,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B4",
+              "value": "סוג מנה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "C4",
+              "value": "מנות לחישוב ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "D4",
+              "value": "סה\"כ מנות להזמנה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            }
+          ]
+        },
+        {
+          "row": 5,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B5",
+              "value": "בלינצעס ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C5",
+              "value": "83.333333333333329",
+              "formula": "D2/3",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "D5",
+              "value": "166.66666666666666",
+              "formula": "C5+C16",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 6,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B6",
+              "value": "טורטיות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C6",
+              "value": "83.333333333333329",
+              "formula": "D2/3",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "D6",
+              "value": "83.333333333333329",
+              "formula": "C6",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 7,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B7",
+              "value": "פילו ירקות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C7",
+              "value": "83.333333333333329",
+              "formula": "D2/3",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "D7",
+              "value": "83.333333333333329",
+              "formula": "C7",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 8,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B8",
+              "value": "סה\"כ ראשונות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "C8",
+              "value": "250",
+              "formula": "C7+C6+C5",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 9,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B9",
+              "value": "נודלס ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C9",
+              "value": "83.333333333333329",
+              "formula": "D2/6*2",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "D9",
+              "value": "83.333333333333329",
+              "formula": "C9",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 10,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B10",
+              "value": "אורז ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C10",
+              "value": "83.333333333333329",
+              "formula": "D2/6*2",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "D10",
+              "value": "83.333333333333329",
+              "formula": "C10",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 11,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B11",
+              "value": "קוגל איטריות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C11",
+              "value": "83.333333333333329",
+              "formula": "D2/6*2",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "D11",
+              "value": "83.333333333333329",
+              "formula": "C11",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 12,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B12",
+              "value": "קוגל תפו\"א ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C12",
+              "value": "83.333333333333329",
+              "formula": "D2/6*2",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "D12",
+              "value": "83.333333333333329",
+              "formula": "C12",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 13,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B13",
+              "value": "סיגרים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C13",
+              "value": "0",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "D13",
+              "value": "125",
+              "formula": "D2/2",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 14,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B14",
+              "value": "פשטידות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C14",
+              "value": "0",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "D14",
+              "value": "0",
+              "formula": "C14",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 15,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B15",
+              "value": "צ'ולנט / תפו\"א פיקנטי ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C15",
+              "value": "83.333333333333329",
+              "formula": "D2/6*2",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "D15",
+              "value": "83.333333333333329",
+              "formula": "C15",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 16,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B16",
+              "value": "בלינצע'ס ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C16",
+              "value": "83.333333333333329",
+              "formula": "D2/6*2",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 17,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B17",
+              "value": "סה\"כ אחרונות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "C17",
+              "value": "499.99999999999994",
+              "formula": "C16+C15+C14+C12+C11+C10+C9",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 18,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B18",
+              "value": "סה\"כ יחד ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "C18",
+              "value": "750",
+              "formula": "C17+C8",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 19,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B19",
+              "value": "חישוב לאדם ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "C19",
+              "value": "3",
+              "formula": "C18/D2",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            }
+          ]
+        }
+      ],
+      "merges": [],
+      "validations": [],
+      "columns": [
+        {
+          "min": "2",
+          "max": "2",
+          "width": "16.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "3",
+          "max": "3",
+          "width": "11.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "4",
+          "max": "4",
+          "width": "14.83203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "5",
+          "max": "5",
+          "width": "11.75",
+          "customWidth": "1"
+        },
+        {
+          "min": "6",
+          "max": "6",
+          "width": "14.83203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "7",
+          "max": "7",
+          "width": "22.58203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "8",
+          "max": "8",
+          "width": "11.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "9",
+          "max": "9",
+          "width": "4.9140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "10",
+          "max": "10",
+          "width": "5",
+          "bestFit": "1",
+          "customWidth": "1"
+        }
+      ]
+    },
+    {
+      "name": "חישוב כלים ",
+      "state": "visible",
+      "dimension": "A1:AN61",
+      "rows": [
+        {
+          "row": 1,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A1",
+              "value": "בס\"ד ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "AA1",
+              "value": "להשתמש במפות לפי הצורך אם השולחן מרובע או רחב להשתמש במרובעות אם צר וארוך במלבניות - מזרח בדרך כלל במלבן ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 5,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "D5",
+              "value": "סידור שולחנות לפי מה שכתוב בדף מזרח / מרובעים / ח וכדומה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "9"
+            },
+            {
+              "ref": "E5",
+              "value": "להשתמש במפות לפי הצורך אם השולחן מרובע או רחב להשתמש במרובעות אם צר וארוך במלבניות - מזרח בדרך כלל במלבן ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "9"
+            }
+          ]
+        },
+        {
+          "row": 7,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "D7",
+              "value": "הוראות עריכה - מרכזי לפי חלקי 8 מהכמות הכוללת של העריכה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            }
+          ]
+        },
+        {
+          "row": 8,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "D8",
+              "value": "אירוע רגיל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "4"
+            },
+            {
+              "ref": "E8",
+              "value": "צלחת קטנה וגדולה מהסוג היפה [לא מהפשוטות של הספיר וההגשה אישית] + כוס מהסוג היפה [לא מהפשוטות של הספיר] + מפית מדוגמת + 2 סכין + 2 מזלג מהסוג היפה [לא מהפשוטים של הספיר] + מלחיה + ברכונים באמצע ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 9,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "D9",
+              "value": "שולחן מתוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "4"
+            },
+            {
+              "ref": "E9",
+              "value": "עריכה של חצי מכמות המנות - צלחת קטנה מהסוג היפה [לא מהפשוטות של הספיר וההגשה אישית] + כוס מהסוג היפה [לא מהפשוטות של הספיר] + מפית סכין ומזלג מהסוג היפה [לא מהפשוטים של הספיר] + מלחיה + ברכונים באמצע ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 11,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "E11",
+              "value": "בשולחן מתוק כל המנות הנוספות וכן באירוע רגיל אם האורחים מבקשים צלחת נוספת / נשבר / נוספו אורחים וכדומה להביא מהסוג הפשוט יותר ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 12,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A12",
+              "value": "המוציא ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "12"
+            },
+            {
+              "ref": "C12",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            }
+          ]
+        },
+        {
+          "row": 13,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A13",
+              "value": "לחמניות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C13",
+              "value": "קערה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 14,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A14",
+              "value": "מציות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C14",
+              "value": "קסרול שקוף ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 16,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A16",
+              "value": "סלטים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "12"
+            },
+            {
+              "ref": "B16",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "C16",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            }
+          ]
+        },
+        {
+          "row": 17,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A17",
+              "value": "כרוב לבן + כרוב סגול + בצל ירוק + רוטב + געלה / חמניה פיקנטי / פקאן ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B17",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C17",
+              "value": "קערה גלאס ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 18,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A18",
+              "value": "חסה + שרי + פטריות + נבטים + בצל סגול + רוטב + נשנושים / פקאן ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B18",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C18",
+              "value": "קערה שקופה עגולה גדולה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 19,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A19",
+              "value": "חציל סירות + טחינה + פטרוזליה + צנוברים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B19",
+              "value": "סכין ומזלג יפים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C19",
+              "value": "צלחת גדולה מהסוג של העריכה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 20,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A20",
+              "value": "חומוס + חומוס גרגרים + שמן זית / בצל / סחוג / פטרוזיליה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B20",
+              "value": "כפית יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C20",
+              "value": "צלחת קטנה מהסוג של העריכה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 21,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A21",
+              "value": "גזר גוליאני מנצס / קופסא מוכנה חמוצים / שרי ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B21",
+              "value": "כפית יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C21",
+              "value": "מרקית מהסט של העריכה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 22,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A22",
+              "value": "בטטה / סלט נוסף ? ? ? ? לנשים ? ? ? ?  מתנה ? ? ? ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B22",
+              "value": "כפית יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C22",
+              "value": "קסרול מהסט של העריכה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 25,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A25",
+              "value": "מנה ראשונה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "12"
+            },
+            {
+              "ref": "B25",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "C25",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            }
+          ]
+        },
+        {
+          "row": 26,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A26",
+              "value": "מרק כתום + קרוטונים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B26",
+              "value": "כפית יפה לקרוטונים + כף יפה אישית",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C26",
+              "value": "מרקית אישית + קסרול לקרוטונים מרכזית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 27,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A27",
+              "value": "טורטיות + צילי ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B27",
+              "value": "צלחת שקופה פשוטה ומזלג פשוט ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C27",
+              "value": "הגשה אישית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 28,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A28",
+              "value": "בלינצעס + רוטב ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B28",
+              "value": "צלחת שקופה פשוטה ומזלג פשוט ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C28",
+              "value": "הגשה אישית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 29,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A29",
+              "value": "פלפל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B29",
+              "value": "צלחת שקופה פשוטה ומזלג פשוט ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C29",
+              "value": "הגשה אישית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 30,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A30",
+              "value": "פילו ירקות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B30",
+              "value": "צלחת שקופה פשוטה ומזלג פשוט ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C30",
+              "value": "הגשה אישית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 31,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A31",
+              "value": "טורטיות + צילי ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B31",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C31",
+              "value": "אובל נמוך ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 32,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A32",
+              "value": "בלינצעס + רוטב ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B32",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C32",
+              "value": "אובל נמוך ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 33,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A33",
+              "value": "פלפל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B33",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C33",
+              "value": "אובל עמוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 34,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A34",
+              "value": "פילו ירקות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B34",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C34",
+              "value": "אובל נמוך ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 37,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A37",
+              "value": "מנה עיקרית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "12"
+            },
+            {
+              "ref": "B37",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "C37",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            }
+          ]
+        },
+        {
+          "row": 38,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A38",
+              "value": "שניצל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "C38",
+              "value": "הגשה אישית",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 39,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A39",
+              "value": "עוף ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "C39",
+              "value": "הגשה אישית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 40,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A40",
+              "value": "סלומון ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "C40",
+              "value": "הגשה אישית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 41,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A41",
+              "value": "שניצל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B41",
+              "value": "כף יפה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C41",
+              "value": "אובל נמוך ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 42,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A42",
+              "value": "עוף ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B42",
+              "value": "כף יפה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C42",
+              "value": "אובל עמוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 43,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A43",
+              "value": "סלומון ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B43",
+              "value": "כף יפה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C43",
+              "value": "אובל עמוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 46,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A46",
+              "value": "תוספות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "12"
+            },
+            {
+              "ref": "B46",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "C46",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            }
+          ]
+        },
+        {
+          "row": 47,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A47",
+              "value": "אורז + תוספת ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B47",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C47",
+              "value": "קערה כלנית  ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 48,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A48",
+              "value": "תפוא ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B48",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C48",
+              "value": "קערה כלנית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 49,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A49",
+              "value": "שעועית + שומשום ושקדים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B49",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C49",
+              "value": "מרקית מהסט של העריכה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 50,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A50",
+              "value": "פסטה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B50",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C50",
+              "value": "קערה כלנית  ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 51,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A51",
+              "value": "קוגל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "B51",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C51",
+              "value": "אובל עמוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 52,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A52",
+              "value": "קוגל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "B52",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C52",
+              "value": "אובל עמוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 53,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A53",
+              "value": "סיגרים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B53",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C53",
+              "value": "אובל נמוך ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 54,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A54",
+              "value": "פשטידות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B54",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C54",
+              "value": "אובל נמוך ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 55,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A55",
+              "value": "צונט",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "C55",
+              "value": "קערה שקופה כפולה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 58,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A58",
+              "value": "מנה אחרונה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "12"
+            },
+            {
+              "ref": "B58",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "C58",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            }
+          ]
+        },
+        {
+          "row": 59,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A59",
+              "value": "מיקס קינוחים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "B59",
+              "value": "כפית",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "C59",
+              "value": "הגשה אישית / אובל גדול / מגש זהב  ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        }
+      ],
+      "merges": [],
+      "validations": [],
+      "columns": [
+        {
+          "min": "1",
+          "max": "1",
+          "width": "55.4140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "3",
+          "max": "3",
+          "width": "32.58203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "4",
+          "max": "4",
+          "width": "49.4140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "5",
+          "max": "5",
+          "width": "180.08203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "6",
+          "max": "6",
+          "width": "16.4140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "7",
+          "max": "7",
+          "width": "20.58203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "10",
+          "max": "10",
+          "width": "9.4140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "11",
+          "max": "11",
+          "width": "9",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "12",
+          "max": "13",
+          "width": "11.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "14",
+          "max": "14",
+          "width": "11.75",
+          "customWidth": "1"
+        },
+        {
+          "min": "15",
+          "max": "15",
+          "width": "2.4140625",
+          "customWidth": "1"
+        },
+        {
+          "min": "16",
+          "max": "17",
+          "width": "3.58203125",
+          "customWidth": "1"
+        },
+        {
+          "min": "18",
+          "max": "18",
+          "width": "3.25",
+          "customWidth": "1"
+        },
+        {
+          "min": "19",
+          "max": "19",
+          "width": "2.75",
+          "customWidth": "1"
+        },
+        {
+          "min": "20",
+          "max": "20",
+          "width": "1.9140625",
+          "customWidth": "1"
+        },
+        {
+          "min": "21",
+          "max": "21",
+          "width": "3.25",
+          "customWidth": "1"
+        },
+        {
+          "min": "22",
+          "max": "22",
+          "width": "2.33203125",
+          "customWidth": "1"
+        },
+        {
+          "min": "23",
+          "max": "23",
+          "width": "3.58203125",
+          "customWidth": "1"
+        },
+        {
+          "min": "25",
+          "max": "25",
+          "width": "49.4140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "26",
+          "max": "26",
+          "width": "174.08203125",
+          "customWidth": "1"
+        }
+      ]
+    },
+    {
+      "name": "חישוב כלים אמיתיים ",
+      "state": "visible",
+      "dimension": "A1:E59",
+      "rows": [
+        {
+          "row": 1,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A1",
+              "value": "בס\"ד ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 2,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "D2",
+              "value": "סידור שולחנות לפי מה שכתוב בדף מזרח / מרובעים / ח וכדומה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "9"
+            },
+            {
+              "ref": "E2",
+              "value": "להשתמש במפות לפי הצורך אם השולחן מרובע או רחב להשתמש במרובעות אם צר וארוך במלבניות - מזרח בדרך כלל במלבן ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "9"
+            }
+          ]
+        },
+        {
+          "row": 4,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "D4",
+              "value": "הוראות עריכה - מרכזי לפי חלקי 8 מהכמות הכוללת של העריכה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            }
+          ]
+        },
+        {
+          "row": 5,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "D5",
+              "value": "אירוע רגיל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "4"
+            },
+            {
+              "ref": "E5",
+              "value": "צלחת קטנה וגדולה מהסוג היפה [לא מהפשוטות של הספיר וההגשה אישית] + כוס מהסוג היפה [לא מהפשוטות של הספיר] + מפית מדוגמת + 2 סכין + 2 מזלג מהסוג היפה [לא מהפשוטים של הספיר] + מלחיה + ברכונים באמצע ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 6,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "D6",
+              "value": "שולחן מתוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "4"
+            },
+            {
+              "ref": "E6",
+              "value": "עריכה של חצי מכמות המנות - צלחת קטנה מהסוג היפה [לא מהפשוטות של הספיר וההגשה אישית] + כוס מהסוג היפה [לא מהפשוטות של הספיר] + מפית סכין ומזלג מהסוג היפה [לא מהפשוטים של הספיר] + מלחיה + ברכונים באמצע ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 8,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "E8",
+              "value": "בשולחן מתוק כל המנות הנוספות וכן באירוע רגיל אם האורחים מבקשים צלחת נוספת / נשבר / נוספו אורחים וכדומה להביא מהסוג הפשוט יותר ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 10,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "C10",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "D10",
+              "value": "המוציא ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "13"
+            }
+          ]
+        },
+        {
+          "row": 11,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "C11",
+              "value": "קערה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D11",
+              "value": "לחמניות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 12,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "C12",
+              "value": "קסרול שקוף ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D12",
+              "value": "מציות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 14,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B14",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "C14",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "D14",
+              "value": "סלטים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "13"
+            }
+          ]
+        },
+        {
+          "row": 15,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B15",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C15",
+              "value": "קערה לכרוב ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D15",
+              "value": "כרוב לבן + כרוב סגול + בצל ירוק + רוטב + געלה / חמניה פיקנטי / פקאן ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 16,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B16",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C16",
+              "value": "קערה לחסה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D16",
+              "value": "חסה + שרי + פטריות + נבטים + בצל סגול + רוטב + נשנושים / פקאן ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 17,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B17",
+              "value": "סכין ומזלג יפים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C17",
+              "value": "צלחת לחציל סירות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D17",
+              "value": "חציל סירות + טחינה + פטרוזליה + צנוברים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 18,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B18",
+              "value": "כפית יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C18",
+              "value": "צלחת חומוס ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D18",
+              "value": "חומוס + חומוס גרגרים + שמן זית / בצל / סחוג / פטרוזיליה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 19,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B19",
+              "value": "כפית יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C19",
+              "value": "מרקית לסלט ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D19",
+              "value": "גזר גוליאני מנצס / קופסא מוכנה חמוצים / שרי ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 20,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B20",
+              "value": "כפית יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C20",
+              "value": "קסרול לסלט ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D20",
+              "value": "בטטה / סלט נוסף ? ? ? ? לנשים ? ? ? ?  מתנה ? ? ? ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 23,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B23",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "C23",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "D23",
+              "value": "מנה ראשונה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "13"
+            }
+          ]
+        },
+        {
+          "row": 24,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B24",
+              "value": "כפית יפה לקרוטונים + כף יפה אישית",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C24",
+              "value": "מרקית אישית + קסרול לקרוטונים מרכזית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D24",
+              "value": "מרק כתום + קרוטונים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 25,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B25",
+              "value": "צלחת פשוטה ומזלג פשוט ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C25",
+              "value": "הגשה אישית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D25",
+              "value": "טורטיות + צילי ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 26,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B26",
+              "value": "צלחת פשוטה ומזלג פשוט ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C26",
+              "value": "הגשה אישית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D26",
+              "value": "בלינצעס + רוטב ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 27,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B27",
+              "value": "צלחת פשוטה ומזלג פשוט ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C27",
+              "value": "הגשה אישית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D27",
+              "value": "פלפל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 28,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B28",
+              "value": "צלחת פשוטה ומזלג פשוט ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C28",
+              "value": "הגשה אישית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D28",
+              "value": "פילו ירקות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 29,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B29",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C29",
+              "value": "אובל נמוך ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D29",
+              "value": "טורטיות + צילי ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 30,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B30",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C30",
+              "value": "אובל נמוך ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D30",
+              "value": "בלינצעס + רוטב ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 31,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B31",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C31",
+              "value": "אובל עמוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D31",
+              "value": "פלפל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 32,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B32",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C32",
+              "value": "אובל נמוך ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D32",
+              "value": "פילו ירקות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 35,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B35",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "C35",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "D35",
+              "value": "מנה עיקרית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "13"
+            }
+          ]
+        },
+        {
+          "row": 36,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "C36",
+              "value": "הגשה אישית",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D36",
+              "value": "שניצל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 37,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "C37",
+              "value": "הגשה אישית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D37",
+              "value": "עוף ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 38,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "C38",
+              "value": "הגשה אישית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D38",
+              "value": "סלומון ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 39,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B39",
+              "value": "כף יפה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C39",
+              "value": "אובל נמוך ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D39",
+              "value": "שניצל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 40,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B40",
+              "value": "כף יפה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C40",
+              "value": "אובל עמוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D40",
+              "value": "עוף ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 41,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B41",
+              "value": "כף יפה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C41",
+              "value": "אובל עמוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D41",
+              "value": "סלומון ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 44,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B44",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "C44",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "D44",
+              "value": "תוספות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "13"
+            }
+          ]
+        },
+        {
+          "row": 45,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B45",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C45",
+              "value": "קערה לאורז ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D45",
+              "value": "אורז + תוספת ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 46,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B46",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C46",
+              "value": "קערה לתפו\"א  ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D46",
+              "value": "תפוא ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 47,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B47",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C47",
+              "value": "מרקית או קערה דומה לשעועית ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D47",
+              "value": "שעועית + שומשום ושקדים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 48,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B48",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C48",
+              "value": "קערה לפסטה   ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D48",
+              "value": "פסטה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 49,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B49",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C49",
+              "value": "אובל עמוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D49",
+              "value": "קוגל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 50,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B50",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C50",
+              "value": "אובל עמוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D50",
+              "value": "קוגל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 51,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B51",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C51",
+              "value": "אובל נמוך ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D51",
+              "value": "סיגרים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 52,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B52",
+              "value": "כף יפה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C52",
+              "value": "אובל נמוך ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D52",
+              "value": "פשטידות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 53,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "C53",
+              "value": "קערה לצ'ונט ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D53",
+              "value": "צ'ונט",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        },
+        {
+          "row": 56,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B56",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "C56",
+              "value": "כלים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "11"
+            },
+            {
+              "ref": "D56",
+              "value": "מנה אחרונה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "13"
+            }
+          ]
+        },
+        {
+          "row": 57,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B57",
+              "value": "כפית",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            },
+            {
+              "ref": "C57",
+              "value": "הגשה אישית / אובל גדול / מגש זהב  ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D57",
+              "value": "מיקס קינוחים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "14"
+            }
+          ]
+        }
+      ],
+      "merges": [],
+      "validations": [],
+      "columns": [
+        {
+          "min": "1",
+          "max": "1",
+          "width": "5.75",
+          "customWidth": "1"
+        },
+        {
+          "min": "2",
+          "max": "2",
+          "width": "28.6640625",
+          "customWidth": "1"
+        },
+        {
+          "min": "3",
+          "max": "3",
+          "width": "33",
+          "customWidth": "1"
+        },
+        {
+          "min": "4",
+          "max": "4",
+          "width": "56.75",
+          "customWidth": "1"
+        },
+        {
+          "min": "5",
+          "max": "5",
+          "width": "183.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "6",
+          "max": "7",
+          "width": "8.6640625",
+          "customWidth": "1"
+        }
+      ]
+    },
+    {
+      "name": "חישוב תוספות לסלטים ומנות",
+      "state": "visible",
+      "dimension": "A1:H20",
+      "rows": [
+        {
+          "row": 1,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A1",
+              "value": "בס\"ד ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 2,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B2",
+              "value": "תוספות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "3"
+            },
+            {
+              "ref": "H2",
+              "value": "מס' שולחנות - קערות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            }
+          ]
+        },
+        {
+          "row": 3,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "C3",
+              "value": "כמות מנות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "D3",
+              "value": "250",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "5"
+            },
+            {
+              "ref": "E3",
+              "value": "מס' שולחנות - קערות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "F3",
+              "value": "31.25",
+              "formula": "D3/8",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "H3",
+              "value": "15.625",
+              "formula": "D3/2/8",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 4,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B4",
+              "value": "סוג תוספת ולמה התוספות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "C4",
+              "value": "למה מיועד",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "D4",
+              "value": "כמות לקערה לחישוב ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "E4",
+              "value": "כמות לקערה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "F4",
+              "value": "כמות לאריזה באירוע רגיל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "H4",
+              "value": "כמות לאריזה שולחן מתוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            }
+          ]
+        },
+        {
+          "row": 5,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B5",
+              "value": "פקאן ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C5",
+              "value": "חסה / כרוב",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "D5",
+              "value": "60",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "E5",
+              "value": "60 גר' לקערה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "F5",
+              "value": "1875",
+              "formula": "D5*F3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H5",
+              "value": "937.5",
+              "formula": "D5*H3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 6,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B6",
+              "value": "געלה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C6",
+              "value": "כרוב",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "D6",
+              "value": "55",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "E6",
+              "value": "55 גר' לקערה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "F6",
+              "value": "1718.75",
+              "formula": "D6*F3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H6",
+              "value": "859.375",
+              "formula": "D6*H3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 7,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B7",
+              "value": "חמוציות ושקדים   ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C7",
+              "value": "כרוב",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "D7",
+              "value": "35",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "E7",
+              "value": "35 גר' לקערה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "F7",
+              "value": "1093.75",
+              "formula": "D7*F3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H7",
+              "value": "546.875",
+              "formula": "D7*H3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 8,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B8",
+              "value": "שקדים מולבנים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C8",
+              "value": "שרי ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "D8",
+              "value": "25",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "E8",
+              "value": "25 גר' לקערה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "F8",
+              "value": "781.25",
+              "formula": "D8*F3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H8",
+              "value": "390.625",
+              "formula": "D8*H3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 9,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B9",
+              "value": "שקדים ושומשום ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C9",
+              "value": "שעועית מוקפצת ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "D9",
+              "value": "25",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "E9",
+              "value": "25 גר' לקערה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "F9",
+              "value": "781.25",
+              "formula": "D9*F3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H9",
+              "value": "390.625",
+              "formula": "D9*H3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 10,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B10",
+              "value": "מנצס",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C10",
+              "value": "כרוב / גזר",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "D10",
+              "value": "12",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "E10",
+              "value": "12 גר' לקערה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "F10",
+              "value": "375",
+              "formula": "D10*F3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H10",
+              "value": "187.5",
+              "formula": "D10*H3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 11,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B11",
+              "value": "צנוברים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C11",
+              "value": "חציל סירות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "D11",
+              "value": "6",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "E11",
+              "value": "6 גר' לקערה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "F11",
+              "value": "187.5",
+              "formula": "D11*F3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H11",
+              "value": "93.75",
+              "formula": "D11*H3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 12,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B12",
+              "value": "תערובת שקדים חמוציות וסילאן ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C12",
+              "value": "אורז",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "D12",
+              "value": "50",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "E12",
+              "value": "50 גר' לקערה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "F12",
+              "value": "1562.5",
+              "formula": "D12*F3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H12",
+              "value": "781.25",
+              "formula": "D12*H3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 13,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B13",
+              "value": "נשנושים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C13",
+              "value": "חסה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "D13",
+              "value": "0.05",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "E13",
+              "value": "1 חבילה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "F13",
+              "value": "1.5625",
+              "formula": "D13*F3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H13",
+              "value": "0.78125",
+              "formula": "D13*H3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 15,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "H15",
+              "value": "מס' שולחנות - קערות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            }
+          ]
+        },
+        {
+          "row": 16,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "C16",
+              "value": "כמות מנות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "D16",
+              "value": "250",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "5"
+            },
+            {
+              "ref": "E16",
+              "value": "מס' שולחנות - קערות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "F16",
+              "value": "31.25",
+              "formula": "D16/8",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "H16",
+              "value": "15.625",
+              "formula": "D16/2/8",
+              "formula_attrs": {},
+              "type": null,
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 17,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B17",
+              "value": "רטבים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "3"
+            },
+            {
+              "ref": "C17",
+              "value": "למה מיועד",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "D17",
+              "value": "כמות לקערה לחישוב ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "E17",
+              "value": "כמות לקערה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "F17",
+              "value": "כמות לאריזה באירוע רגיל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "H17",
+              "value": "כמות לאריזה שולחן מתוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            }
+          ]
+        },
+        {
+          "row": 18,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B18",
+              "value": "רוטב חסה הדרים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C18",
+              "value": "חסה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D18",
+              "value": "70",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "E18",
+              "value": "70 מ\"ל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "F18",
+              "value": "2187.5",
+              "formula": "D18*F16",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H18",
+              "value": "1093.75",
+              "formula": "D18*H16",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 19,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B19",
+              "value": "רוטב כרוב סויה",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C19",
+              "value": "מיקס כרובים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D19",
+              "value": "50",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "E19",
+              "value": "50 מ\"ל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "F19",
+              "value": "1562.5",
+              "formula": "D19*F16",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H19",
+              "value": "781.25",
+              "formula": "D19*H16",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 20,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B20",
+              "value": "רוטב חסה מיונז ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "C20",
+              "value": "חסה שבת ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "D20",
+              "value": "70",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": null
+            },
+            {
+              "ref": "E20",
+              "value": "70 מ\"ל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            },
+            {
+              "ref": "F20",
+              "value": "2187.5",
+              "formula": "D20*F16",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H20",
+              "value": "1093.75",
+              "formula": "D20*H16",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        }
+      ],
+      "merges": [],
+      "validations": [],
+      "columns": [
+        {
+          "min": "1",
+          "max": "1",
+          "width": "4.9140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "2",
+          "max": "2",
+          "width": "54",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "3",
+          "max": "3",
+          "width": "12.9140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "4",
+          "max": "4",
+          "width": "15.9140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "5",
+          "max": "5",
+          "width": "16.5",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "6",
+          "max": "6",
+          "width": "19.4140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "7",
+          "max": "7",
+          "width": "3.1640625",
+          "customWidth": "1"
+        },
+        {
+          "min": "8",
+          "max": "8",
+          "width": "19.4140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "9",
+          "max": "9",
+          "width": "16.5",
+          "bestFit": "1",
+          "customWidth": "1"
+        }
+      ]
+    },
+    {
+      "name": "חישוב עמלת סליקה ",
+      "state": "visible",
+      "dimension": "A1:F12",
+      "rows": [
+        {
+          "row": 1,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A1",
+              "value": "בסד",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "15"
+            }
+          ]
+        },
+        {
+          "row": 6,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A6",
+              "value": "סכום לתשלום ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "16"
+            },
+            {
+              "ref": "B6",
+              "value": "מספר התשלומים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "16"
+            },
+            {
+              "ref": "C6",
+              "value": "עמלה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "16"
+            },
+            {
+              "ref": "D6",
+              "value": "מע\"מ ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "16"
+            },
+            {
+              "ref": "E6",
+              "value": "סה\"כ תוספת ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "16"
+            },
+            {
+              "ref": "F6",
+              "value": "סה\"כ לתשלום ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "17"
+            }
+          ]
+        },
+        {
+          "row": 7,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A7",
+              "value": "100",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "18"
+            },
+            {
+              "ref": "B7",
+              "value": "1",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "19"
+            },
+            {
+              "ref": "C7",
+              "value": "1.9",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "15"
+            },
+            {
+              "ref": "D7",
+              "value": "1.18",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "15"
+            },
+            {
+              "ref": "E7",
+              "value": "2.242",
+              "formula": "A7*C7*D7/100",
+              "formula_attrs": {},
+              "type": null,
+              "style": "15"
+            },
+            {
+              "ref": "F7",
+              "value": "102.242",
+              "formula": "A7+E7",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 8,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B8",
+              "value": "2",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "19"
+            },
+            {
+              "ref": "C8",
+              "value": "2.36",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "15"
+            },
+            {
+              "ref": "E8",
+              "value": "2.7847999999999997",
+              "formula": "A7*C8*D7/100",
+              "formula_attrs": {},
+              "type": null,
+              "style": "15"
+            },
+            {
+              "ref": "F8",
+              "value": "102.7848",
+              "formula": "A7+E8",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 9,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B9",
+              "value": "3",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "19"
+            },
+            {
+              "ref": "C9",
+              "value": "2.74",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "15"
+            },
+            {
+              "ref": "E9",
+              "value": "3.2332000000000001",
+              "formula": "A7*C9*D7/100",
+              "formula_attrs": {},
+              "type": null,
+              "style": "15"
+            },
+            {
+              "ref": "F9",
+              "value": "103.2332",
+              "formula": "A7+E9",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 10,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B10",
+              "value": "4",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "19"
+            },
+            {
+              "ref": "C10",
+              "value": "3.12",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "15"
+            },
+            {
+              "ref": "E10",
+              "value": "3.6815999999999995",
+              "formula": "A7*C10*D7/100",
+              "formula_attrs": {},
+              "type": null,
+              "style": "15"
+            },
+            {
+              "ref": "F10",
+              "value": "103.6816",
+              "formula": "A7+E10",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 11,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B11",
+              "value": "5",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "19"
+            },
+            {
+              "ref": "C11",
+              "value": "3.49",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "15"
+            },
+            {
+              "ref": "E11",
+              "value": "4.1181999999999999",
+              "formula": "A7*C11*D7/100",
+              "formula_attrs": {},
+              "type": null,
+              "style": "15"
+            },
+            {
+              "ref": "F11",
+              "value": "104.1182",
+              "formula": "A7+E11",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 12,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B12",
+              "value": "6",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "19"
+            },
+            {
+              "ref": "C12",
+              "value": "3.87",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "15"
+            },
+            {
+              "ref": "E12",
+              "value": "4.5665999999999993",
+              "formula": "A7*C12*D7/100",
+              "formula_attrs": {},
+              "type": null,
+              "style": "15"
+            },
+            {
+              "ref": "F12",
+              "value": "104.56659999999999",
+              "formula": "A7+E12",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        }
+      ],
+      "merges": [],
+      "validations": [],
+      "columns": [
+        {
+          "min": "1",
+          "max": "1",
+          "width": "11.25",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "2",
+          "max": "2",
+          "width": "13.9140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "3",
+          "max": "3",
+          "width": "9.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "5",
+          "max": "5",
+          "width": "12.25",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "6",
+          "max": "6",
+          "width": "12.33203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        }
+      ]
+    },
+    {
+      "name": "חישוב סלטים חיים ",
+      "state": "visible",
+      "dimension": "A1:K6",
+      "rows": [
+        {
+          "row": 1,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A1",
+              "value": "בס\"ד ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 3,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B3",
+              "value": "כמות מנות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "C3",
+              "value": "אייסברג",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "D3",
+              "value": "חסה רגילה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "E3",
+              "value": "כרוב  סגול ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "F3",
+              "value": "כרוב לבן  ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "G3",
+              "value": "עגבניות שרי ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "H3",
+              "value": "בצל ירוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "I3",
+              "value": "פטרוזיליה ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "J3",
+              "value": "פטריות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            },
+            {
+              "ref": "K3",
+              "value": "נבטים עבים ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "5"
+            }
+          ]
+        },
+        {
+          "row": 4,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B4",
+              "value": "70",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "9"
+            }
+          ]
+        },
+        {
+          "row": 5,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B5",
+              "value": "אירוע רגיל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C5",
+              "value": "2.3333333333333335",
+              "formula": "B4/30",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "D5",
+              "value": "7",
+              "formula": "B4/10",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "E5",
+              "value": "0.93333333333333335",
+              "formula": "B4/75",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "F5",
+              "value": "1.8918918918918919",
+              "formula": "B4/37",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "G5",
+              "value": "1.1666666666666667",
+              "formula": "B4/60",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H5",
+              "value": "2.3333333333333335",
+              "formula": "B4/30",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "I5",
+              "value": "1.1666666666666667",
+              "formula": "B4/60",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "J5",
+              "value": "1.75",
+              "formula": "B4/40",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "K5",
+              "value": "2.3333333333333335",
+              "formula": "B4/30",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        },
+        {
+          "row": 6,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B6",
+              "value": "שולחן מתוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C6",
+              "value": "1.1666666666666667",
+              "formula": "B4/2/30",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "D6",
+              "value": "3.5",
+              "formula": "B4/2/10",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "E6",
+              "value": "0.46666666666666667",
+              "formula": "B4/2/75",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "F6",
+              "value": "0.94594594594594594",
+              "formula": "B4/2/37",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "G6",
+              "value": "0.58333333333333337",
+              "formula": "B4/2/60",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "H6",
+              "value": "1.1666666666666667",
+              "formula": "B4/2/30",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "I6",
+              "value": "0.58333333333333337",
+              "formula": "B4/2/60",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "J6",
+              "value": "0.875",
+              "formula": "B4/2/40",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "K6",
+              "value": "1.1666666666666667",
+              "formula": "B4/2/30",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            }
+          ]
+        }
+      ],
+      "merges": [],
+      "validations": [],
+      "columns": [
+        {
+          "min": "2",
+          "max": "2",
+          "width": "10.08203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "4",
+          "max": "4",
+          "width": "11.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "5",
+          "max": "5",
+          "width": "12.58203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "6",
+          "max": "6",
+          "width": "12.58203125",
+          "customWidth": "1"
+        },
+        {
+          "min": "7",
+          "max": "7",
+          "width": "10.25",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "8",
+          "max": "8",
+          "width": "7.1640625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "9",
+          "max": "9",
+          "width": "8.33203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "10",
+          "max": "11",
+          "width": "11.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        }
+      ]
+    },
+    {
+      "name": "חישוב כמות סלטים לשליחה לאירוע",
+      "state": "visible",
+      "dimension": "A1:D9",
+      "rows": [
+        {
+          "row": 1,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A1",
+              "value": "בס\"ד ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": null
+            }
+          ]
+        },
+        {
+          "row": 2,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "A2",
+              "value": "ליטר ל-3 שולחנות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "3"
+            },
+            {
+              "ref": "B2",
+              "value": "כמות מנות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "C2",
+              "value": "70",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "9"
+            },
+            {
+              "ref": "D2",
+              "value": "מספר שולחנות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            }
+          ]
+        },
+        {
+          "row": 3,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B3",
+              "value": "אירוע רגיל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C3",
+              "value": "2.9166666666666665",
+              "formula": "D3/3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "D3",
+              "value": "8.75",
+              "formula": "C2/8",
+              "formula_attrs": {},
+              "type": null,
+              "style": "2"
+            }
+          ]
+        },
+        {
+          "row": 4,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B4",
+              "value": "שולחן מתוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C4",
+              "value": "1.4583333333333333",
+              "formula": "D4/3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "D4",
+              "value": "4.375",
+              "formula": "C2/8/2",
+              "formula_attrs": {},
+              "type": null,
+              "style": "2"
+            }
+          ]
+        },
+        {
+          "row": 6,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B6",
+              "value": "סלט לנשים בלבד ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "3"
+            }
+          ]
+        },
+        {
+          "row": 7,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B7",
+              "value": "כמות מנות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            },
+            {
+              "ref": "C7",
+              "value": "250",
+              "formula": null,
+              "formula_attrs": null,
+              "type": null,
+              "style": "9"
+            },
+            {
+              "ref": "D7",
+              "value": "מספר שולחנות ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "2"
+            }
+          ]
+        },
+        {
+          "row": 8,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B8",
+              "value": "אירוע רגיל ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C8",
+              "value": "5.208333333333333",
+              "formula": "D8/3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "D8",
+              "value": "15.625",
+              "formula": "C7/8/2",
+              "formula_attrs": {},
+              "type": null,
+              "style": "2"
+            }
+          ]
+        },
+        {
+          "row": 9,
+          "hidden": null,
+          "cells": [
+            {
+              "ref": "B9",
+              "value": "שולחן מתוק ",
+              "formula": null,
+              "formula_attrs": null,
+              "type": "s",
+              "style": "6"
+            },
+            {
+              "ref": "C9",
+              "value": "2.6041666666666665",
+              "formula": "D9/3",
+              "formula_attrs": {},
+              "type": null,
+              "style": "4"
+            },
+            {
+              "ref": "D9",
+              "value": "7.8125",
+              "formula": "C7/8/2/2",
+              "formula_attrs": {},
+              "type": null,
+              "style": "2"
+            }
+          ]
+        }
+      ],
+      "merges": [],
+      "validations": [],
+      "columns": [
+        {
+          "min": "1",
+          "max": "1",
+          "width": "14.08203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "2",
+          "max": "2",
+          "width": "13.4140625",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "4",
+          "max": "4",
+          "width": "11.83203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "5",
+          "max": "5",
+          "width": "4.75",
+          "bestFit": "1",
+          "customWidth": "1"
+        },
+        {
+          "min": "6",
+          "max": "6",
+          "width": "14.08203125",
+          "bestFit": "1",
+          "customWidth": "1"
+        }
+      ]
+    }
+  ],
+  "names": [],
+  "extras": []
+}
