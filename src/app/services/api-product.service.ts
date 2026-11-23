@@ -19,7 +19,7 @@ export class ApiProductService extends BaseApiService {
     return this.get<ApiResponse<ApiProduct>>('/products', params);
   }
 
-  getProduct(productId: string): Observable<ApiProduct> {
+  getProduct(productId: number): Observable<ApiProduct> {
     return this.get<ApiProduct>(`/products/${productId}`);
   }
 
@@ -27,20 +27,20 @@ export class ApiProductService extends BaseApiService {
     return this.post<ApiProduct>('/products', product);
   }
 
-  updateProduct(productId: string, product: ProductUpdate): Observable<ApiProduct> {
+  updateProduct(productId: number, product: ProductUpdate): Observable<ApiProduct> {
     return this.put<ApiProduct>(`/products/${productId}`, product);
   }
 
-  deleteProduct(productId: string): Observable<void> {
+  deleteProduct(productId: number): Observable<void> {
     return this.delete<void>(`/products/${productId}`);
   }
 
   // Bulk Operations
-  createMultipleProducts(products: ProductCreate[]): Observable<ApiProduct[]> {
-    return this.post<ApiProduct[]>('/products/bulk', products);
+  createMultipleProducts(products: ProductCreate[]): Observable<{ message: string; success: boolean; count: number }> {
+    return this.post<{ message: string; success: boolean; count: number }>('/products/bulk', products);
   }
 
-  deleteMultipleProducts(productIds: string[]): Observable<void> {
-    return this.delete<void>(`/products/bulk?ids=${productIds.join(',')}`);
+  deleteMultipleProducts(productIds: number[]): Observable<{ message: string; deleted_count: number; success: boolean }> {
+    return this.delete<{ message: string; deleted_count: number; success: boolean }>(`/products/bulk?ids=${productIds.join(',')}`);
   }
 }

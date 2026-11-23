@@ -1,7 +1,15 @@
 <div class="settings-container p-4">
-  <div class="flex align-items-center justify-content-between mb-4">
-    <h1 class="text-3xl font-bold text-900">הגדרות מערכת</h1>
-    <div class="flex gap-2">
+  <div class="settings-header flex align-items-center justify-content-between mb-4">
+    <div class="settings-title">
+      <div class="page-icon">
+        <i class="pi pi-cog"></i>
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold text-900">הגדרות מערכת</h1>
+        <p>ניהול אפשרויות מערכת והעדפות עבודה</p>
+      </div>
+    </div>
+    <div class="settings-actions flex gap-2">
       <p-button 
         label="שמור הגדרות" 
         icon="pi pi-save" 
@@ -19,16 +27,69 @@
   </div>
 
   <div class="settings-sections">
-    <!-- General Settings Section -->
     <p-card styleClass="mb-4">
       <ng-template pTemplate="header">
         <div class="flex align-items-center p-3">
+          <i class="pi pi-tags mr-2 text-primary"></i>
+          <span class="font-bold text-lg">קטגוריות אירועים</span>
+        </div>
+      </ng-template>
+
+      <p class="text-600 mb-3">
+        הקטגוריות זמינות בכל יצירה או עריכה של אירוע. אפשר להוסיף, לשנות או להסיר קטגוריות בלי לשנות אירועים קיימים.
+      </p>
+
+      <div class="lookup-items" *ngIf="!loadingEventCategories">
+        <div class="lookup-row" *ngFor="let category of eventCategories; let i = index; trackBy: trackByIndex">
+          <input
+            pInputText
+            [(ngModel)]="eventCategories[i]"
+            (keyup.enter)="updateEventCategory(i); $event.preventDefault()" />
+          <p-button
+            icon="pi pi-save"
+            severity="success"
+            [text]="true"
+            (onClick)="updateEventCategory(i)">
+          </p-button>
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            [text]="true"
+            (onClick)="deleteEventCategory(i)">
+          </p-button>
+        </div>
+
+        <div class="lookup-add">
+          <input
+            pInputText
+            placeholder="הוספת קטגוריית אירוע"
+            [(ngModel)]="newEventCategory"
+            (keyup.enter)="addEventCategory()" />
+          <p-button
+            label="הוספה"
+            icon="pi pi-plus"
+            (onClick)="addEventCategory()"
+            [disabled]="!newEventCategory.trim()">
+          </p-button>
+        </div>
+      </div>
+
+      <div class="text-center py-4" *ngIf="loadingEventCategories">
+        טוען קטגוריות...
+      </div>
+    </p-card>
+
+    <!-- General Settings Section (Theme Only) -->
+    <p-card styleClass="mb-4" *ngIf="false">
+      <ng-template pTemplate="header">
+        <div class="flex align-items-center p-3">
           <i class="pi pi-cog mr-2 text-primary"></i>
-          <span class="font-bold text-lg">הגדרות כלליות</span>
+          <span class="font-bold text-lg">הגדרות תצוגה</span>
         </div>
       </ng-template>
       <div class="grid">
-        <div class="col-12 md:col-6">
+        <!-- HIDDEN: Basic settings - not functional -->
+        <div class="col-12 md:col-6" *ngIf="false">
           <p-card header="הגדרות בסיסיות" styleClass="h-full">
             <div class="flex flex-column gap-4">
               <p-floatlabel>
@@ -65,10 +126,11 @@
           </p-card>
         </div>
 
-        <div class="col-12 md:col-6">
+        <div class="col-12">
           <p-card header="מראה ותחושה" styleClass="h-full">
             <div class="flex flex-column gap-4">
-              <p-floatlabel>
+              <!-- HIDDEN: Language select - not functional -->
+              <p-floatlabel *ngIf="false">
                 <p-select 
                   id="language"
                   [options]="languageOptions"
@@ -101,8 +163,8 @@
       </div>
     </p-card>
 
-    <!-- Dishes Settings Section -->
-    <p-card styleClass="mb-4">
+    <!-- HIDDEN: Dishes Settings Section - not functional -->
+    <p-card styleClass="mb-4" *ngIf="false">
       <ng-template pTemplate="header">
         <div class="flex align-items-center p-3">
           <i class="pi pi-star mr-2 text-primary"></i>
@@ -127,7 +189,7 @@
               <p-floatlabel>
                 <p-select 
                   id="default-category"
-                  [options]="dishCategories"
+                  [options]="kosherTypes"
                   [(ngModel)]="settings.dishes.defaultCategory"
                   optionLabel="label"
                   optionValue="value"
@@ -186,8 +248,8 @@
       </div>
     </p-card>
 
-    <!-- Events Settings Section -->
-    <p-card styleClass="mb-4">
+    <!-- HIDDEN: Events Settings Section - not functional -->
+    <p-card styleClass="mb-4" *ngIf="false">
       <ng-template pTemplate="header">
         <div class="flex align-items-center p-3">
           <i class="pi pi-calendar mr-2 text-primary"></i>
@@ -201,25 +263,13 @@
               <p-floatlabel>
                 <p-select 
                   id="default-event-type"
-                  [options]="eventTypes"
-                  [(ngModel)]="settings.events.defaultEventType"
+                  [options]="menuTypes"
+                  [(ngModel)]="settings.events.defaultMenuType"
                   optionLabel="label"
                   optionValue="value"
                   class="w-full">
                 </p-select>
-                <label for="default-event-type">סוג אירוע ברירת מחדל</label>
-              </p-floatlabel>
-
-              <p-floatlabel>
-                <p-select 
-                  id="default-food-type"
-                  [options]="foodTypes"
-                  [(ngModel)]="settings.events.defaultFoodType"
-                  optionLabel="label"
-                  optionValue="value"
-                  class="w-full">
-                </p-select>
-                <label for="default-food-type">סוג אוכל ברירת מחדל</label>
+                <label for="default-event-type">סוג תפריט ברירת מחדל</label>
               </p-floatlabel>
 
               <p-floatlabel>
@@ -262,8 +312,8 @@
       </div>
     </p-card>
 
-    <!-- Products Settings Section -->
-    <p-card styleClass="mb-4">
+    <!-- HIDDEN: Products Settings Section - not functional -->
+    <p-card styleClass="mb-4" *ngIf="false">
       <ng-template pTemplate="header">
         <div class="flex align-items-center p-3">
           <i class="pi pi-box mr-2 text-primary"></i>
@@ -338,8 +388,8 @@
       </div>
     </p-card>
 
-    <!-- Advanced Settings Section -->
-    <p-card styleClass="mb-4">
+    <!-- HIDDEN: Advanced Settings Section - not functional -->
+    <p-card styleClass="mb-4" *ngIf="false">
       <ng-template pTemplate="header">
         <div class="flex align-items-center p-3">
           <i class="pi pi-cogs mr-2 text-primary"></i>
@@ -404,6 +454,139 @@
     <p-card styleClass="mb-4">
       <ng-template pTemplate="header">
         <div class="flex align-items-center p-3">
+          <i class="pi pi-calculator mr-2 text-primary"></i>
+          <span class="font-bold text-lg">המרות יחידות מידה</span>
+        </div>
+      </ng-template>
+
+      <p class="text-600 mb-3">
+        הגדר כיצד להמיר יחידות מידה כמו כף, כפית וקורט לגרמים. המרות מערכתיות (כמו ק"ג לגרם) אינן ניתנות לשינוי.
+      </p>
+
+      <div class="mb-3">
+        <p-button 
+          label="טעינת המרות מהשרת"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="loadUnitConversions()"
+          [loading]="loadingConversions">
+        </p-button>
+      </div>
+
+      <!-- Unit Conversions Cards -->
+      <div class="kpi-grid mt-4" *ngIf="unitConversions.length > 0">
+        <div class="kpi-card stat-card-mini conversion-card flex flex-column align-items-center justify-content-center p-4 relative" 
+             *ngFor="let conv of unitConversions; trackBy: trackById" 
+             [ngClass]="{'system-card': conv.isSystem}">
+             
+          <div class="kpi-icon-wrapper mb-3">
+            <i class="pi pi-arrows-h"></i>
+          </div>
+
+          <div class="kpi-title font-bold text-center mb-1">
+            <span class="text-xl">{{ conv.fromUnit }}</span>
+          </div>
+          
+          <i class="pi pi-arrow-down text-400 my-2"></i>
+          
+          <div class="kpi-title font-bold text-center mb-3">
+            <span class="text-xl text-primary">{{ conv.toUnit }}</span>
+          </div>
+
+          <div class="kpi-value text-center w-full mt-auto" style="direction: ltr;">
+            <p-inputNumber 
+              *ngIf="!conv.isSystem"
+              [(ngModel)]="conv.factor"
+              [min]="0.001"
+              [maxFractionDigits]="6"
+              (onBlur)="updateConversion(conv)"
+              class="w-full text-center p-inputtext-sm">
+            </p-inputNumber>
+            <div *ngIf="conv.isSystem" class="text-2xl font-bold">{{ conv.factor }}</div>
+          </div>
+          
+          <div class="absolute top-0 right-0 p-3">
+            <span class="p-tag p-tag-rounded" [ngClass]="conv.isSystem ? 'p-tag-info' : 'p-tag-success'">
+              {{ conv.isSystem ? 'מערכתית' : 'מותאמת' }}
+            </span>
+          </div>
+
+          <div class="absolute top-0 left-0 p-2" *ngIf="!conv.isSystem">
+            <p-button 
+              icon="pi pi-trash"
+              severity="danger"
+              [text]="true"
+              [rounded]="true"
+              (onClick)="deleteConversion(conv.id)">
+            </p-button>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="unitConversions.length === 0 && !loadingConversions" class="text-center py-4 text-500">
+        <i class="pi pi-info-circle mr-2"></i>
+        לא נמצאו המרות. לחץ "טעינת המרות מהשרת" לטעינה ראשונית.
+      </div>
+
+      <!-- Add New Conversion -->
+      <p-card header="הוסף המרה חדשה" styleClass="mt-3">
+        <div class="grid align-items-end gap-3">
+          <div class="col-12 md:col-3">
+            <p-floatlabel>
+              <p-select 
+                id="new-from-unit"
+                [options]="measurementUnitsOptions"
+                [(ngModel)]="newConversion.fromUnit"
+                optionLabel="label"
+                optionValue="value"
+                class="w-full">
+              </p-select>
+              <label for="new-from-unit">מיחידה</label>
+            </p-floatlabel>
+          </div>
+          <div class="col-12 md:col-3">
+            <p-floatlabel>
+              <p-select 
+                id="new-to-unit"
+                [options]="measurementUnitsOptions"
+                [(ngModel)]="newConversion.toUnit"
+                optionLabel="label"
+                optionValue="value"
+                class="w-full">
+              </p-select>
+              <label for="new-to-unit">ליחידה</label>
+            </p-floatlabel>
+          </div>
+          <div class="col-12 md:col-2">
+            <p-floatlabel>
+              <p-inputNumber 
+                id="new-factor"
+                [(ngModel)]="newConversion.factor"
+                [min]="0.001"
+                [maxFractionDigits]="6"
+                class="w-full">
+              </p-inputNumber>
+              <label for="new-factor">ערך המרה</label>
+            </p-floatlabel>
+          </div>
+          <div class="col-12 md:col-4">
+            <p-button 
+              label="הוסף המרה"
+              icon="pi pi-plus"
+              severity="primary"
+              (onClick)="addConversion()"
+              [disabled]="!newConversion.fromUnit || !newConversion.toUnit || !newConversion.factor">
+            </p-button>
+          </div>
+        </div>
+      </p-card>
+    </p-card>
+
+    <!-- HIDDEN: Domain Dictionary Management - not functional (backend uses enums) -->
+    <p-card styleClass="mb-4" *ngIf="false">
+      <ng-template pTemplate="header">
+        <div class="flex align-items-center p-3">
           <i class="pi pi-database mr-2 text-primary"></i>
           <span class="font-bold text-lg">ניהול נתוני בסיס</span>
         </div>
@@ -420,11 +603,11 @@
       </div>
 
       <div class="grid">
-        <div class="col-12 lg:col-4" *ngFor="let group of listGroups">
+        <div class="col-12 lg:col-4" *ngFor="let group of listGroups; trackBy: trackById">
           <p-card [header]="group.title" styleClass="h-full dictionary-card">
             <p class="text-600 mb-3">{{ group.description }}</p>
 
-            <div class="lookup-section" *ngFor="let list of group.lists">
+            <div class="lookup-section" *ngFor="let list of group.lists; trackBy: trackById">
               <div class="lookup-header">
                 <div class="flex align-items-center gap-2">
                   <i class="{{ list.icon }} text-primary"></i>
@@ -440,10 +623,10 @@
               </div>
 
               <div class="lookup-items">
-                <div class="lookup-row" *ngFor="let value of editableLists[list.key]; let i = index">
+                <div class="lookup-row" *ngFor="let value of $any(editableLists)[list.key]; let i = index; trackBy: trackByIndex">
                   <input 
                     pInputText 
-                    [(ngModel)]="editableLists[list.key][i]"
+                    [(ngModel)]="$any(editableLists)[list.key][i]"
                     (blur)="commitListItem(list.key, i)"
                     (keyup.enter)="commitListItem(list.key, i); $event.preventDefault()" />
                   <p-button 
@@ -458,14 +641,14 @@
                   <input 
                     pInputText 
                     [placeholder]="list.placeholder"
-                    [(ngModel)]="listDrafts[list.key]"
+                    [(ngModel)]="$any(listDrafts)[list.key]"
                     (keyup.enter)="addListItem(list.key)" />
                   <p-button 
                     icon="pi pi-plus"
                     severity="primary"
                     [outlined]="true"
                     (onClick)="addListItem(list.key)"
-                    [disabled]="!(listDrafts[list.key] && listDrafts[list.key].trim())">
+                    [disabled]="!($any(listDrafts)[list.key] && $any(listDrafts)[list.key].trim())">
                   </p-button>
                 </div>
               </div>
@@ -475,8 +658,8 @@
       </div>
     </p-card>
 
-    <!-- Dashboard Customization Section -->
-    <p-card styleClass="mb-4">
+    <!-- HIDDEN: Dashboard Customization Section - not functional -->
+    <p-card styleClass="mb-4" *ngIf="false">
       <ng-template pTemplate="header">
         <div class="flex align-items-center p-3">
           <i class="pi pi-sliders-h mr-2 text-primary"></i>
@@ -485,27 +668,27 @@
       </ng-template>
 
       <div class="grid">
-        <div class="col-12 md:col-6" *ngFor="let group of dashboardGroups">
+        <div class="col-12 md:col-6" *ngFor="let group of dashboardGroups; trackBy: trackById">
           <p-card [header]="group.title" styleClass="h-full dashboard-card">
             <p class="text-600 mb-3">{{ group.description }}</p>
 
-            <div class="dashboard-item" *ngFor="let widget of dashboardCollections[group.key]; let i = index">
+            <div class="dashboard-item" *ngFor="let widget of $any(dashboardCollections)[group.key]; let i = index; trackBy: trackById">
               <div class="flex flex-column gap-2 flex-1">
                 <input 
                   pInputText 
-                  [(ngModel)]="dashboardCollections[group.key][i].label"
+                  [(ngModel)]="$any(dashboardCollections)[group.key][i].label"
                   (blur)="commitWidget(group.key, i)"
                   placeholder="שם תצוגה" />
                 <textarea 
                   class="p-inputtextarea p-inputtext"
                   rows="2"
-                  [(ngModel)]="dashboardCollections[group.key][i].description"
+                  [(ngModel)]="$any(dashboardCollections)[group.key][i].description"
                   (blur)="commitWidget(group.key, i)"
                   placeholder="תיאור קצר"></textarea>
               </div>
               <div class="dashboard-controls">
                 <p-toggleButton
-                  [(ngModel)]="dashboardCollections[group.key][i].enabled"
+                  [(ngModel)]="$any(dashboardCollections)[group.key][i].enabled"
                   (onChange)="commitWidget(group.key, i)"
                   onLabel="פעיל"
                   offLabel="כבוי">
@@ -525,19 +708,19 @@
                 <input 
                   pInputText 
                   [placeholder]="group.addPlaceholder"
-                  [(ngModel)]="dashboardDrafts[group.key].label" />
+                  [(ngModel)]="$any(dashboardDrafts)[group.key].label" />
                 <textarea 
                   class="p-inputtextarea p-inputtext"
                   rows="2"
                   [placeholder]="group.addDescriptionPlaceholder"
-                  [(ngModel)]="dashboardDrafts[group.key].description"></textarea>
+                  [(ngModel)]="$any(dashboardDrafts)[group.key].description"></textarea>
                 <div class="flex gap-2">
                   <p-button 
                     label="הוסף"
                     icon="pi pi-plus"
                     severity="primary"
                     (onClick)="addDashboardWidget(group.key)"
-                    [disabled]="!(dashboardDrafts[group.key].label && dashboardDrafts[group.key].label.trim())">
+                    [disabled]="!($any(dashboardDrafts)[group.key].label && $any(dashboardDrafts)[group.key].label.trim())">
                   </p-button>
                   <p-button 
                     label="איפוס קבוצה"
@@ -555,7 +738,7 @@
     </p-card>
 
     <!-- Data Management Section -->
-    <p-card styleClass="mb-4">
+    <p-card styleClass="mb-4" *ngIf="false">
       <ng-template pTemplate="header">
         <div class="flex align-items-center p-3">
           <i class="pi pi-database mr-2 text-primary"></i>
@@ -590,7 +773,8 @@
           </p-card>
         </div>
 
-        <div class="col-12 md:col-6">
+        <!-- HIDDEN: Data cleanup - localStorage only, not real DB cleanup -->
+        <div class="col-12 md:col-6" *ngIf="false">
           <p-card header="ניקוי נתונים" styleClass="h-full">
             <div class="flex flex-column gap-3">
               <p class="text-600">

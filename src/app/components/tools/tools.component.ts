@@ -2,15 +2,17 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, EMPTY, forkJoin, of } from 'rxjs';
-import { catchError, map, takeUntil } from 'rxjs/operators';
+import { ExcelExportService } from '../../services/excel-export.service';
+import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
+import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import { Tool } from '../../core/models';
 import { ApiToolService } from '../../services/api-tool.service';
 import { ApiLookupService } from '../../services/api-lookup.service';
 import { ApiTool, ToolCreate, ToolUpdate, LookupValue } from '../../core/models/api.models';
 
-const FALLBACK_INVENTORY_STATUSES = ['במלאי', 'מלאי נמוך', 'אזל'];
-const FALLBACK_TOOL_CATEGORIES = ['מפות', 'כלי הגשה', 'צלחות', 'סכו"ם', 'כוסות', 'קערות', 'מגשים', 'אחר'];
-const FALLBACK_TOOL_SUB_CATEGORIES = ['חד״פ', 'אמיתי'];
+const FALLBACK_INVENTORY_STATUSES = ['במלאי', 'מלאי נמוך', 'אין במלאי'];
+const FALLBACK_TOOL_CATEGORIES = ['צלחות', 'כוסות', 'סכו"ם', 'מפות', 'כלי הגשה'];
+const FALLBACK_TOOL_SUB_CATEGORIES = ['אמיתי', 'חד פעמי'];
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -48,7 +50,8 @@ import { TextareaModule } from 'primeng/textarea';
     CheckboxModule,
     DividerModule,
     TooltipModule,
-    TextareaModule
+    TextareaModule,
+    LoadingOverlayComponent
   ],
   templateUrl: './tools.html',
   styleUrls: ['./tools.scss'],
@@ -69,6 +72,7 @@ export class ToolsComponent implements OnInit, OnDestroy {
   toolDialog: boolean = false;
   detailDialog: boolean = false;
   submitted: boolean = false;
+  isLoading = true;
   
   sortField: string = '';
   sortOrder: 'asc' | 'desc' | '' = '';
@@ -102,7 +106,8 @@ export class ToolsComponent implements OnInit, OnDestroy {
     private toolService: ApiToolService,
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
-    private lookupService: ApiLookupService
+    private lookupService: ApiLookupService,
+    private excelExportService: ExcelExportService
   ) {
     this.tool = this.getEmptyTool();
   }
@@ -118,6 +123,7 @@ export class ToolsComponent implements OnInit, OnDestroy {
   }
 
   private loadTools(): void {
+    this.isLoading = true;
     this.toolService.getTools()
       .pipe(
         takeUntil(this.destroy$),
@@ -130,7 +136,8 @@ export class ToolsComponent implements OnInit, OnDestroy {
             detail: 'טעינת הכלים נכשלה'
           });
           return EMPTY;
-        })
+        }),
+        finalize(() => this.isLoading = false)
       )
       .subscribe(tools => {
         this.tools = tools;
@@ -196,25 +203,25 @@ export class ToolsComponent implements OnInit, OnDestroy {
     return {
       id: apiTool.id,
       name: apiTool.name,
-      brand: '',
+      brand: apiTool.brand || '',
       category: apiTool.category,
       subCategory: apiTool.sub_category || '',
       inventoryStatus: apiTool.inventory_status,
-      estimatedPrice: apiTool.price_per_unit ?? 0,
+      pricePerUnit: apiTool.price_per_unit ?? 0,
       description: apiTool.description || '',
-      notes: '',
-      quantity: apiTool.quantity_in_stock ?? 0
+      quantityInStock: apiTool.quantity_in_stock ?? 0
     };
   }
 
   private mapToolToCreatePayload(tool: Tool): ToolCreate {
     return {
       name: tool.name.trim(),
+      brand: tool.brand?.trim() || undefined,
       category: tool.category,
       sub_category: tool.subCategory || undefined,
-      quantity_in_stock: tool.quantity,
-      min_stock_level: 0,
-      price_per_unit: tool.estimatedPrice,
+      quantity_in_stock: tool.quantityInStock,
+      min_stock_level: tool.minStockLevel || 0,
+      price_per_unit: tool.pricePerUnit,
       description: tool.description || undefined
     };
   }
@@ -231,7 +238,7 @@ export class ToolsComponent implements OnInit, OnDestroy {
     this.filteredTools = this.tools.filter(tool => {
       const matchesSearch = !this.searchValue || 
         tool.name.toLowerCase().includes(this.searchValue.toLowerCase()) ||
-        tool.brand.toLowerCase().includes(this.searchValue.toLowerCase()) ||
+        (tool.brand?.toLowerCase().includes(this.searchValue.toLowerCase())) ||
         (tool.description?.toLowerCase().includes(this.searchValue.toLowerCase()));
       
       const matchesStatus = !this.filterInventoryStatus || 
@@ -267,8 +274,8 @@ export class ToolsComponent implements OnInit, OnDestroy {
       });
     } else {
       this.filteredTools.sort((a, b) => {
-        const aId = parseInt(a.id) || 0;
-        const bId = parseInt(b.id) || 0;
+        const aId = a.id || 0;
+        const bId = b.id || 0;
         return bId - aId;
       });
     }
@@ -465,9 +472,9 @@ export class ToolsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // איפוס מחיר לכלים שאינם חד"פ
+    // איפוס מחיר לכלים שאינם חד פעמי
     if (!this.isDisposableTool(this.tool)) {
-      this.tool.estimatedPrice = 0;
+      this.tool.pricePerUnit = 0;
     }
 
     const isUpdate = !!this.tool.id;
@@ -575,7 +582,8 @@ export class ToolsComponent implements OnInit, OnDestroy {
     delete this.clonedTools[tool.id];
   }
 
-  getStatusSeverity(status: string): 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast' | undefined {
+  getStatusSeverity(status: string | undefined): 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast' | undefined {
+    if (!status) return 'info';
     const normalized = status.toLowerCase();
     if (normalized.includes('אזל') || normalized.includes('חסר') || normalized.includes('empty') || normalized.includes('out')) {
       return 'danger';
@@ -589,7 +597,8 @@ export class ToolsComponent implements OnInit, OnDestroy {
     return 'info';
   }
 
-  getStatusIcon(status: string): string {
+  getStatusIcon(status: string | undefined): string {
+    if (!status) return 'pi pi-info-circle';
     const normalized = status.toLowerCase();
     if (normalized.includes('אזל') || normalized.includes('חסר') || normalized.includes('empty') || normalized.includes('out')) {
       return 'pi pi-times-circle';
@@ -603,7 +612,8 @@ export class ToolsComponent implements OnInit, OnDestroy {
     return 'pi pi-info-circle';
   }
 
-  getSubCategorySeverity(subCategory: string): 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast' | undefined {
+  getSubCategorySeverity(subCategory: string | undefined): 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast' | undefined {
+    if (!subCategory) return 'info';
     if (subCategory === 'חד״פ') {
       return 'info';
     }
@@ -613,50 +623,104 @@ export class ToolsComponent implements OnInit, OnDestroy {
     return 'secondary';
   }
 
-  trackByTool(index: number, tool: Tool): string {
+  trackByTool(index: number, tool: Tool): number {
     return tool.id;
   }
 
+  getComputedInventoryStatus(tool: Tool): string {
+    const qty = tool.quantityInStock ?? 0;
+    const minLevel = tool.minStockLevel ?? 0;
+    if (qty <= 0) {
+      return 'אזל';
+    }
+    if (qty <= minLevel) {
+      return 'מלאי נמוך';
+    }
+    return 'במלאי';
+  }
+
   private getEmptyTool(): Tool {
-    const defaultStatus = this.inventoryStatusValues[0] || FALLBACK_INVENTORY_STATUSES[0];
     const defaultCategory = this.categoryValues[0] || '';
     const defaultSubCategory = this.subCategoryValues[0] || '';
 
     return {
-      id: '',
+      id: 0,
       name: '',
-      inventoryStatus: defaultStatus,
+      inventoryStatus: 'במלאי',
       brand: '',
-      estimatedPrice: 0,
+      pricePerUnit: 0,
       category: defaultCategory,
       subCategory: defaultSubCategory,
       description: '',
-      notes: '',
-      quantity: 0
+      quantityInStock: 0,
+      minStockLevel: 0
     };
   }
 
   private updateInventorySummary(): void {
-    if (!this.inventoryStatuses.length) {
-      this.inventorySummary = [];
-      return;
-    }
+    // Build summary from actual tool statuses, not from lookup values
+    const statusCounts = new Map<string, number>();
+    
+    this.tools.forEach(tool => {
+      const status = tool.inventoryStatus || 'לא מוגדר';
+      statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
+    });
 
-    this.inventorySummary = this.inventoryStatuses.map(option => {
-      const count = this.tools.filter(tool => tool.inventoryStatus === option.value).length;
-      const severity = this.getStatusSeverity(option.value);
+    this.inventorySummary = Array.from(statusCounts.entries()).map(([status, count]) => {
+      const severity = this.getStatusSeverity(status);
       return {
-        value: option.value,
-        label: option.label,
+        value: status,
+        label: status,
         count,
         severity,
-        icon: this.getStatusIcon(option.value),
+        icon: this.getStatusIcon(status),
         badgeClass: this.getFilterBadgeClass(severity)
       };
     });
+    
+    // Sort by severity: danger first, then warn, then success
+    const severityOrder = { danger: 0, warn: 1, success: 2, info: 3, secondary: 4, contrast: 5 };
+    this.inventorySummary.sort((a, b) => {
+      const orderA = severityOrder[a.severity || 'info'] ?? 6;
+      const orderB = severityOrder[b.severity || 'info'] ?? 6;
+      return orderA - orderB;
+    });
   }
   isDisposableTool(tool: Tool): boolean {
-    return tool.subCategory === 'חד״פ';
+    return tool.subCategory === 'חד פעמי';
+  }
+
+  exportShortages(): void {
+    const isShortage = (t: Tool) =>
+      (t.minStockLevel ?? 0) > 0 && (t.quantityInStock ?? 0) < (t.minStockLevel ?? 0);
+
+    const headers = ['שם הכלי', 'קטגוריה', 'סוג', 'כמות במלאי', 'כמות מינימום'];
+
+    const disposableShortages = this.tools
+      .filter(t => t.subCategory === 'חד פעמי' && isShortage(t))
+      .map(t => [t.name, t.category, t.subCategory ?? '', t.quantityInStock ?? 0, t.minStockLevel ?? 0]);
+
+    const realToolShortages = this.tools
+      .filter(t => t.subCategory !== 'חד פעמי' && isShortage(t))
+      .map(t => [t.name, t.category, t.subCategory ?? '', t.quantityInStock ?? 0, t.minStockLevel ?? 0]);
+
+    this.excelExportService.exportSheets(
+      [
+        { name: 'חוסרי כלים אמיתיים', headers, rows: realToolShortages },
+        { name: 'חוסרי חד פעמי',      headers, rows: disposableShortages }
+      ],
+      `חוסרי_כלים_${this.excelExportService.todayString()}.xlsx`
+    );
+
+    const total = disposableShortages.length + realToolShortages.length;
+    this.messageService.add({
+      severity: total > 0 ? 'success' : 'info',
+      summary: total > 0 ? 'יצוא הצליח' : 'אין חוסרים',
+      detail: total > 0
+        ? `הקובץ הורד בהצלחה (${realToolShortages.length} כלים אמיתיים, ${disposableShortages.length} חד פעמי)`
+        : 'לא נמצאו כלים החורגים מרמת המינימום',
+      life: 4000
+    });
   }
 
   private getFilterBadgeClass(
@@ -673,4 +737,5 @@ export class ToolsComponent implements OnInit, OnDestroy {
         return 'filter-stat-neutral';
     }
   }
+  
 }

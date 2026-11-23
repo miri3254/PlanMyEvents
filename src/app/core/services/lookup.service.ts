@@ -164,10 +164,6 @@ export class LookupService {
     }
 
     return {
-      dishCategories: this.normalizeList(
-        stored.dishCategories,
-        defaults.dishCategories
-      ),
       kosherTypes: this.normalizeList(stored.kosherTypes, defaults.kosherTypes),
       measurementUnits: this.normalizeList(
         stored.measurementUnits,
@@ -181,7 +177,7 @@ export class LookupService {
         stored.inventoryStatuses,
         defaults.inventoryStatuses
       ),
-      eventTypes: this.normalizeList(stored.eventTypes, defaults.eventTypes),
+      eventStatuses: this.normalizeList(stored.eventStatuses, defaults.eventStatuses),
       toolCategories: this.normalizeList(stored.toolCategories, defaults.toolCategories),
       toolSubCategories: this.normalizeList(stored.toolSubCategories, defaults.toolSubCategories),
       dashboardSections: this.mergeWidgetCollection(
@@ -256,12 +252,11 @@ export class LookupService {
 
   private cloneData(data: LookupData): LookupData {
     return {
-      dishCategories: [...data.dishCategories],
       kosherTypes: [...data.kosherTypes],
       measurementUnits: [...data.measurementUnits],
       productCategories: [...data.productCategories],
       inventoryStatuses: [...data.inventoryStatuses],
-      eventTypes: [...data.eventTypes],
+      eventStatuses: [...data.eventStatuses],
       toolCategories: [...data.toolCategories],
       toolSubCategories: [...data.toolSubCategories],
       dashboardSections: data.dashboardSections.map(widget => ({ ...widget })),

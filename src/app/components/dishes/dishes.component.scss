@@ -427,7 +427,95 @@
       }
     }
   }
-}
+
+    // Event Header Card
+    .event-header-card {
+      background: linear-gradient(135deg,
+        rgba(99, 102, 241, 0.1) 0%,
+        rgba(34, 197, 94, 0.08) 50%,
+        rgba(255, 255, 255, 0.95) 100%);
+      border-radius: 16px;
+      padding: 1.5rem 2rem;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
+
+      .event-header-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      .event-header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .title-icon {
+          width: 52px;
+          height: 52px;
+          border-radius: 14px;
+          background: linear-gradient(135deg, #6366f1, #22c55e);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+
+          i { font-size: 1.4rem; color: white; }
+        }
+
+        .title-text {
+          .gradient-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1, #22c55e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+            line-height: 1.2;
+          }
+
+          .event-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 0.35rem;
+
+            .guest-count {
+              color: var(--text-color-secondary);
+              font-size: 0.9rem;
+              display: flex;
+              align-items: center;
+              gap: 0.3rem;
+            }
+          }
+        }
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .selected-count {
+          font-weight: 600;
+          color: #16a34a;
+          font-size: 0.95rem;
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+      }
+    }
+  }
 
 
 
@@ -436,6 +524,33 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
+}
+
+.calculation-admin { display: grid; gap: 1rem; }
+.calculation-admin-card { padding: 1rem; border: 1px solid #dbe4ee; border-radius: 8px; background: #f8fafc; }
+.calculation-admin-row { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-bottom: .6rem; }
+.calculation-admin-row input, .calculation-admin-row select, .calculation-admin textarea {
+  padding: .4rem; border: 1px solid #cbd5e1; border-radius: 5px;
+}
+.calculation-admin textarea { width: 100%; }
+
+.dishes-container,
+:host {
+  ::ng-deep .custom-dialog {
+    .p-dialog-header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+      color: white !important;
+    }
+
+    .dialog-title {
+      color: white !important;
+    }
+
+    .dialog-content .form-group-card .group-title i,
+    .dialog-content .section-title i {
+      color: var(--primary) !important;
+    }
+  }
 }
 
 .dish-card {
@@ -557,41 +672,264 @@
   align-items: center;
 }
 
-// Dialog Forms
-.dialog-form {
-  padding: 1rem 0;
+// ====================================
+// Dialog UI Design
+// ====================================
+::ng-deep .custom-dialog {
+  background: var(--surface-card);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 
-  .form-grid {
+  .p-dialog-header {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px 12px 0 0;
+
+    .dialog-header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      gap: 1rem;
+
+      .dialog-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        flex: 1;
+        color: white;
+      }
+    }
+
+    .p-dialog-header-icons {
+      button {
+        color: white !important;
+        &:hover {
+          background: rgba(255, 255, 255, 0.2) !important;
+        }
+      }
+    }
+  }
+
+  .p-dialog-content {
+    padding: 0;
+    background: #fafafa;
+  }
+
+  .p-dialog-footer {
+    padding: 0.875rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    background: white;
+    border-radius: 0 0 12px 12px;
+
+    .p-button {
+      padding: 0.625rem 1.25rem;
+      font-weight: 600;
+      border-radius: 8px;
+    }
+  }
+
+  // Tab Styles overrides
+  p-tabs {
+    .p-tablist {
+      border-bottom: 2px solid var(--surface-border);
+      background: white;
+      padding: 0 1.5rem;
+    }
+    .p-tab {
+      font-weight: 600;
+      color: var(--text-color-secondary);
+      padding: 0.85rem 1.25rem;
+
+      &.p-tab-active {
+        color: #6366f1;
+        border-bottom-color: #6366f1;
+      }
+
+      i { margin-left: 0.4rem; }
+    }
+    .p-tabpanel {
+      padding: 0 !important;
+    }
+  }
+}
+
+// Dialog Content (inside tab panels)
+.dialog-content {
+  padding: 1.5rem;
+  direction: rtl;
+  background: #fafafa;
+
+  .form-section {
+    &.highlight-section {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(99, 102, 241, 0.15);
+
+      .primary-input {
+        font-size: 1.2rem !important;
+        font-weight: 600;
+        padding: 0.9rem 1rem !important;
+        border: 2px solid rgba(99, 102, 241, 0.25) !important;
+
+        &:focus {
+          border-color: #6366f1 !important;
+          box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+        }
+      }
+
+      .field-label { font-size: 1rem; color: var(--text-color); }
+    }
+  }
+
+  .form-grid-layout {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
+    gap: 1.25rem;
+
+    @media (max-width: 640px) { grid-template-columns: 1fr; }
+  }
+
+  .form-group-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    &.full-width { grid-column: 1 / -1; }
+
+    .group-title {
+      margin: 0 0 0.25rem 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--surface-border);
+
+      i { color: #6366f1; font-size: 1rem; }
+    }
+
+    .form-grid-inner {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+
+      .form-field.full-width { grid-column: 1 / -1; }
+      @media (max-width: 640px) { grid-template-columns: 1fr; }
+    }
   }
 
   .form-field {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    width: 100%;
 
-    label {
-      font-weight: 600;
-      color: #333;
+    &.full-width { grid-column: 1 / -1; }
+
+    .field-label {
       font-size: 0.875rem;
-    }
+      font-weight: 600;
+      color: var(--text-color-secondary);
 
-    &.checkbox-field {
-      flex-direction: row;
-      align-items: center;
-      gap: 0.75rem;
-
-      label {
-        font-weight: 500;
-        margin: 0;
+      &.required::after {
+        content: ' *';
+        color: #ef4444;
+        font-weight: 700;
       }
     }
 
-    &.full-width {
-      grid-column: 1 / -1;
+    ::ng-deep .p-inputtext,
+    ::ng-deep .p-inputnumber-input {
+      padding: 0.7rem 1rem;
+      border: 1px solid var(--input-border-color, #d1d5db);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+      background: white;
+      color: var(--text-color);
+      width: 100%;
+
+      &:hover { border-color: #6366f1; }
+      &:focus, &.p-focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+      }
+    }
+
+    ::ng-deep .p-select,
+    ::ng-deep .field-select .p-select {
+      width: 100%;
+      background: white;
+      border: 1px solid var(--input-border-color, #d1d5db);
+      border-radius: 6px;
+
+      .p-select-label { padding: 0.7rem 1rem; color: var(--text-color); }
+      &:not(.p-disabled):hover { border-color: #6366f1; }
+      &.p-focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+      }
+    }
+
+    .field-textarea {
+      padding: 0.7rem 1rem;
+      border: 1px solid var(--input-border-color, #d1d5db);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      background: white;
+      color: var(--text-color);
+      resize: vertical;
+      width: 100%;
+
+      &:hover { border-color: #6366f1; }
+      &:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+      }
+    }
+
+    // Estimated price card inside group
+    &.estimated-price-display {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.04) 100%);
+      padding: 0.875rem 1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(99, 102, 241, 0.15);
+
+      .cost-display-box {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: white;
+        border: 2px solid rgba(99, 102, 241, 0.2);
+        border-radius: 10px;
+        padding: 0.65rem 1rem;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+
+        i { color: #6366f1; font-size: 1rem; }
+        .cost-value { font-size: 1.4rem; font-weight: 700; color: #6366f1; }
+      }
+
+      .price-hint {
+        color: var(--text-color-secondary);
+        font-size: 0.75rem;
+        margin-top: 0.2rem;
+      }
     }
   }
 }
@@ -603,10 +941,27 @@
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid #e5e7eb;
+  gap: 1rem;
 
   p {
     margin: 0;
     color: #666;
+  }
+
+  .tab-header-info {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    padding-inline-end: 1rem;
+  }
+
+  .total-price-badge {
+    background: linear-gradient(135deg, #ff732d 0%, #e8590c 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
   }
 }
 
@@ -642,9 +997,51 @@
   .serving-dish-fields {
     flex: 1;
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: 2fr 1fr 1fr auto;
     gap: 1rem;
     align-items: end;
+  }
+
+  .ingredient-price {
+    min-width: 80px;
+    text-align: center;
+    
+    .price-display {
+      display: block;
+      font-weight: 600;
+      color: #ff732d;
+      font-size: 1rem;
+      background: rgba(255, 115, 45, 0.1);
+      padding: 0.5rem;
+      border-radius: 6px;
+    }
+  }
+
+  // Ingredient price breakdown in popup
+  .ingredient-price-breakdown {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    background: rgba(255, 115, 45, 0.06);
+    border: 1px solid rgba(255, 115, 45, 0.15);
+    border-radius: 8px;
+    padding: 0.4rem 0.6rem;
+    min-width: 120px;
+
+    .price-calc {
+      font-size: 0.7rem;
+      color: #888;
+      direction: ltr;
+      unicode-bidi: plaintext;
+    }
+
+    .price-total {
+      font-size: 0.85rem;
+      color: #ff732d;
+      direction: ltr;
+      unicode-bidi: plaintext;
+    }
   }
 
   .equipment-fields {
@@ -653,6 +1050,26 @@
 
   .serving-dish-fields {
     grid-template-columns: 2fr 1fr 1fr;
+  }
+}
+
+// Selected product styling in dropdown
+::ng-deep .product-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0;
+  
+  &.selected-product {
+    opacity: 0.5;
+    color: #6c757d;
+    pointer-events: none;
+    cursor: not-allowed;
+    
+    span {
+      text-decoration: line-through;
+    }
   }
 }
 
@@ -692,6 +1109,94 @@
   padding: 2rem;
   color: #999;
   font-size: 1rem;
+}
+
+// Table presentation aligned with the Products and Tools pages.
+::ng-deep .dishes-table-card {
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+
+  .p-card-body,
+  .p-card-content {
+    padding: 0;
+  }
+}
+
+::ng-deep .dishes-table {
+  .p-datatable-thead > tr > th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 700;
+    padding: 1rem;
+    border-color: #e2e8f0;
+    white-space: nowrap;
+  }
+
+  .p-datatable-tbody > tr > td {
+    padding: 0.9rem 1rem;
+    border-color: #edf1f5;
+    vertical-align: middle;
+  }
+
+  .p-datatable-tbody > tr.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.18s ease, box-shadow 0.18s ease;
+
+    &:hover {
+      background: #fff7ed;
+      box-shadow: inset -3px 0 0 #ff732d;
+    }
+  }
+
+  .p-paginator {
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+    padding: 0.75rem;
+    background: white;
+  }
+}
+
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    background: #f1f5f9 !important;
+  }
+}
+
+.dish-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .dish-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+}
+
+.ingredient-count {
+  display: inline-flex;
+  min-width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #c2410c;
+  font-weight: 700;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
 }
 
 // Utility Classes
@@ -753,6 +1258,245 @@
     p-selectbutton,
     .view-toggle-group {
       width: 100%;
+    }
+  }
+}
+
+// ====================================
+// Event Selection Mode Styles
+// ====================================
+.selected-row {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  border-right: 4px solid #22c55e;
+  
+  &:hover {
+    background-color: rgba(34, 197, 94, 0.2) !important;
+  }
+}
+
+.event-mode-row {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: rgba(255, 115, 45, 0.08);
+    transform: translateX(-2px);
+  }
+}
+
+.selected-card {
+  border: 3px solid #22c55e !important;
+  background: linear-gradient(135deg, 
+    rgba(34, 197, 94, 0.1) 0%, 
+    rgba(255, 255, 255, 1) 100%) !important;
+  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.25) !important;
+}
+
+.event-mode-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(255, 115, 45, 0.2);
+  }
+}
+
+.dish-card-checkbox {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  
+  ::ng-deep .p-checkbox {
+    .p-checkbox-box {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: 2px solid var(--primary-color);
+      
+      &.p-highlight {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        border-color: #22c55e;
+      }
+      
+      .p-checkbox-icon {
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+.dish-card {
+  position: relative;
+}
+
+// ====================================
+// Menu Tags in Table & Cards
+// ====================================
+.menu-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+
+  .no-menus-label {
+    font-size: 0.85rem;
+    color: var(--text-color-secondary);
+  }
+}
+
+::ng-deep .menu-tag-small {
+  font-size: 0.7rem !important;
+  padding: 2px 6px !important;
+  line-height: 1.2 !important;
+}
+
+.card-menu-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+// ====================================
+// Menu Mappings Tab (שיוך לתפריטים)
+// ====================================
+.menu-mappings-container {
+  .mapping-instructions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(59, 130, 246, 0.08);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    color: var(--text-color-secondary);
+
+    i {
+      color: var(--primary-color);
+    }
+  }
+}
+
+.menu-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+
+  .menu-template-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .mapping-count-badge {
+    font-size: 0.75rem;
+    background: var(--primary-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-right: auto;
+  }
+}
+
+.categories-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 16px;
+
+  .category-check-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background 0.15s;
+    border: 1px solid transparent;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+    
+    // Category has upgrade settings
+    &:has(.upgrade-options) {
+      background: rgba(255, 115, 45, 0.05);
+      border-color: rgba(255, 115, 45, 0.2);
+    }
+
+    .category-main-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .category-label {
+      cursor: pointer;
+      user-select: none;
+
+      .category-name {
+        font-weight: 500;
+      }
+
+      .sub-meal-label {
+        color: var(--text-color-secondary);
+        font-size: 0.85rem;
+      }
+    }
+    
+    // Upgrade options container
+    .upgrade-options {
+      margin-right: 32px;
+      padding: 10px 14px;
+      background: rgba(255, 115, 45, 0.08);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 115, 45, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      
+      .upgrade-checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
+        .upgrade-label {
+          cursor: pointer;
+          font-weight: 500;
+          color: #E8590C;
+          user-select: none;
+        }
+      }
+      
+      .extra-charge-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        
+        .extra-charge-label {
+          font-weight: 500;
+          color: var(--text-color-secondary);
+          white-space: nowrap;
+        }
+        
+        .currency-suffix {
+          font-weight: 600;
+          color: #E8590C;
+        }
+        
+        ::ng-deep {
+          .p-inputnumber {
+            .p-inputtext {
+              text-align: center;
+              font-weight: 600;
+            }
+          }
+        }
+      }
     }
   }
 }

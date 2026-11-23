@@ -1,8 +1,8 @@
 // ====================================
-// Tools Component - Modern Design with Gradients
+// Tools Component - Modern Design (matches Products)
 // ====================================
 
-.tools-container {
+.tools-page {
     direction: rtl;
 
     // ====================================
@@ -12,18 +12,18 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        
+
         // Header Card
         .header-card {
-            background: linear-gradient(135deg, 
-                rgba(99, 102, 241, 0.08) 0%, 
+            background: linear-gradient(135deg,
+                rgba(99, 102, 241, 0.08) 0%,
                 rgba(255, 152, 0, 0.08) 50%,
                 rgba(255, 255, 255, 0.9) 100%);
             border-radius: 16px;
             padding: 1.5rem 2rem;
             border: 1px solid rgba(99, 102, 241, 0.15);
             box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
-            
+
             .header-inner {
                 display: flex;
                 justify-content: space-between;
@@ -31,13 +31,13 @@
                 flex-wrap: wrap;
                 gap: 1rem;
             }
-            
+
             .header-content {
                 .title-wrapper {
                     display: flex;
                     align-items: center;
                     gap: 1rem;
-                    
+
                     .title-icon {
                         width: 56px;
                         height: 56px;
@@ -47,13 +47,13 @@
                         align-items: center;
                         justify-content: center;
                         box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
-                        
+
                         i {
                             font-size: 1.5rem;
                             color: white;
                         }
                     }
-                    
+
                     .title-text {
                         .gradient-title {
                             font-size: 1.75rem;
@@ -65,7 +65,7 @@
                             margin: 0;
                             line-height: 1.2;
                         }
-                        
+
                         .subtitle {
                             color: var(--muted-foreground);
                             font-size: 0.9rem;
@@ -74,8 +74,24 @@
                     }
                 }
             }
-            
+
             .header-actions {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+
+                ::ng-deep .export-shortages-btn {
+                    border-radius: 10px;
+                    font-weight: 600;
+                    padding: 0.75rem 1.25rem;
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 16px rgba(34, 197, 94, 0.3);
+                    }
+                }
+
                 ::ng-deep .add-tool-btn {
                     background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
                     border: none !important;
@@ -84,20 +100,20 @@
                     border-radius: 10px;
                     box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
                     transition: all 0.3s ease;
-                    
+
                     &:hover {
                         background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
                         transform: translateY(-3px);
                         box-shadow: 0 10px 28px rgba(99, 102, 241, 0.45);
                     }
-                    
+
                     .p-button-icon {
                         margin-left: 0.5rem;
                     }
                 }
             }
         }
-        
+
         // Filters Card
         .filters-card {
             background: var(--card-bg);
@@ -105,34 +121,31 @@
             padding: 1.25rem 1.5rem;
             border: 1px solid var(--border);
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-            
+
             .filters-inner {
                 display: flex;
                 flex-direction: column;
                 gap: 0.75rem;
-                
+
                 .filters-row {
                     display: flex;
                     align-items: center;
                     gap: 1rem;
                     flex-wrap: wrap;
-                }
-                
-                // שורה ראשונה - חיפוש, קטגוריה ותצוגה
-                .filters-row-primary {
+
                     // Search Section
                     .search-section {
-                        flex: 1;
+                        flex: 0 0 auto;
                         min-width: 220px;
-                        max-width: 350px;
+                        max-width: 320px;
                         display: flex;
                         align-items: center;
-                        
+
                         .search-input-wrapper {
                             width: 100%;
                             position: relative;
                             display: block;
-                            
+
                             .search-input {
                                 width: 100%;
                                 border-radius: 10px;
@@ -141,19 +154,19 @@
                                 transition: all 0.2s ease;
                                 background: var(--surface-ground);
                                 height: 42px;
-                                
+
                                 &:focus {
                                     border-color: #6366f1;
                                     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
                                     background: white;
                                 }
-                                
+
                                 &::placeholder {
                                     color: var(--text-color-secondary);
                                     font-size: 0.875rem;
                                 }
                             }
-                            
+
                             .pi-search {
                                 position: absolute;
                                 top: 50%;
@@ -164,25 +177,50 @@
                             }
                         }
                     }
-                    
-                    // Category Filters
-                    .category-filters {
+
+                    // Status Filters
+                    .status-filters {
                         display: flex;
                         align-items: center;
-                        gap: 0.75rem;
-                        
-                        .filter-dropdown {
-                            min-width: 140px;
+                        gap: 0.4rem;
+                        flex-wrap: wrap;
+                        padding: 0 0.75rem;
+                        border-right: 2px solid var(--surface-border);
+                        margin: 0 0.25rem 0 0;
+                        height: auto;
+                        min-height: 42px;
+
+                        ::ng-deep .clear-btn {
+                            border-radius: 4px !important;
+                            font-size: 0.75rem;
+                            margin-right: 0.35rem;
+                            padding: 0.4rem 0.65rem;
+                            border: 1px solid var(--surface-border) !important;
+                            background: white !important;
+                            color: var(--text-color-secondary) !important;
+
+                            &:hover {
+                                background: var(--surface-ground) !important;
+                                border-color: #6366f1 !important;
+                                color: #6366f1 !important;
+                            }
+
+                            .p-button-icon {
+                                font-size: 0.8rem;
+                            }
                         }
                     }
-                    
+
                     // Filter Actions - View Toggle
                     .filter-actions {
                         display: flex;
                         align-items: center;
                         gap: 0.75rem;
                         margin-right: auto;
-                        
+                        height: 42px;
+                        padding-right: 0.75rem;
+                        border-right: 2px solid var(--surface-border);
+
                         .view-toggle-group {
                             display: flex;
                             align-items: center;
@@ -191,21 +229,21 @@
                             padding: 4px;
                             border-radius: 10px;
                             border: 1px solid var(--surface-border);
-                            
+
                             ::ng-deep .p-button {
                                 border-radius: 8px !important;
                                 height: 34px;
                                 padding: 0 0.75rem;
-                                
+
                                 .p-button-label {
                                     font-size: 0.85rem;
                                     font-weight: 500;
                                 }
-                                
+
                                 .p-button-icon {
                                     margin-left: 0.4rem;
                                 }
-                                
+
                                 &.p-button-outlined {
                                     background: white !important;
                                     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
@@ -214,133 +252,129 @@
                         }
                     }
                 }
-                
-                // שורה שנייה - כפתורי סינון
-                .filters-row-secondary {
+
+                // Secondary row - category + type filters
+                .secondary-filters-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    flex-wrap: wrap;
                     padding-top: 0.5rem;
                     border-top: 1px solid var(--surface-border);
-                    justify-content: flex-start;
-                    
-                    .status-filters {
-                        display: flex;
-                        align-items: center;
-                        gap: 0.4rem;
-                        flex-wrap: wrap;
-                        
-                        .filter-divider {
-                            width: 1px;
-                            height: 24px;
-                            background: var(--surface-border);
-                            margin: 0 0.5rem;
-                        }
-                        
-                        ::ng-deep .sub-cat-btn {
-                            font-size: 0.8rem;
-                            padding: 0.4rem 0.75rem;
-                            border-radius: 6px;
-                            white-space: nowrap;
-                            
-                            &.p-button-outlined {
-                                background: var(--surface-ground);
-                                border-color: var(--surface-border);
-                                
-                                &:hover {
-                                    background: var(--surface-hover);
-                                    border-color: #6366f1;
-                                }
-                            }
-                            
-                            &:not(.p-button-outlined) {
-                                background: linear-gradient(135deg, #6366f1, #8b5cf6);
-                                border-color: transparent;
-                            }
-                            
-                            .p-button-icon {
-                                font-size: 0.75rem;
-                                margin-left: 0.4rem;
-                            }
-                        }
-                    }
-                    
-                    ::ng-deep .clear-btn {
-                        border-radius: 6px !important;
-                        font-size: 0.8rem;
-                        padding: 0.4rem 0.75rem;
-                        border: 1px solid var(--surface-border) !important;
-                        background: white !important;
-                        color: var(--text-color-secondary) !important;
-                        margin-right: 0.75rem;
-                        
-                        &:hover {
-                            background: var(--surface-ground) !important;
-                            border-color: #6366f1 !important;
-                            color: #6366f1 !important;
-                        }
-                        
-                        .p-button-icon {
-                            font-size: 0.8rem;
-                        }
-                    }
                 }
             }
         }
-        
+
+        // Filter Status Cards (Button Style)
+        .filter-stat-card {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.9rem;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: var(--font-family);
+            font-weight: 500;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            background: var(--surface-ground);
+            min-height: 36px;
+
+            i { font-size: 1rem; }
+
+            .filter-label {
+                font-family: var(--font-family);
+                font-size: 0.875rem;
+            }
+
+            .stat-number {
+                font-weight: 600;
+                font-size: 0.875rem;
+                margin-right: 0.2rem;
+                padding: 0.15rem 0.5rem;
+                border-radius: 4px;
+                background: rgba(0, 0, 0, 0.06);
+            }
+
+            &.filter-stat-success {
+                background: #f0fdf4; border-color: #bbf7d0; color: #15803d;
+                .stat-number { background: rgba(34,197,94,0.15); }
+                &:hover { border-color: #86efac; background: #dcfce7; }
+                &.active { border-color: #22c55e; background: #dcfce7; box-shadow: inset 0 0 0 1px #22c55e; }
+            }
+
+            &.filter-stat-warning {
+                background: #fefce8; border-color: #fef08a; color: #a16207;
+                .stat-number { background: rgba(234,179,8,0.15); }
+                &:hover { border-color: #fde047; background: #fef9c3; }
+                &.active { border-color: #eab308; background: #fef9c3; box-shadow: inset 0 0 0 1px #eab308; }
+            }
+
+            &.filter-stat-danger {
+                background: #fef2f2; border-color: #fecaca; color: #b91c1c;
+                .stat-number { background: rgba(239,68,68,0.15); }
+                &:hover { border-color: #fca5a5; background: #fee2e2; }
+                &.active { border-color: #ef4444; background: #fee2e2; box-shadow: inset 0 0 0 1px #ef4444; }
+            }
+        }
+
         // Responsive
         @media (max-width: 1024px) {
             .filters-card {
-                .filters-row-primary {
+                .filters-row {
                     .search-section {
                         min-width: 100%;
                         max-width: 100%;
                         order: -1;
                     }
-                    
-                    .category-filters {
+
+                    .status-filters {
+                        border: none;
+                        padding: 0;
+                        margin: 0;
                         width: 100%;
+                        justify-content: flex-start;
                     }
-                    
+
                     .filter-actions {
                         width: 100%;
                         justify-content: space-between;
                     }
                 }
-                
-                .filters-row-secondary {
-                    .status-filters {
-                        width: 100%;
-                        justify-content: flex-start;
-                    }
-                }
             }
         }
-        
+
         @media (max-width: 640px) {
             .header-card {
                 padding: 1rem 1.25rem;
-                
+
                 .header-inner {
                     flex-direction: column;
                     align-items: stretch;
-                    
+
                     .header-actions {
                         width: 100%;
-                        
+                        flex-direction: column;
+
+                        ::ng-deep .export-shortages-btn,
                         ::ng-deep .add-tool-btn {
                             width: 100%;
                             justify-content: center;
                         }
                     }
                 }
-                
+
                 .title-icon {
                     width: 48px;
                     height: 48px;
-                    
+
                     i {
                         font-size: 1.25rem;
                     }
                 }
-                
+
                 .gradient-title {
                     font-size: 1.4rem !important;
                 }
@@ -348,254 +382,7 @@
         }
     }
 
-    // Filter Dropdown
-    .filter-dropdown {
-        min-width: 150px;
-    }
-
-    // Statistics Cards
-    ::ng-deep .stat-card {
-        border: 2px solid;
-        transition: all 0.3s ease;
-
-        &:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 1rem;
-
-            .stat-icon {
-                padding: 0.5rem;
-                border-radius: 0.5rem;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                
-                i {
-                    color: white;
-                    font-size: 1rem;
-                }
-
-                &.bg-green {
-                    background: linear-gradient(135deg, #22c55e, #16a34a);
-                }
-
-                &.bg-yellow {
-                    background: linear-gradient(135deg, #eab308, #ca8a04);
-                }
-        
-            &.filter-stat-neutral {
-                background: linear-gradient(135deg, #ffffff, rgba(96, 125, 139, 0.05));
-                border-color: rgba(96, 125, 139, 0.2);
-                color: #546e7a;
-
-                i {
-                    color: #546e7a;
-                }
-
-                &:hover, &.active {
-                    border-color: #607d8b;
-                    background: linear-gradient(135deg, #ffffff, rgba(96, 125, 139, 0.15));
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 12px rgba(96, 125, 139, 0.2);
-                }
-            }
-
-                &.bg-red {
-                    background: linear-gradient(135deg, #ef4444, #dc2626);
-                }
-            }
-
-            .stat-title {
-                font-size: 0.875rem;
-                font-weight: 600;
-            }
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            padding: 0 1rem 1rem 1rem;
-        }
-
-        &.stat-card-success {
-            border-color: rgba(34, 197, 94, 0.2);
-            background: linear-gradient(135deg, #ffffff, rgba(34, 197, 94, 0.05));
-        }
-
-        &.stat-card-warning {
-            border-color: rgba(234, 179, 8, 0.2);
-            background: linear-gradient(135deg, #ffffff, rgba(234, 179, 8, 0.05));
-        }
-
-        &.stat-card-danger {
-            border-color: rgba(239, 68, 68, 0.2);
-            background: linear-gradient(135deg, #ffffff, rgba(239, 68, 68, 0.05));
-        }
-    }
-
-    // Gradient Text Colors
-    .gradient-text-green {
-        background: linear-gradient(90deg, #22c55e, #16a34a);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .gradient-text-yellow {
-        background: linear-gradient(90deg, #eab308, #ca8a04);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .gradient-text-red {
-        background: linear-gradient(90deg, #ef4444, #dc2626);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    // Search Input Wrapper
-    .search-input-wrapper {
-        flex: 1;
-        min-width: 250px;
-    }
-
-    // Filter Status Cards (Button Style) - Professional Look
-    .filter-stat-card {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 0.9rem;
-        border-radius: 6px;
-        border: 1px solid transparent;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-family: var(--font-family);
-        font-weight: 500;
-        font-size: 0.875rem;
-        white-space: nowrap;
-        background: var(--surface-ground);
-        min-height: 36px;
-
-        i {
-            font-size: 1rem;
-        }
-
-        .filter-label {
-            font-family: var(--font-family);
-            font-size: 0.875rem;
-        }
-
-        .stat-number {
-            font-family: var(--font-family);
-            font-weight: 600;
-            font-size: 0.875rem;
-            margin-right: 0.2rem;
-            padding: 0.15rem 0.5rem;
-            border-radius: 4px;
-            background: rgba(0, 0, 0, 0.06);
-        }
-
-        &.filter-stat-success {
-            background: #f0fdf4;
-            border-color: #bbf7d0;
-            color: #15803d;
-
-            .stat-number {
-                background: rgba(34, 197, 94, 0.15);
-            }
-
-            &:hover {
-                border-color: #86efac;
-                background: #dcfce7;
-            }
-            
-            &.active {
-                border-color: #22c55e;
-                background: #dcfce7;
-                box-shadow: inset 0 0 0 1px #22c55e;
-            }
-        }
-
-        &.filter-stat-warning {
-            background: #fefce8;
-            border-color: #fef08a;
-            color: #a16207;
-
-            .stat-number {
-                background: rgba(234, 179, 8, 0.15);
-            }
-
-            &:hover {
-                border-color: #fde047;
-                background: #fef9c3;
-            }
-            
-            &.active {
-                border-color: #eab308;
-                background: #fef9c3;
-                box-shadow: inset 0 0 0 1px #eab308;
-            }
-        }
-
-        &.filter-stat-danger {
-            background: #fef2f2;
-            border-color: #fecaca;
-            color: #b91c1c;
-
-            .stat-number {
-                background: rgba(239, 68, 68, 0.15);
-            }
-
-            &:hover {
-                border-color: #fca5a5;
-                background: #fee2e2;
-            }
-            
-            &.active {
-                border-color: #ef4444;
-                background: #fee2e2;
-                box-shadow: inset 0 0 0 1px #ef4444;
-            }
-        }
-
-        &.filter-stat-neutral {
-            background: #f8fafc;
-            border-color: #e2e8f0;
-            color: #64748b;
-
-            .stat-number {
-                background: rgba(100, 116, 139, 0.15);
-            }
-
-            &:hover {
-                border-color: #cbd5e1;
-                background: #f1f5f9;
-            }
-            
-            &.active {
-                border-color: #94a3b8;
-                background: #f1f5f9;
-                box-shadow: inset 0 0 0 1px #94a3b8;
-            }
-        }
-    }
-
-    // View Toggle Group
-    .view-toggle-group {
-        background: var(--surface-ground);
-        border-color: var(--surface-border);
-    }
-
-    // Sortable Table Headers
-    ::ng-deep .sortable-header {
+  .sortable-header {
         cursor: pointer;
         user-select: none;
         transition: background-color 0.2s;
@@ -613,7 +400,6 @@
             font-size: 0.875rem;
         }
     }
-
     // Clickable Row
     .clickable-row {
         cursor: pointer;
@@ -861,4 +647,330 @@
             transform: translateY(0);
         }
     }
+
+    // ====================================
+    // עיצוב דיאלוג
+    // ====================================
+    ::ng-deep .custom-dialog {
+        .p-dialog-header {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px 12px 0 0;
+            
+            .dialog-header-content {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                gap: 1rem;
+                
+                .dialog-title {
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    flex: 1;
+                }
+                
+                .header-actions {
+                    display: flex;
+                    gap: 0.5rem;
+                    
+                    .p-button {
+                        background: white;
+                        color: #6366f1;
+                        border: none;
+                        
+                        &.p-button-outlined {
+                            background: transparent;
+                            color: white;
+                            border: 1px solid white;
+                            
+                            &:hover {
+                                background: rgba(255, 255, 255, 0.15);
+                            }
+                        }
+                        
+                        &:not(.p-button-outlined):hover {
+                            background: #f8f9fa;
+                        }
+                    }
+                }
+            }
+            
+            .p-dialog-header-icons {
+                button {
+                    color: white !important;
+                    
+                    &:hover {
+                        background: rgba(255, 255, 255, 0.2) !important;
+                    }
+                }
+            }
+        }
+        
+        .p-dialog-content {
+            padding: 0;
+            background: #fafafa;
+        }
+        
+        .p-dialog-footer {
+            padding: 0.875rem 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 0 0 12px 12px;
+            
+            .p-button {
+                padding: 0.625rem 1.25rem;
+                font-weight: 600;
+                border-radius: 8px;
+            }
+        }
+    }
+    
+    .dialog-content {
+        padding: 1.5rem;
+        direction: rtl;
+        background: var(--surface-ground);
+        
+        .form-section {
+            &.highlight-section {
+                background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(255, 152, 0, 0.05));
+                border-radius: 12px;
+                padding: 1.5rem;
+                margin-bottom: 2rem;
+                border: 1px solid rgba(99, 102, 241, 0.1);
+                
+                .primary-input {
+                    font-size: 1.25rem !important;
+                    font-weight: 600;
+                    padding: 1rem !important;
+                    border: 2px solid rgba(99, 102, 241, 0.3) !important;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+                    &:focus {
+                        border-color: #6366f1 !important;
+                        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+                    }
+                }
+
+                .field-label {
+                    font-size: 1rem;
+                    color: var(--text-color);
+                }
+            }
+        }
+
+        .form-grid-layout {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            
+            @media (max-width: 768px) {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--surface-border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+
+            &.full-width {
+                grid-column: 1 / -1;
+            }
+
+            .group-title {
+                margin: 0 0 0.5rem 0;
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: var(--text-color);
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding-bottom: 0.75rem;
+                border-bottom: 1px solid var(--surface-border);
+
+                i {
+                    color: #6366f1;
+                    font-size: 1.2rem;
+                }
+            }
+        }
+
+        .stock-section {
+            background: linear-gradient(to bottom, var(--card-bg), rgba(99, 102, 241, 0.03));
+            
+            .stock-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1.5rem;
+
+                @media (max-width: 768px) {
+                    grid-template-columns: 1fr;
+                }
+
+                .status-field {
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-start;
+
+                    .status-badge-container {
+                        height: 100%;
+                        display: flex;
+                        align-items: center;
+                        padding-top: 0.25rem;
+
+                        ::ng-deep .status-tag-large {
+                            font-size: 1rem;
+                            padding: 0.5rem 1rem;
+                            border-radius: 8px;
+                            width: 100%;
+                            justify-content: center;
+                        }
+                    }
+                }
+            }
+        }
+        
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            width: 100%;
+            
+            &.full-width {
+                grid-column: 1 / -1;
+            }
+            
+            .field-label {
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: var(--text-color-secondary);
+                
+                &.required::after {
+                    content: ' *';
+                    color: #ef4444;
+                    font-weight: 700;
+                }
+            }
+
+            &.full-height-textarea {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+
+                ::ng-deep .field-textarea,
+                ::ng-deep .p-inputtextarea {
+                    flex: 1;
+                    min-height: 100px;
+                }
+            }
+
+            ::ng-deep .field-input,
+            ::ng-deep .p-inputtext,
+            ::ng-deep .p-inputnumber-input {
+                padding: 0.75rem 1rem;
+                border: 1px solid var(--input-border-color, #d1d5db);
+                border-radius: 6px;
+                font-size: 0.95rem;
+                transition: all 0.2s ease;
+                background: var(--input-bg, white);
+                color: var(--text-color);
+                width: 100%;
+                
+                &:hover {
+                    border-color: #6366f1;
+                }
+                
+                &:focus, &.p-focus {
+                    outline: none;
+                    border-color: #6366f1;
+                    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+                }
+            }
+            
+            ::ng-deep .field-select .p-select,
+            ::ng-deep .p-select {
+                width: 100%;
+                background: var(--input-bg, white);
+                border: 1px solid var(--input-border-color, #d1d5db);
+                
+                .p-select-label {
+                    padding: 0.75rem 1rem;
+                    color: var(--text-color);
+                }
+                
+                &:not(.p-disabled):hover {
+                    border-color: #6366f1;
+                }
+                
+                &.p-focus {
+                    outline: none;
+                    border-color: #6366f1;
+                    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+                }
+            }
+
+            ::ng-deep .field-textarea,
+            ::ng-deep .p-inputtextarea {
+                padding: 0.75rem 1rem;
+                border: 1px solid var(--input-border-color, #d1d5db);
+                border-radius: 6px;
+                font-size: 0.95rem;
+                font-family: inherit;
+                transition: all 0.2s ease;
+                background: var(--input-bg, white);
+                color: var(--text-color);
+                resize: vertical;
+                width: 100%;
+                
+                &:hover {
+                    border-color: #6366f1;
+                }
+                
+                &:focus {
+                    outline: none;
+                    border-color: #6366f1;
+                    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+                }
+            }
+        }
+    }
 }
+
+.tools-page {
+    .top-section .header-card .header-actions {
+        ::ng-deep .add-tool-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+            box-shadow: 0 8px 24px hsla(24, 95%, 53%, 0.34) !important;
+
+            &:hover {
+                background: linear-gradient(135deg, var(--primary-dark), hsl(14, 90%, 42%)) !important;
+                box-shadow: 0 12px 30px hsla(24, 95%, 53%, 0.42) !important;
+            }
+        }
+    }
+
+    ::ng-deep .custom-dialog {
+        .p-dialog-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+            color: white !important;
+        }
+
+        .dialog-title {
+            color: white !important;
+        }
+
+        .form-group-card .group-title i,
+        .section-title i {
+            color: var(--primary) !important;
+        }
+    }
+}
+
+

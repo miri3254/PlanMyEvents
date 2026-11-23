@@ -1,0 +1,322 @@
+<div class="wizard-page" dir="rtl">
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="initialLoading">
+    <i class="pi pi-spin pi-spinner" style="font-size: 2rem; color: var(--primary)"></i>
+    <p>טוען נתוני אירוע ותפריט...</p>
+  </div>
+
+  <!-- No Steps (template has no categories) -->
+  <div class="empty-container" *ngIf="!initialLoading && steps.length === 0">
+    <i class="pi pi-inbox" style="font-size: 3rem; color: var(--muted-foreground)"></i>
+    <h3>לא נמצאו קטגוריות בתבנית התפריט</h3>
+    <p>נדרש להגדיר קטגוריות בתבנית "{{ event?.menu_type }}" לפני בחירת מנות</p>
+    <p-button label="חזרה לאירועים" icon="pi pi-arrow-right" (onClick)="goBackToEvents()"></p-button>
+  </div>
+
+  <!-- Main Wizard -->
+  <ng-container *ngIf="!initialLoading && steps.length > 0">
+
+    <!-- Header -->
+    <div class="wizard-header">
+      <div class="header-right">
+        <p-button icon="pi pi-arrow-right" [text]="true" (onClick)="goBackToEvents()" pTooltip="חזרה לאירועים"></p-button>
+        <div class="event-info">
+          <h1>{{ event?.name }}</h1>
+          <div class="event-meta">
+            <p-tag [value]="event?.menu_type || ''" severity="info" [rounded]="true"></p-tag>
+            <span class="meta-item"><i class="pi pi-users"></i> {{ event?.guest_count }} אורחים</span>
+            <span class="meta-item" *ngIf="totalSelected > 0"><i class="pi pi-check-square"></i> {{ totalSelected }} מנות נבחרו</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-left">
+        <p-button
+          label="סיכום"
+          icon="pi pi-list"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (onClick)="goToSummary()"
+          [badge]="'' + totalSelected"
+          badgeSeverity="info">
+        </p-button>
+      </div>
+    </div>
+
+    <!-- Step Sidebar + Content Layout -->
+    <div class="wizard-body" [class.summary-mode]="showSummary">
+
+      <!-- Steps Sidebar -->
+      <aside class="steps-sidebar">
+        <div class="steps-list">
+          <ng-container *ngFor="let step of steps; let i = index">
+            <!-- Sub-meal group divider -->
+            <div class="sub-meal-divider" *ngIf="isSubMealBoundary(i)">
+              <span>{{ step.subMealName }}</span>
+            </div>
+            <!-- Step item -->
+            <div class="step-item"
+                 [class.active]="activeStepIndex === i && !showSummary"
+                 [class.completed]="step.quota ? getStandardDishCount(step) >= step.quota : step.selectedDishIds.size > 0"
+                 (click)="goToStep(i)">
+              <div class="step-indicator">
+                <i [class]="getStepIcon(step)"></i>
+              </div>
+              <div class="step-label">
+                <span class="step-name">{{ step.categoryNameHebrew }}</span>
+                <span class="step-count" *ngIf="step.selectedDishIds.size > 0">{{ getSelectionLabel(step) }}</span>
+              </div>
+            </div>
+          </ng-container>
+          <!-- Summary step -->
+          <div class="step-item summary-step"
+               [class.active]="showSummary"
+               (click)="goToSummary()">
+            <div class="step-indicator">
+              <i class="pi pi-flag"></i>
+            </div>
+            <div class="step-label">
+              <span class="step-name">סיכום</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="wizard-content">
+
+        <!-- ==================== CATEGORY STEP VIEW ==================== -->
+        <ng-container *ngIf="!showSummary && currentStep">
+
+          <!-- Sub-meal header (shown on first category of each sub-meal) -->
+          <div class="sub-meal-header" *ngIf="currentStep.subMealName && isNewSubMealGroup">
+            <h2>{{ currentStep.subMealName }}</h2>
+          </div>
+
+          <!-- Category header -->
+          <div class="category-header">
+            <div class="category-title">
+              <h3>{{ currentStep.categoryNameHebrew }}</h3>
+              <span class="category-step-number">שלב {{ activeStepIndex + 1 }} מתוך {{ steps.length }}</span>
+            </div>
+            <!-- Quota bar -->
+            <div class="quota-bar" *ngIf="currentStep.quota">
+              <div class="quota-text">
+                <span>{{ currentStep.quotaDescription || (currentStep.quota + ' לבחירה') }}</span>
+                <span class="quota-count" [class.quota-full]="isQuotaReached(currentStep)">
+                  {{ getSelectionLabel(currentStep) }}
+                </span>
+              </div>
+              <p-progressBar
+                [value]="getQuotaPercent(currentStep)"
+                [showValue]="false"
+                [style]="{ height: '6px' }">
+              </p-progressBar>
+            </div>
+            <!-- Warning box if quota exceeded -->
+            <div *ngIf="currentStep.quota && getStandardDishCount(currentStep) > currentStep.quota" class="quota-warning-box" style="margin-top: 12px; padding: 10px; border: 1px solid #ff0707; background-color: #f7ff03; display: flex; align-items: center;">
+              <i class="pi pi-exclamation-triangle" style="color: #ff0707; margin-left: 8px;"></i>
+              <span style="color: #e83434;  font-weight: bold;">נבחרו יותר מנות מהמגבלה</span>
+            </div>
+          </div>
+
+          <!-- Loading dishes -->
+          <div class="dishes-loading" *ngIf="currentStep.loading">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>טוען מנות...</span>
+          </div>
+
+          <!-- No dishes -->
+          <div class="dishes-empty" *ngIf="currentStep.loaded && currentStep.standardDishes.length === 0 && currentStep.upgradeDishes.length === 0">
+            <i class="pi pi-info-circle"></i>
+            <span>אין מנות משויכות לקטגוריה זו</span>
+          </div>
+
+          <!-- Standard Dishes -->
+          <div class="dishes-section" *ngIf="currentStep.loaded && currentStep.standardDishes.length > 0">
+            <div class="dishes-grid">
+              <div class="dish-card"
+                   *ngFor="let dish of currentStep.standardDishes"
+                   [class.selected]="isDishSelected(currentStep, dish.dish_id)"
+                   [class.disabled]="isDishDisabled(currentStep, dish.dish_id)"
+                   (click)="toggleDish(currentStep, dish, false)">
+                <div class="dish-check">
+                  <i class="pi" [class.pi-check-square]="isDishSelected(currentStep, dish.dish_id)"
+                     [class.pi-stop]="!isDishSelected(currentStep, dish.dish_id)"></i>
+                </div>
+                <div class="dish-info">
+                  <span class="dish-name">{{ dish.dish_name }}</span>
+                  <span class="dish-description" *ngIf="dish.dish_description">{{ dish.dish_description }}</span>
+                  <label class="serving-set-select" *ngIf="isDishSelected(currentStep, dish.dish_id) && getServingSets(dish.dish_id, 'serving').length" (click)="$event.stopPropagation()">
+                    הכלים הנדרשים להגשת המנה
+                    <select [ngModel]="selectedServingSets[dish.dish_id + ':serving']"
+                      (ngModelChange)="saveServingSetSelection(dish.dish_id, 'serving', $event)">
+                      <option [ngValue]="undefined" disabled>בחרו אפשרות הגשה</option>
+                      <option *ngFor="let set of getServingSets(dish.dish_id, 'serving')" [ngValue]="set.id">{{ set.serving_mode ? (set.serving_mode === 'personal' ? 'אישית' : 'במרכז השולחן') + ' · ' + (set.dishware_type === 'real' ? 'אמיתי' : 'חד פעמי') + ' · ' : '' }}{{ set.name }}</option>
+                    </select>
+                  </label>
+                  <label class="serving-set-select" *ngIf="isDishSelected(currentStep, dish.dish_id) && getServingSets(dish.dish_id, 'packaging').length" (click)="$event.stopPropagation()">
+                    אריזה
+                    <select [ngModel]="selectedServingSets[dish.dish_id + ':packaging']"
+                      (ngModelChange)="saveServingSetSelection(dish.dish_id, 'packaging', $event)">
+                      <option [ngValue]="undefined" disabled>בחרו אפשרות הגשה</option>
+                      <option *ngFor="let set of getServingSets(dish.dish_id, 'packaging')" [ngValue]="set.id">{{ set.serving_mode ? (set.serving_mode === 'personal' ? 'אישית' : 'במרכז השולחן') + ' · ' + (set.dishware_type === 'real' ? 'אמיתי' : 'חד פעמי') + ' · ' : '' }}{{ set.name }}</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="dish-meta">
+                  <button *ngIf="isDishSelected(currentStep, dish.dish_id)"
+                          type="button" class="gift-toggle"
+                          [class.active]="isGiftDish(dish.dish_id)"
+                          [attr.aria-pressed]="isGiftDish(dish.dish_id)"
+                          [pTooltip]="isGiftDish(dish.dish_id) ? 'בטל מנת מתנה' : 'הגדר כמנת מתנה'"
+                          (click)="toggleGift(dish.dish_id, $event)">
+                    🎁 <span>{{ isGiftDish(dish.dish_id) ? 'מתנה' : 'הגדר כמתנה' }}</span>
+                  </button>
+                  <span class="dish-price" *ngIf="dish.dish_client_price">₪{{ dish.dish_client_price }}</span>
+                  <span class="dish-kosher" *ngIf="dish.dish_kosher_type">
+                    <p-tag [value]="dish.dish_kosher_type" [severity]="dish.dish_kosher_type === 'בשרי' ? 'warn' : dish.dish_kosher_type === 'חלבי' ? 'info' : 'success'" [rounded]="true" size="small"></p-tag>
+                  </span>
+                </div>
+                <div class="dish-saving" *ngIf="savingDishIds.has(dish.dish_id)">
+                  <i class="pi pi-spin pi-spinner"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Upgrade Dishes -->
+          <div class="dishes-section upgrade-section" *ngIf="currentStep.loaded && currentStep.upgradeDishes.length > 0">
+            <div class="section-header">
+              <h4><i class="pi pi-star"></i> שדרוגים</h4>
+              <small>מנות פרימיום עם תוספת מחיר</small>
+            </div>
+            <div class="dishes-grid">
+              <div class="dish-card upgrade"
+                   *ngFor="let dish of currentStep.upgradeDishes"
+                   [class.selected]="isDishSelected(currentStep, dish.dish_id)"
+                   [class.disabled]="isDishDisabled(currentStep, dish.dish_id)"
+                   (click)="toggleDish(currentStep, dish, true)">
+                <div class="dish-check">
+                  <i class="pi" [class.pi-check-square]="isDishSelected(currentStep, dish.dish_id)"
+                     [class.pi-stop]="!isDishSelected(currentStep, dish.dish_id)"></i>
+                </div>
+                <div class="dish-info">
+                  <div class="dish-name-row">
+                    <span class="dish-name">{{ dish.dish_name }}</span>
+                    <p-tag value="שדרוג" severity="warn" [rounded]="true" size="small"></p-tag>
+                    <span class="dish-upgrade-charge"
+                          *ngIf="dish.extra_charge"
+                          pTooltip="תוספת זו תחושב אוטומטית לפי מספר הסועדים באירוע"
+                          tooltipPosition="top">
+                      (+{{ dish.extra_charge }}₪ לסועד)
+                    </span>
+                  </div>
+                  <span class="dish-description" *ngIf="dish.dish_description">{{ dish.dish_description }}</span>
+                  <label class="serving-set-select" *ngIf="isDishSelected(currentStep, dish.dish_id) && getServingSets(dish.dish_id, 'serving').length" (click)="$event.stopPropagation()">
+                    הכלים הנדרשים להגשת המנה
+                    <select [ngModel]="selectedServingSets[dish.dish_id + ':serving']"
+                      (ngModelChange)="saveServingSetSelection(dish.dish_id, 'serving', $event)">
+                      <option [ngValue]="undefined" disabled>בחרו אפשרות הגשה</option>
+                      <option *ngFor="let set of getServingSets(dish.dish_id, 'serving')" [ngValue]="set.id">{{ set.serving_mode ? (set.serving_mode === 'personal' ? 'אישית' : 'במרכז השולחן') + ' · ' + (set.dishware_type === 'real' ? 'אמיתי' : 'חד פעמי') + ' · ' : '' }}{{ set.name }}</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="dish-meta">
+                  <button *ngIf="isDishSelected(currentStep, dish.dish_id)"
+                          type="button" class="gift-toggle"
+                          [class.active]="isGiftDish(dish.dish_id)"
+                          [attr.aria-pressed]="isGiftDish(dish.dish_id)"
+                          [pTooltip]="isGiftDish(dish.dish_id) ? 'בטל מנת מתנה' : 'הגדר כמנת מתנה'"
+                          (click)="toggleGift(dish.dish_id, $event)">
+                    🎁 <span>{{ isGiftDish(dish.dish_id) ? 'מתנה' : 'הגדר כמתנה' }}</span>
+                  </button>
+                  <span class="dish-price" *ngIf="dish.dish_client_price">₪{{ dish.dish_client_price }}</span>
+                </div>
+                <div class="dish-saving" *ngIf="savingDishIds.has(dish.dish_id)">
+                  <i class="pi pi-spin pi-spinner"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation Buttons -->
+          <div class="step-navigation">
+            <p-button
+              *ngIf="!isFirstStep"
+              label="הקודם"
+              icon="pi pi-arrow-right"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="prevStep()">
+            </p-button>
+            <span class="spacer"></span>
+            <p-button
+              [label]="isLastStep ? 'לסיכום' : 'הבא'"
+              [icon]="isLastStep ? 'pi pi-flag' : 'pi pi-arrow-left'"
+              iconPos="left"
+              (onClick)="nextStep()">
+            </p-button>
+          </div>
+        </ng-container>
+
+        <!-- ==================== SUMMARY VIEW ==================== -->
+        <ng-container *ngIf="showSummary">
+          <div class="summary-view">
+            <div class="summary-header">
+              <h2><i class="pi pi-flag"></i> סיכום בחירת מנות</h2>
+              <p>{{ event?.name }} · {{ event?.guest_count }} אורחים · {{ totalSelected }} מנות נבחרו</p>
+            </div>
+
+            <div class="summary-groups">
+              <div class="summary-group" *ngFor="let group of subMealGroups">
+                <h3 *ngIf="group.name" class="group-title">{{ group.name }}</h3>
+                <div class="summary-category" *ngFor="let step of group.steps">
+                  <div class="summary-category-header">
+                    <span class="cat-name">{{ step.categoryNameHebrew }}</span>
+                    <span class="cat-count">{{ getSelectionLabel(step) }}</span>
+                  </div>
+                  <div class="summary-dishes" *ngIf="step.loaded && step.selectedDishIds.size > 0">
+                    <span class="summary-dish" *ngFor="let name of getSelectedDishNames(step)">{{ name }}</span>
+                  </div>
+                  <div class="summary-dishes empty" *ngIf="step.selectedDishIds.size === 0">
+                    <span class="no-selection">לא נבחרו מנות</span>
+                  </div>
+                  <!-- Edit button -->
+                  <!-- <p-button
+                    label="ערוך"
+                    icon="pi pi-pencil"
+                    size="small"
+                    [text]="true"
+                    (onClick)="goToStep(step.index)">
+                  </p-button> -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Summary Navigation -->
+            <div class="step-navigation">
+              <p-button
+                label="חזרה לעריכה"
+                icon="pi pi-arrow-right"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="prevStep()">
+              </p-button>
+              <span class="spacer"></span>
+              <p-button
+                label="סיום בחירה"
+                icon="pi pi-check"
+                severity="success"
+                (onClick)="finishWizard()">
+              </p-button>
+            </div>
+          </div>
+        </ng-container>
+      </main>
+    </div>
+  </ng-container>
+
+  <p-toast position="top-right"></p-toast>
+</div>

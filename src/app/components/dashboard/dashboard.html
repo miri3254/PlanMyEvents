@@ -1,164 +1,385 @@
 <div class="dashboard-container">
-  <!-- Header -->
-  <div class="dashboard-header mb-4">
-    <div class="flex align-items-center justify-content-between">
+  <!-- Header with Period Selector -->
+  <div class="dashboard-header mb-5">
+    <div class="flex align-items-center justify-content-between flex-wrap gap-3">
       <div>
-        <h1 class="text-3xl font-bold text-900 mb-2">לוח בקרה</h1>
-        <p class="text-600 m-0">סקירה כללית של המערכת</p>
+        <h1 class="gradient-text mb-1">לוח בקרה - רווחיות</h1>
+        <p class="text-600 m-0 font-medium">{{ profitability?.period_label || 'סקירת רווחיות העסק' }}</p>
       </div>
-      <div class="flex align-items-center gap-2">
+      <div class="flex align-items-center gap-3">
+        <p-selectButton 
+          [options]="periodOptions" 
+          [(ngModel)]="selectedPeriod"
+          (onChange)="onPeriodChange()"
+          optionLabel="label" 
+          optionValue="value"
+          styleClass="shadow-none">
+        </p-selectButton>
         <p-button 
-          label="רענן נתונים" 
           icon="pi pi-refresh" 
           severity="secondary" 
           [outlined]="true"
-          (onClick)="loadDashboardData()">
+          [loading]="loading"
+          (onClick)="loadDashboardData()"
+          pTooltip="רענן נתונים"
+          styleClass="p-button-rounded bg-white">
         </p-button>
       </div>
     </div>
   </div>
 
-  <!-- Stats Cards Row -->
-  <div class="grid mb-4">
-    <div class="col-12 lg:col-3 md:col-6">
-      <p-card class="stat-card h-full">
-        <ng-template pTemplate="content">
-          <div class="flex align-items-center">
-            <div class="stat-icon bg-blue-100 text-blue-600">
-              <i class="pi pi-star text-2xl"></i>
-            </div>
-            <div class="stat-content mr-3">
-              <div class="stat-value text-2xl font-bold text-900">{{ totalDishes }}</div>
-              <div class="stat-label text-600">סה"כ מנות</div>
+  <!-- Main KPI Cards Row -->
+  <div class="kpi-grid mb-5" *ngIf="profitability">
+    <!-- Total Revenue -->
+    <p-card class="kpi-card h-full">
+      <ng-template pTemplate="content">
+        <div class="flex flex-column align-items-center justify-content-center text-center h-full gap-3 py-2">
+          <div class="stat-icon bg-orange-100 m-0">
+            <i class="pi pi-dollar text-orange-600"></i>
+          </div>
+          <div>
+            <div class="text-500 mb-2 font-bold text-sm">הכנסות</div>
+            <div class="text-3xl font-bold text-orange-600">{{ formatCurrency(profitability.total_revenue) }}</div>
+            <div class="flex align-items-center justify-content-center mt-3 font-semibold" *ngIf="profitability.revenue_vs_last_period !== 0">
+              <i [class]="getChangeIcon(profitability.revenue_vs_last_period)" 
+                 [ngClass]="getChangeClass(profitability.revenue_vs_last_period)"></i>
+              <span class="mr-1" [ngClass]="getChangeClass(profitability.revenue_vs_last_period)">
+                {{ formatPercent(Math.abs(profitability.revenue_vs_last_period)) }}
+              </span>
+              <span class="text-500 ml-1 font-medium" style="font-size:0.8rem;text-transform:none">מהתקופה הקודמת</span>
             </div>
           </div>
-        </ng-template>
-      </p-card>
-    </div>
+        </div>
+      </ng-template>
+    </p-card>
 
-    <div class="col-12 lg:col-3 md:col-6">
-      <p-card class="stat-card h-full">
-        <ng-template pTemplate="content">
-          <div class="flex align-items-center">
-            <div class="stat-icon bg-green-100 text-green-600">
-              <i class="pi pi-list text-2xl"></i>
-            </div>
-            <div class="stat-content mr-3">
-              <div class="stat-value text-2xl font-bold text-900">{{ totalIngredients }}</div>
-              <div class="stat-label text-600">מרכיבים שונים</div>
+    <!-- Total Costs -->
+    <p-card class="kpi-card h-full">
+      <ng-template pTemplate="content">
+        <div class="flex flex-column align-items-center justify-content-center text-center h-full gap-3 py-2">
+          <div class="stat-icon bg-blue-100 m-0">
+            <i class="pi pi-credit-card text-blue-600"></i>
+          </div>
+          <div>
+            <div class="text-500 mb-2 font-bold text-sm">עלויות</div>
+            <div class="text-3xl font-bold" style="color: #475569;">{{ formatCurrency(profitability.total_cost) }}</div>
+            <div class="text-500 mt-3 font-medium flex justify-content-center align-items-center" style="text-transform:none; font-size:0.85rem;">
+              <i class="pi pi-chart-pie ml-2 text-purple-600"></i>
+              {{ formatPercent(100 - profitability.profit_margin_percent) }} מההכנסות
             </div>
           </div>
-        </ng-template>
-      </p-card>
-    </div>
+        </div>
+      </ng-template>
+    </p-card>
 
-    <div class="col-12 lg:col-3 md:col-6">
-      <p-card class="stat-card h-full">
-        <ng-template pTemplate="content">
-          <div class="flex align-items-center">
-            <div class="stat-icon bg-orange-100 text-orange-600">
-              <i class="pi pi-calendar text-2xl"></i>
+    <!-- Total Profit -->
+    <p-card class="kpi-card h-full">
+      <ng-template pTemplate="content">
+        <div class="flex flex-column align-items-center justify-content-center text-center h-full gap-3 py-2">
+          <div class="stat-icon bg-green-100 m-0">
+            <i class="pi pi-chart-line text-green-600"></i>
+          </div>
+          <div>
+            <div class="text-500 mb-2 font-bold text-sm">רווח גולמי</div>
+            <div class="text-3xl font-bold" [ngClass]="getProfitClass(profitability.total_profit)">
+              {{ formatCurrency(profitability.total_profit) }}
             </div>
-            <div class="stat-content mr-3">
-              <div class="stat-value text-2xl font-bold text-900">{{ totalEvents }}</div>
-              <div class="stat-label text-600">אירועים מתוכננים</div>
+            <div class="flex align-items-center justify-content-center mt-3 font-semibold" *ngIf="profitability.profit_vs_last_period !== 0">
+              <i [class]="getChangeIcon(profitability.profit_vs_last_period)" 
+                 [ngClass]="getChangeClass(profitability.profit_vs_last_period)"></i>
+              <span class="mr-1" [ngClass]="getChangeClass(profitability.profit_vs_last_period)">
+                {{ formatPercent(Math.abs(profitability.profit_vs_last_period)) }}
+              </span>
+              <span class="text-500 ml-1 font-medium" style="font-size:0.8rem;text-transform:none">מהתקופה הקודמת</span>
             </div>
           </div>
-        </ng-template>
-      </p-card>
-    </div>
+        </div>
+      </ng-template>
+    </p-card>
 
-    <div class="col-12 lg:col-3 md:col-6">
-      <p-card class="stat-card h-full">
-        <ng-template pTemplate="content">
-          <div class="flex align-items-center">
-            <div class="stat-icon bg-purple-100 text-purple-600">
-              <i class="pi pi-chart-bar text-2xl"></i>
+    <!-- Profit Margin -->
+    <p-card class="kpi-card h-full">
+      <ng-template pTemplate="content">
+        <div class="flex flex-column align-items-center justify-content-center text-center h-full gap-3 py-2">
+          <div class="stat-icon bg-purple-100 m-0">
+            <i class="pi pi-percentage text-purple-600"></i>
+          </div>
+          <div>
+            <div class="text-500 mb-2 font-bold text-sm">אחוז רווחיות</div>
+            <div class="text-3xl font-bold text-purple-600">
+              {{ formatPercent(profitability.profit_margin_percent) }}
             </div>
-            <div class="stat-content mr-3">
-              <div class="stat-value text-2xl font-bold text-900">{{ averageIngredientsPerDish | number:'1.1-1' }}</div>
-              <div class="stat-label text-600">ממוצע מרכיבים למנה</div>
+            <div class="mt-3">
+              <p-tag [severity]="getMarginSeverity(profitability.profit_margin_percent)" 
+                     [value]="profitability.profit_margin_percent >= 20 ? 'טוב' : profitability.profit_margin_percent >= 10 ? 'סביר' : 'נמוך'"
+                     styleClass="px-3" [rounded]="true">
+              </p-tag>
             </div>
           </div>
-        </ng-template>
-      </p-card>
-    </div>
+        </div>
+      </ng-template>
+    </p-card>
   </div>
 
-  <!-- Charts and Quick Actions Row -->
-  <div class="grid mb-4">
-    <!-- Charts Column -->
+  <!-- Secondary Stats Row -->
+  <div class="kpi-grid mb-5" *ngIf="profitability">
+    <p-card class="stat-card-mini h-full">
+      <ng-template pTemplate="content">
+        <div class="flex flex-column align-items-center justify-content-center text-center h-full gap-3 py-2">
+          <div class="stat-icon-mini bg-orange-100 text-orange-600 m-0">
+            <i class="pi pi-calendar"></i>
+          </div>
+          <div>
+            <div class="text-500 mb-2 font-bold text-sm">סה"כ אירועים</div>
+            <div class="text-2xl font-bold text-900">{{ profitability.total_events }}</div>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+    
+    <p-card class="stat-card-mini h-full">
+      <ng-template pTemplate="content">
+        <div class="flex flex-column align-items-center justify-content-center text-center h-full gap-3 py-2">
+          <div class="stat-icon-mini bg-purple-100 text-purple-600 m-0">
+            <i class="pi pi-users"></i>
+          </div>
+          <div>
+            <div class="text-500 mb-2 font-bold text-sm">סה"כ אורחים</div>
+            <div class="text-2xl font-bold text-900">{{ profitability.total_guests }}</div>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+    
+    <p-card class="stat-card-mini h-full">
+      <ng-template pTemplate="content">
+        <div class="flex flex-column align-items-center justify-content-center text-center h-full gap-3 py-2">
+          <div class="stat-icon-mini bg-blue-100 text-blue-600 m-0">
+            <i class="pi pi-wallet"></i>
+          </div>
+          <div>
+            <div class="text-500 mb-2 font-bold text-sm">רווח ממוצע לאירוע</div>
+            <div class="text-2xl font-bold text-900">{{ formatCurrency(profitability.avg_profit_per_event) }}</div>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+    
+    <p-card class="stat-card-mini h-full">
+      <ng-template pTemplate="content">
+        <div class="flex flex-column align-items-center justify-content-center text-center h-full gap-3 py-2">
+          <div class="stat-icon-mini bg-green-100 text-green-600 m-0">
+            <i class="pi pi-user"></i>
+          </div>
+          <div>
+            <div class="text-500 mb-2 font-bold text-sm">רווח ממוצע לאורח</div>
+            <div class="text-2xl font-bold text-900">{{ formatCurrency(profitability.avg_profit_per_guest) }}</div>
+          </div>
+        </div>
+      </ng-template>
+    </p-card>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="grid mb-5">
+    <!-- Revenue/Profit Trend Chart -->
     <div class="col-12 lg:col-8">
-      <div class="grid">
-        <!-- Categories Chart -->
-        <div class="col-12 xl:col-6">
-          <p-card class="chart-card h-full">
-            <ng-template pTemplate="header">
-              <div class="card-header-custom">
-                <h3 class="text-lg font-semibold text-900 m-0">מנות לפי קטגוריה</h3>
-              </div>
-            </ng-template>
-            <ng-template pTemplate="content">
-              <div class="chart-container" style="height: 300px;">
-                <p-chart 
-                  type="doughnut" 
-                  [data]="dishCategoriesData" 
-                  [options]="dishCategoriesOptions"
-                  class="w-full h-full">
-                </p-chart>
-              </div>
-            </ng-template>
-          </p-card>
-        </div>
-
-        <!-- Kosher Types Chart -->
-        <div class="col-12 xl:col-6">
-          <p-card class="chart-card h-full">
-            <ng-template pTemplate="header">
-              <div class="card-header-custom">
-                <h3 class="text-lg font-semibold text-900 m-0">מנות לפי כשרות</h3>
-              </div>
-            </ng-template>
-            <ng-template pTemplate="content">
-              <div class="chart-container" style="height: 300px;">
-                <p-chart 
-                  type="pie" 
-                  [data]="kosherTypesData" 
-                  [options]="kosherTypesOptions"
-                  class="w-full h-full">
-                </p-chart>
-              </div>
-            </ng-template>
-          </p-card>
-        </div>
-      </div>
-    </div>
-
-    <!-- Quick Actions Column -->
-    <div class="col-12 lg:col-4">
-      <p-card class="quick-actions-card h-full">
+      <p-card class="chart-card h-full">
         <ng-template pTemplate="header">
           <div class="card-header-custom">
-            <h3 class="text-lg font-semibold text-900 m-0">פעולות מהירות</h3>
+            <h3 class="text-lg font-semibold text-900 m-0">
+              <i class="pi pi-chart-line ml-2"></i>מגמות הכנסות ורווח
+            </h3>
           </div>
         </ng-template>
         <ng-template pTemplate="content">
-          <div class="quick-actions-grid">
-            <div 
-              *ngFor="let action of quickActions" 
-              class="quick-action-item mb-3">
+          <div class="chart-container" style="height: 350px;">
+            <p-chart 
+              type="line" 
+              [data]="revenueChartData" 
+              [options]="revenueChartOptions"
+              class="w-full h-full"
+              *ngIf="revenueChartData">
+            </p-chart>
+            <div *ngIf="!revenueChartData" class="flex align-items-center justify-content-center h-full">
+              <i class="pi pi-spin pi-spinner text-4xl text-400"></i>
+            </div>
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
+
+    <!-- Expense Breakdown Chart -->
+    <!-- <div class="col-12 lg:col-4">
+      <p-card class="chart-card h-full">
+        <ng-template pTemplate="header">
+          <div class="card-header-custom">
+            <h3 class="text-lg font-semibold text-900 m-0">
+              <i class="pi pi-chart-pie ml-2"></i>התפלגות הוצאות
+            </h3>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="content">
+          <div class="chart-container" style="height: 350px;">
+            <p-chart 
+              type="doughnut" 
+              [data]="expenseChartData" 
+              [options]="expenseChartOptions"
+              class="w-full h-full"
+              *ngIf="expenseChartData">
+            </p-chart>
+            <div *ngIf="!expenseChartData" class="flex align-items-center justify-content-center h-full">
+              <span class="text-500">אין נתוני הוצאות</span>
+            </div>
+          </div>
+        </ng-template>
+      </p-card>
+    </div>
+  </div> -->
+
+  <!-- Events Table and Inventory Row -->
+  <div class="grid mb-5">
+    <!-- Events Profitability Table -->
+    <div class="col-12 lg:col-8">
+      <p-card class="events-card h-full">
+        <ng-template pTemplate="header">
+          <div class="card-header-custom flex justify-content-between align-items-center">
+            <h3 class="m-0">
+              <i class="pi pi-list"></i>רווחיות לפי אירוע
+            </h3>
+            <p-button 
+              label="כל האירועים" 
+              icon="pi pi-arrow-left" 
+              iconPos="left"
+              [text]="true" 
+              routerLink="/events"
+              styleClass="text-orange-600 hover:bg-orange-50 font-bold p-2">
+            </p-button>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="content">
+          <p-table 
+            [value]="profitability?.events_profitability || []" 
+            [rows]="5"
+            [paginator]="true"
+            [rowsPerPageOptions]="[5, 10, 20]"
+            styleClass="p-datatable-sm"
+            [tableStyle]="{'min-width': '40rem'}">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>אירוע</th>
+                <th>תאריך</th>
+                <th>אורחים</th>
+                <th>הכנסה</th>
+                <th>עלות</th>
+                <th>רווח</th>
+                <th>% רווחיות</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-event>
+              <tr>
+                <td>
+                  <a [routerLink]="['/events', event.event_id]" class="text-orange-600 hover:text-orange-700 font-bold no-underline">
+                    {{ event.event_name }}
+                  </a>
+                </td>
+                <td class="text-500 font-medium">{{ event.event_date | date:'dd/MM/yyyy' }}</td>
+                <td><p-badge [value]="event.guest_count" severity="secondary" styleClass="bg-purple-100 text-purple-700"></p-badge></td>
+                <td class="text-blue-600 font-bold">{{ formatCurrency(event.revenue) }}</td>
+                <td class="text-orange-500">{{ formatCurrency(event.total_cost) }}</td>
+                <td class="font-bold" [ngClass]="getProfitClass(event.gross_profit)">{{ formatCurrency(event.gross_profit) }}</td>
+                <td>
+                  <p-tag [severity]="getMarginSeverity(event.profit_margin_percent)" 
+                         [value]="formatPercent(event.profit_margin_percent)">
+                  </p-tag>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="7" class="text-center p-4">
+                  <i class="pi pi-inbox text-4xl text-400 mb-3 block"></i>
+                  <span class="text-500">אין אירועים בתקופה זו</span>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </ng-template>
+      </p-card>
+    </div>
+
+    <!-- Inventory Summary + Quick Actions -->
+    <div class="col-12 lg:col-4 flex flex-column gap-4">
+      <!-- Inventory Summary -->
+      <p-card class="inventory-card" *ngIf="inventory">
+        <ng-template pTemplate="header">
+          <div class="card-header-custom">
+            <h3 class="m-0 flex align-items-center gap-2">
+              <i class="pi pi-box text-orange-600 bg-orange-100 p-2 border-round-xl"></i>סטטוס מלאי
+            </h3>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="content">
+          <div class="mb-4 bg-f8fafc p-3 border-round-xl border-1 surface-border">
+            <div class="flex justify-content-between mb-2 align-items-center">
+              <span class="text-600 font-bold">בריאות מלאי</span>
+              <p-tag [value]="inventory.healthy_stock_count + '/' + inventory.total_products" severity="success" [rounded]="true"></p-tag>
+            </div>
+            <p-progressBar 
+              [value]="getInventoryHealthPercent()" 
+              [showValue]="false"
+              [style]="{ height: '10px' }">
+            </p-progressBar>
+            
+            <div class="flex justify-content-between text-sm mt-3 pt-3 border-top-1 surface-border">
+              <span class="text-500 font-bold">שווי מלאי כולל:</span>
+              <span class="font-bold text-lg text-900">{{ formatCurrency(inventory.total_value) }}</span>
+            </div>
+          </div>
+
+          <div class="inventory-stats-group">
+            <div class="inv-stat-box success">
+              <div class="inv-stat-val">{{ inventory.healthy_stock_count }}</div>
+              <div class="inv-stat-lbl">תקין</div>
+            </div>
+            <div class="inv-stat-box warning">
+              <div class="inv-stat-val">{{ inventory.low_stock_count }}</div>
+              <div class="inv-stat-lbl">נמוך</div>
+            </div>
+            <div class="inv-stat-box danger">
+              <div class="inv-stat-val">{{ inventory.out_of_stock_count }}</div>
+              <div class="inv-stat-lbl">אזל</div>
+            </div>
+          </div>
+
+          <p-button 
+            label="ניהול מלאי מורחב" 
+            icon="pi pi-arrow-left" 
+            iconPos="left"
+            [outlined]="true" 
+            styleClass="w-full mt-4 p-button-secondary font-bold"
+            routerLink="/products">
+          </p-button>
+        </ng-template>
+      </p-card>
+
+      <!-- Quick Actions -->
+      <p-card class="quick-actions-card">
+        <ng-template pTemplate="header">
+          <div class="card-header-custom pb-0">
+            <h3 class="m-0"><i class="pi pi-bolt mr-2 text-purple-600"></i>פעולות מהירות</h3>
+          </div>
+        </ng-template>
+        <ng-template pTemplate="content">
+          <div class="quick-actions-grid mt-2">
+            <div *ngFor="let action of quickActions" class="quick-action-button">
               <p-button 
                 [label]="action.label"
                 [icon]="action.icon"
-                [severity]="action.color"
-                [outlined]="true"
                 [routerLink]="action.route"
-                class="w-full"
+                class="w-full h-full"
                 pRipple>
               </p-button>
-              <div class="action-description mt-1">
-                <small class="text-500">{{ action.description }}</small>
-              </div>
             </div>
           </div>
         </ng-template>
@@ -166,48 +387,43 @@
     </div>
   </div>
 
-  <!-- Recent Activity -->
-  <div class="grid">
+  <!-- Upcoming Events Row -->
+  <!-- <div class="grid" *ngIf="upcomingEvents.length > 0">
     <div class="col-12">
-      <p-card class="activity-card">
+      <p-card class="upcoming-card">
         <ng-template pTemplate="header">
-          <div class="card-header-custom">
-            <h3 class="text-lg font-semibold text-900 m-0">פעילות אחרונה</h3>
+          <div class="card-header-custom flex justify-content-between align-items-center">
+            <h3 class="m-0 text-xl">
+              <i class="pi pi-calendar-plus ml-2 text-orange-500"></i>אירועים קרובים
+            </h3>
+            <p-badge [value]="upcomingEvents.length.toString()" styleClass="bg-purple-100 text-purple-700"></p-badge>
           </div>
         </ng-template>
         <ng-template pTemplate="content">
-          <div class="activity-timeline">
-            <div 
-              *ngFor="let activity of recentActivity; let last = last" 
-              class="activity-item"
-              [class.last-item]="last">
-              <div class="activity-marker">
-                <i [class]="getActivityIcon(activity.type)" 
-                   [class.text-success-600]="activity.type === 'dish'"
-                   [class.text-warning-600]="activity.type === 'event'"
-                   [class.text-info-600]="activity.type === 'ingredient'"></i>
+          <div class="upcoming-grid">
+            <div *ngFor="let event of upcomingEvents.slice(0, 4)" class="upcoming-event-card cursor-pointer"
+                 [routerLink]="['/events', event.id]">
+              <div class="flex justify-content-between align-items-start mb-3">
+                <span class="event-title m-0">{{ event.name }}</span>
+                <p-tag [severity]="getStatusSeverity(event.status)" [value]="event.status" [rounded]="true"></p-tag>
               </div>
-              <div class="activity-content">
-                <div class="activity-main">
-                  <span class="font-medium">{{ activity.action }}</span>
-                  <span class="activity-title mr-1">{{ activity.title }}</span>
-                  <p-tag 
-                    [value]="activity.type === 'dish' ? 'מנה' : activity.type === 'event' ? 'אירוע' : 'מרכיב'" 
-                    [severity]="getActivityColor(activity.type)"
-                    class="text-xs">
-                  </p-tag>
-                </div>
-                <div class="activity-time text-500 text-sm">{{ activity.time }}</div>
+              <div class="event-detail">
+                <i class="pi pi-calendar"></i>
+                <span class="ml-2">{{ event.date | date:'dd/MM/yyyy' }}</span>
+                <span *ngIf="event.event_time" class="mr-2">{{ event.event_time }}</span>
               </div>
-            </div>
-            
-            <div *ngIf="recentActivity.length === 0" class="text-center p-4">
-              <i class="pi pi-info-circle text-4xl text-400 mb-3"></i>
-              <p class="text-500">אין פעילות אחרונה</p>
+              <div class="event-detail">
+                <i class="pi pi-users"></i>
+                <span class="ml-2">{{ event.guest_count }} אורחים</span>
+              </div>
+              <div class="event-detail" *ngIf="event.city">
+                <i class="pi pi-map-marker"></i>
+                <span class="ml-2">{{ event.city }}</span>
+              </div>
             </div>
           </div>
         </ng-template>
       </p-card>
-    </div>
+    </div> -->
   </div>
 </div>

@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Observable, Subject, takeUntil, map, combineLatest } from 'rxjs';
+import { Observable, Subject, take } from 'rxjs';
 import { MenubarModule } from 'primeng/menubar';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -11,18 +11,22 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
-import { EventService } from '../../../services/event.service';
-import { Event } from '../../../core/models';
-import { LookupService } from '../../../core/services/lookup.service';
+import { ApiEventService } from '../../../services/api-event.service';
+import { ApiMenuService } from '../../../services/api-menu.service';
+import { ApiLookupService } from '../../../services/api-lookup.service';
+import { MenuTemplate } from '../../../models/menu.model';
+import { Event, EventCreate } from '../../../core/models';
 import { ConnectionStatusService, ConnectionStatus } from '../../../core/services/connection-status.service';
 
 type EventFormState = {
   name: string;
-  participants: number;
-  eventType: string;
-  foodType: string;
+  eventCategory: string;
+  guestCount: number;
+  menuType: string;
   eventDate: Date | null;
   hebrewDate: string;
+  address: string;
+  city: string;
 };
 
 @Component({
@@ -71,13 +75,7 @@ type EventFormState = {
       <div class="nav-container">
         <!-- Logo -->
         <div class="logo-section" routerLink="/">
-          <div class="logo-icon">
-            <i class="pi pi-calendar"></i>
-          </div>
-          <div class="logo-text">
-            <h2>PlanMyEvents</h2>
-            <span class="logo-subtitle">תכנון אירועים חכם</span>
-          </div>
+          <img class="logo-image" src="assets/logo.png" alt="PlanMyEvents" />
         </div>
 
         <!-- Menu Items -->
@@ -113,6 +111,19 @@ type EventFormState = {
             <i class="pi pi-calendar-plus"></i>
             <span>אירועים</span>
           </a>
+          <a routerLink="/menus" 
+             routerLinkActive="active"
+             class="menu-item">
+            <i class="pi pi-book"></i>
+            <span>תפריטים</span>
+          </a>
+          <a routerLink="/backup" 
+             routerLinkActive="active"
+             class="menu-item"
+             pTooltip="גיבוי וייצוא נתונים">
+            <i class="pi pi-download"></i>
+            <span>גיבוי</span>
+          </a>
           <a routerLink="/settings" 
              routerLinkActive="active"
              class="menu-item">
@@ -136,32 +147,14 @@ type EventFormState = {
             <span class="status-text">{{ status.isConnected ? 'מחובר' : 'מנותק' }}</span>
           </div>
 
-          <!-- Current Event Display -->
-          <div *ngIf="currentEvent$ | async as event" class="current-event-badge">
-            <i class="pi pi-users"></i>
-            <span>{{ event.name }} ({{ event.participants }} אורחים)</span>
-          </div>
-
-          <!-- Event Selector -->
-          <p-select
-            [options]="eventOptions"
-            [(ngModel)]="selectedEventId"
-            (onChange)="onEventChange($event)"
-            placeholder="בחר אירוע"
-            optionLabel="label"
-            optionValue="value"
-            [style]="{'min-width': '200px'}"
-            class="event-selector">
-          </p-select>
-
           <!-- New Event Button -->
           <p-button
             label="אירוע חדש"
-            icon="pi pi-plus"
-            (onClick)="showEventDialog = true"
+            icon="pi pi-calendar-plus"
+            (onClick)="navigateToNewEvent()"
             [raised]="true"
             severity="primary"
-            class="new-event-btn">
+            styleClass="new-event-action">
           </p-button>
         </div>
       </div>
@@ -190,12 +183,12 @@ type EventFormState = {
             class="w-full" />
         </div>
 
-        <!-- Number of Participants -->
+        <!-- Number of Guests -->
         <div class="form-field">
-          <label for="participants">מספר משתתפים *</label>
+          <label for="guestCount">מספר אורחים *</label>
           <p-inputnumber
-            id="participants"
-            [(ngModel)]="newEvent.participants"
+            id="guestCount"
+            [(ngModel)]="newEvent.guestCount"
             [min]="1"
             [max]="1000"
             [step]="5"
@@ -216,20 +209,42 @@ type EventFormState = {
             appendTo="body"
             class="w-full">
           </p-datepicker>
-          <small class="text-600">התאריך העברי יעודכן אוטומטית וניתן לעריכה.</small>
+          <small class="text-600">התאריך העברי יעודכן אוטומטית.</small>
         </div>
 
-        <!-- Event Type -->
+        <!-- Menu Type -->
         <div class="form-field">
-          <label for="eventType">סוג אירוע *</label>
+          <label for="eventCategory">קטגוריית אירוע *</label>
           <p-select
-            id="eventType"
-            [options]="eventTypeOptions"
-            [(ngModel)]="newEvent.eventType"
-            placeholder="בחר סוג אירוע"
+            id="eventCategory"
+            [options]="eventCategories"
+            [(ngModel)]="newEvent.eventCategory"
+            placeholder="בחר קטגוריית אירוע"
+            class="w-full">
+          </p-select>
+        </div>
+
+        <!-- Menu Type -->
+        <div class="form-field">
+          <label for="menuType">שם תפריט *</label>
+          <p-select
+            id="menuType"
+            [options]="menuTemplateSelectItems"
+            [(ngModel)]="newEvent.menuType"
+            placeholder="בחר תפריט"
             optionLabel="label"
             optionValue="value"
             class="w-full">
+            <ng-template pTemplate="item" let-item>
+              <div>
+                <div>{{ item.label }}</div>
+                <small style="color: var(--text-color-secondary)">
+                  {{ item.template.kosher_type }}
+                  <span *ngIf="item.template.min_guests > 1"> &middot; מינ. {{ item.template.min_guests }}</span>
+                  <span *ngIf="item.template.base_price_per_guest"> &middot; &#x20AA;{{ item.template.base_price_per_guest }}/אורח</span>
+                </small>
+              </div>
+            </ng-template>
           </p-select>
         </div>
 
@@ -245,18 +260,28 @@ type EventFormState = {
             class="w-full" />
         </div>
 
-        <!-- Food Type -->
+        <!-- Address -->
         <div class="form-field">
-          <label for="foodType">סוג אוכל *</label>
-          <p-select
-            id="foodType"
-            [options]="foodTypeOptions"
-            [(ngModel)]="newEvent.foodType"
-            placeholder="בחר סוג אוכל"
-            optionLabel="label"
-            optionValue="value"
-            class="w-full">
-          </p-select>
+          <label for="address">כתובת</label>
+          <input
+            id="address"
+            type="text"
+            pInputText
+            [(ngModel)]="newEvent.address"
+            placeholder="רחוב ומספר"
+            class="w-full" />
+        </div>
+
+        <!-- City -->
+        <div class="form-field">
+          <label for="city">עיר</label>
+          <input
+            id="city"
+            type="text"
+            pInputText
+            [(ngModel)]="newEvent.city"
+            placeholder="שם העיר"
+            class="w-full" />
         </div>
       </div>
 
@@ -415,42 +440,21 @@ type EventFormState = {
     .logo-section {
       display: flex;
       align-items: center;
-      gap: 12px;
       cursor: pointer;
       transition: all 0.3s ease;
+      flex-shrink: 0;
     }
 
     .logo-section:hover {
       transform: translateY(-2px);
     }
 
-    .logo-icon {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1.5rem;
-      box-shadow: var(--shadow-glow);
-    }
-
-    .logo-text h2 {
-      margin: 0;
-      font-size: 1.25rem;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .logo-subtitle {
-      font-size: 0.75rem;
-      color: var(--muted-foreground);
+    .logo-image {
       display: block;
-      margin-top: -4px;
+      height: 56px;
+      width: auto;
+      max-width: min(240px, 32vw);
+      object-fit: contain;
     }
 
     .menu-items {
@@ -512,10 +516,58 @@ type EventFormState = {
       min-width: 200px;
     }
 
-    .new-event-btn {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      border: none;
-      box-shadow: var(--shadow-glow);
+    :host ::ng-deep .new-event-action {
+      box-sizing: border-box;
+      min-height: 44px !important;
+      height: 44px !important;
+      padding: 0 18px 0 20px !important;
+      border: 0 !important;
+      outline: 0 !important;
+      border-radius: 999px !important;
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 52%, #c2410c 100%) !important;
+      color: #ffffff !important;
+      font-weight: 800;
+      letter-spacing: 0;
+      box-shadow: 0 12px 24px rgba(234, 88, 12, 0.24) !important;
+      transition: none !important;
+      transform: none !important;
+      filter: none !important;
+      white-space: nowrap;
+    }
+
+    :host ::ng-deep .new-event-action .p-button-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      margin-inline-end: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.22);
+      font-size: 0.95rem;
+    }
+
+    :host ::ng-deep .new-event-action .p-button-label {
+      line-height: 1;
+    }
+
+    :host ::ng-deep .new-event-action:hover,
+    :host ::ng-deep .new-event-action:enabled:hover,
+    :host ::ng-deep .new-event-action:not(:disabled):hover,
+    :host ::ng-deep .new-event-action:active,
+    :host ::ng-deep .new-event-action:focus,
+    :host ::ng-deep .new-event-action:focus-visible {
+      min-height: 44px !important;
+      height: 44px !important;
+      padding: 0 18px 0 20px !important;
+      border: 0 !important;
+      outline: 0 !important;
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 52%, #c2410c 100%) !important;
+      color: #ffffff !important;
+      box-shadow: 0 12px 24px rgba(234, 88, 12, 0.24) !important;
+      filter: none !important;
+      transform: none !important;
+      transition: none !important;
     }
 
     /* Event Form Styles */
@@ -564,12 +616,9 @@ type EventFormState = {
         padding: 10px 16px;
       }
 
-      .logo-text h2 {
-        font-size: 1rem;
-      }
-
-      .logo-subtitle {
-        display: none;
+      .logo-image {
+        height: 44px;
+        max-width: 180px;
       }
 
       .event-selector {
@@ -579,12 +628,8 @@ type EventFormState = {
   `]
 })
 export class NavigationComponent implements OnInit, OnDestroy {
-  events$!: Observable<Event[]>;
-  currentEvent$!: Observable<Event | null>;
   connectionStatus$!: Observable<ConnectionStatus>;
 
-  eventOptions: any[] = [];
-  selectedEventId: string | null = null;
   showConnectionBanner = true;
 
   private readonly destroy$ = new Subject<void>();
@@ -592,67 +637,42 @@ export class NavigationComponent implements OnInit, OnDestroy {
   showEventDialog = false;
   newEvent: EventFormState;
 
-  eventTypeOptions: { label: string; value: string }[] = [];
-  foodTypeOptions: { label: string; value: string }[] = [];
+  menuTemplates: MenuTemplate[] = [];
+  eventCategories: string[] = [];
+
+  get menuTemplateSelectItems(): { label: string; value: string; template: MenuTemplate }[] {
+    return this.menuTemplates.map(t => ({ label: t.name, value: t.name, template: t }));
+  }
 
   constructor(
-    private eventService: EventService,
-    private lookupService: LookupService,
+    private router: Router,
+    private eventService: ApiEventService,
+    private menuService: ApiMenuService,
+    private lookupService: ApiLookupService,
     private connectionStatusService: ConnectionStatusService
   ) {
     this.newEvent = this.getDefaultEventForm();
   }
 
   ngOnInit(): void {
-    this.events$ = this.eventService.events$;
-    this.currentEvent$ = this.eventService.currentEvent$;
     this.connectionStatus$ = this.connectionStatusService.status$;
 
-    // Subscribe to events to build options
-    this.events$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(events => {
-      this.eventOptions = [
-        { label: 'ללא אירוע', value: null },
-        ...events.map(event => ({
-          label: `${event.name} (${event.participants} אורחים)`,
-          value: event.id
-        }))
-      ];
-    });
-
-    // Subscribe to current event
-    this.currentEvent$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(event => {
-        this.selectedEventId = event?.id || null;
+    // Load menu templates for the quick-create dialog
+    this.menuService.getMenuTemplates()
+      .pipe(take(1))
+      .subscribe(templates => {
+        this.menuTemplates = templates;
+        if (!this.newEvent.menuType && templates.length > 0) {
+          this.newEvent.menuType = templates[0].name;
+        }
       });
 
-    this.lookupService.lookup$
-      .pipe(takeUntil(this.destroy$))
+    this.lookupService.getAllLookupData()
+      .pipe(take(1))
       .subscribe(data => {
-        this.eventTypeOptions = data.eventTypes.map(type => ({
-          label: type,
-          value: type
-        }));
-
-        this.foodTypeOptions = [
-          ...data.kosherTypes.map(type => ({ label: type, value: type })),
-          { label: 'כל הסוגים', value: 'כל הסוגים' }
-        ];
-
-        if (
-          this.newEvent.eventType &&
-          !data.eventTypes.includes(this.newEvent.eventType)
-        ) {
-          this.newEvent.eventType = data.eventTypes[0] || '';
-        }
-
-        if (
-          this.newEvent.foodType &&
-          ![...data.kosherTypes, 'כל הסוגים'].includes(this.newEvent.foodType)
-        ) {
-          this.newEvent.foodType = data.kosherTypes[0] || 'כל הסוגים';
+        this.eventCategories = data.event_categories || [];
+        if (!this.newEvent.eventCategory) {
+          this.newEvent.eventCategory = this.eventCategories[0] || '';
         }
       });
   }
@@ -662,14 +682,12 @@ export class NavigationComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  onEventChange(event: any): void {
-    if (this.selectedEventId) {
-      this.eventService.setCurrentEvent(this.selectedEventId);
-    }
-  }
-
   dismissBanner(): void {
     this.showConnectionBanner = false;
+  }
+
+  navigateToNewEvent(): void {
+    this.router.navigate(['/events'], { queryParams: { createEvent: '1' } });
   }
 
   retryConnection(): void {
@@ -684,12 +702,27 @@ export class NavigationComponent implements OnInit, OnDestroy {
 
   createEvent(): void {
     if (this.isFormValid()) {
-      const eventId = this.eventService.createEvent({
-        ...this.newEvent,
-        eventDate: this.newEvent.eventDate || undefined
-      });
-      this.eventService.setCurrentEvent(eventId);
-      this.closeEventDialog();
+      const payload: EventCreate = {
+        name: this.newEvent.name,
+        event_category: this.newEvent.eventCategory,
+        menu_type: this.newEvent.menuType,
+        date: this.newEvent.eventDate?.toISOString() || new Date().toISOString(),
+        guest_count: this.newEvent.guestCount,
+        address: this.newEvent.address || undefined,
+        city: this.newEvent.city || undefined,
+        status: 'טיוטה'
+      };
+      this.eventService.createEvent(payload)
+        .pipe(take(1))
+        .subscribe({
+          next: (created: any) => {
+            this.closeEventDialog();
+            this.router.navigate(['/events'], { queryParams: { openEvent: created.id } });
+          },
+          error: () => {
+            this.closeEventDialog();
+          }
+        });
     }
   }
 
@@ -700,9 +733,9 @@ export class NavigationComponent implements OnInit, OnDestroy {
   isFormValid(): boolean {
     return !!(
       this.newEvent.name &&
-      this.newEvent.participants > 0 &&
-      this.newEvent.eventType &&
-      this.newEvent.foodType &&
+      this.newEvent.eventCategory &&
+      this.newEvent.guestCount > 0 &&
+      this.newEvent.menuType &&
       this.newEvent.eventDate
     );
   }
@@ -714,18 +747,17 @@ export class NavigationComponent implements OnInit, OnDestroy {
   }
 
   private getDefaultEventForm(): EventFormState {
-    const defaultEventType = this.lookupService.getList('eventTypes')[0] || '';
-    const defaultKosher =
-      this.lookupService.getList('kosherTypes')[0] || 'כל הסוגים';
     const now = new Date();
 
     return {
       name: '',
-      participants: 10,
-      eventType: defaultEventType,
-      foodType: defaultKosher,
+      eventCategory: this.eventCategories[0] || '',
+      guestCount: 10,
+      menuType: '',
       eventDate: now,
-      hebrewDate: this.formatHebrewDate(now)
+      hebrewDate: this.formatHebrewDate(now),
+      address: '',
+      city: ''
     };
   }
 

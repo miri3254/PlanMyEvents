@@ -347,3 +347,686 @@ p, span, div {
     padding: 15px;
   }
 }
+
+/* === Admin Catalog Consistency === */
+.dishes-container,
+.products-container,
+.tools-page {
+  width: 100%;
+  direction: rtl;
+}
+
+.dishes-container.p-6,
+.products-container.p-6,
+.tools-page.p-6 {
+  padding: 0 !important;
+}
+
+.dishes-container .top-section,
+.products-container .top-section,
+.tools-page .top-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.25rem !important;
+}
+
+.dishes-container .header-card,
+.products-container .header-card,
+.tools-page .header-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg,
+      hsla(24, 95%, 53%, 0.12) 0%,
+      hsla(14, 90%, 48%, 0.08) 48%,
+      hsla(0, 0%, 100%, 0.96) 100%) !important;
+  border: 2px solid hsla(24, 95%, 53%, 0.24) !important;
+  border-radius: 20px !important;
+  padding: 1.75rem 2rem !important;
+  box-shadow: var(--shadow-glow) !important;
+}
+
+.dishes-container .header-card::before,
+.products-container .header-card::before,
+.tools-page .header-card::before {
+  content: '';
+  position: absolute;
+  inset: -40% -40% auto auto;
+  width: 70%;
+  height: 140%;
+  background: radial-gradient(circle, hsla(24, 95%, 53%, 0.12), transparent 65%);
+  pointer-events: none;
+}
+
+.dishes-container .header-inner,
+.products-container .header-inner,
+.tools-page .header-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.dishes-container .title-wrapper,
+.products-container .title-wrapper,
+.tools-page .title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.dishes-container .title-icon,
+.products-container .title-icon,
+.tools-page .title-icon {
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 16px !important;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+  box-shadow: 0 10px 30px hsla(24, 95%, 53%, 0.36) !important;
+}
+
+.dishes-container .title-icon i,
+.products-container .title-icon i,
+.tools-page .title-icon i {
+  color: #fff !important;
+  font-size: 1.65rem !important;
+}
+
+.dishes-container .gradient-title,
+.products-container .gradient-title,
+.tools-page .gradient-title {
+  margin: 0 !important;
+  font-size: 2rem !important;
+  line-height: 1.15 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+.dishes-container .subtitle,
+.products-container .subtitle,
+.tools-page .subtitle {
+  margin: 0.35rem 0 0 !important;
+  color: var(--muted-foreground) !important;
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+}
+
+.dishes-container .header-actions,
+.products-container .header-actions,
+.tools-page .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.add-dish-btn,
+.add-product-btn,
+.add-tool-btn {
+  min-height: 44px !important;
+  padding: 0.8rem 1.45rem !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+  box-shadow: 0 8px 24px hsla(24, 95%, 53%, 0.34) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+
+body .dishes-container .header-card .title-icon,
+body .products-container .header-card .title-icon,
+body .tools-page .header-card .title-icon,
+body .dishes-container .header-card.main-header .title-icon {
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 16px !important;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+  box-shadow: 0 10px 30px hsla(24, 95%, 53%, 0.36) !important;
+}
+
+body .dishes-container .header-card .gradient-title,
+body .products-container .header-card .gradient-title,
+body .tools-page .header-card .gradient-title,
+body .dishes-container .header-card.main-header .gradient-title {
+  font-size: 2rem !important;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+body .dishes-container .header-actions .add-dish-btn,
+body .products-container .header-actions .add-product-btn,
+body .tools-page .header-actions .add-tool-btn {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+  box-shadow: 0 8px 24px hsla(24, 95%, 53%, 0.34) !important;
+}
+
+body .dishes-container .header-actions .add-dish-btn:hover,
+body .products-container .header-actions .add-product-btn:hover,
+body .tools-page .header-actions .add-tool-btn:hover {
+  background: linear-gradient(135deg, var(--primary-dark), hsl(14, 90%, 42%)) !important;
+  box-shadow: 0 12px 30px hsla(24, 95%, 53%, 0.42) !important;
+}
+
+body .products-container .header-card,
+body .tools-page .header-card {
+  padding: 1.35rem 1.6rem !important;
+  border-width: 1px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 18px hsla(24, 95%, 53%, 0.12) !important;
+}
+
+body .products-container .header-card::before,
+body .tools-page .header-card::before {
+  opacity: 0.45;
+}
+
+body .products-container .header-card .title-icon,
+body .tools-page .header-card .title-icon {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 14px !important;
+  box-shadow: 0 7px 20px hsla(24, 95%, 53%, 0.28) !important;
+}
+
+body .products-container .header-card .title-icon i,
+body .tools-page .header-card .title-icon i {
+  font-size: 1.35rem !important;
+}
+
+body .products-container .header-card .gradient-title,
+body .tools-page .header-card .gradient-title {
+  font-size: 1.55rem !important;
+}
+
+body .products-container .subtitle,
+body .tools-page .subtitle {
+  font-size: 0.9rem !important;
+}
+
+.add-dish-btn:hover,
+.add-product-btn:hover,
+.add-tool-btn:hover {
+  background: linear-gradient(135deg, var(--primary-dark), hsl(14, 90%, 42%)) !important;
+  box-shadow: 0 12px 30px hsla(24, 95%, 53%, 0.42) !important;
+  transform: translateY(-2px);
+}
+
+.export-shortages-btn {
+  min-height: 44px !important;
+  padding: 0.75rem 1.1rem !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  background: #fff !important;
+}
+
+.dishes-container .filters-card,
+.products-container .filters-card,
+.tools-page .filters-card {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  padding: 1.25rem 1.5rem !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+}
+
+.dishes-container .filters-inner,
+.products-container .filters-inner,
+.tools-page .filters-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.dishes-container .filters-row,
+.products-container .filters-row,
+.tools-page .filters-row,
+.tools-page .secondary-filters-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.dishes-container .search-section,
+.products-container .search-section,
+.tools-page .search-section {
+  min-width: 240px;
+  max-width: 360px;
+  flex: 1 1 280px;
+}
+
+.dishes-container .search-input-wrapper,
+.products-container .search-input-wrapper,
+.tools-page .search-input-wrapper {
+  display: block;
+  position: relative;
+  width: 100%;
+}
+
+.dishes-container .search-input,
+.products-container .search-input,
+.tools-page .search-input {
+  width: 100% !important;
+  height: 44px !important;
+  border: 2px solid var(--border) !important;
+  border-radius: 12px !important;
+  background: var(--surface-ground, hsl(40, 10%, 97%)) !important;
+  padding: 0.7rem 2.5rem 0.7rem 1rem !important;
+  font-family: inherit !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.dishes-container .search-input:focus,
+.products-container .search-input:focus,
+.tools-page .search-input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px hsla(24, 95%, 53%, 0.14) !important;
+  background: #fff !important;
+}
+
+.dishes-container .filter-actions,
+.products-container .filter-actions,
+.tools-page .filter-actions {
+  margin-right: auto !important;
+  padding-right: 0.75rem;
+  border-right: 1px solid var(--border) !important;
+}
+
+.dishes-container .view-toggle-group,
+.products-container .view-toggle-group,
+.tools-page .view-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-ground, hsl(40, 10%, 97%));
+}
+
+.dishes-container .view-toggle-group .p-button,
+.products-container .view-toggle-group .p-button,
+.tools-page .view-toggle-group .p-button {
+  min-height: 34px;
+  border-radius: 9px !important;
+  font-weight: 600;
+}
+
+.dishes-container .filter-stat-card,
+.products-container .filter-stat-card,
+.tools-page .filter-stat-card {
+  min-height: 42px;
+  border-radius: 12px !important;
+  border: 1px solid var(--border) !important;
+  background: #fff !important;
+  color: var(--foreground) !important;
+  box-shadow: none !important;
+}
+
+.dishes-container .filter-stat-card.active,
+.products-container .filter-stat-card.active,
+.tools-page .filter-stat-card.active {
+  border-color: var(--primary) !important;
+  background: var(--primary-light) !important;
+  color: var(--primary-dark) !important;
+}
+
+.clear-btn {
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+}
+
+.products-container .p-card,
+.tools-page .p-card,
+.dishes-container .p-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.products-container .p-datatable,
+.tools-page .p-datatable,
+.dishes-container .p-datatable {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+.products-container .p-datatable-thead > tr > th,
+.tools-page .p-datatable-thead > tr > th,
+.dishes-container .p-datatable-thead > tr > th {
+  background: hsl(40, 10%, 96%) !important;
+  color: var(--foreground) !important;
+  font-weight: 700 !important;
+}
+
+.custom-dialog {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18) !important;
+}
+
+.custom-dialog .p-dialog-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+  color: #fff !important;
+  padding: 1.1rem 1.5rem !important;
+  border-bottom: 0 !important;
+}
+
+.custom-dialog .dialog-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.custom-dialog .dialog-title {
+  color: #fff !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+}
+
+.custom-dialog .p-dialog-header-icons button {
+  color: #fff !important;
+}
+
+.custom-dialog .p-dialog-header-icons button:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+.custom-dialog .p-dialog-content {
+  padding: 0 !important;
+  background: hsl(40, 10%, 98%) !important;
+}
+
+.custom-dialog .p-dialog-footer {
+  padding: 1rem 1.5rem !important;
+  border-top: 1px solid var(--border) !important;
+  background: #fff !important;
+}
+
+.custom-dialog .dialog-content {
+  padding: 1.5rem !important;
+}
+
+.custom-dialog .highlight-section,
+.custom-dialog .form-group-card {
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04) !important;
+}
+
+.custom-dialog .highlight-section {
+  border-color: hsla(24, 95%, 53%, 0.28) !important;
+  background: linear-gradient(135deg, hsla(24, 95%, 53%, 0.06), #fff) !important;
+}
+
+.custom-dialog .group-title i,
+.custom-dialog .section-title i {
+  color: var(--primary) !important;
+}
+
+.custom-dialog .p-inputtext:enabled:focus,
+.custom-dialog .p-inputnumber-input:enabled:focus,
+.custom-dialog .p-textarea:enabled:focus,
+.custom-dialog .p-select:not(.p-disabled).p-focus,
+.custom-dialog .field-input:focus,
+.custom-dialog .primary-input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px hsla(24, 95%, 53%, 0.14) !important;
+}
+
+.custom-dialog .p-tab.p-tab-active,
+.custom-dialog .p-tab-active {
+  color: var(--primary-dark) !important;
+  border-bottom-color: var(--primary) !important;
+}
+
+/* === Secondary App Pages === */
+.events-page,
+.menus-page,
+.settings-container {
+  width: 100%;
+  direction: rtl;
+  padding: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+
+.events-page .page-header,
+.menus-page .page-header,
+.settings-container .settings-header {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 0 0 1.25rem !important;
+  padding: 1.25rem 1.5rem !important;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(135deg,
+      hsla(24, 95%, 53%, 0.07),
+      hsla(0, 0%, 100%, 0.98) 55%,
+      hsla(40, 10%, 98%, 1));
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.055);
+}
+
+.events-page .page-header::before,
+.menus-page .page-header::before,
+.events-page .page-icon,
+.menus-page .page-icon,
+.settings-container .page-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  flex: 0 0 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  box-shadow: 0 7px 18px hsla(24, 95%, 53%, 0.24);
+}
+
+.events-page .page-icon i,
+.menus-page .page-icon i,
+.settings-container .page-icon i {
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.events-page .page-title,
+.menus-page .page-title,
+.settings-container .settings-title {
+  flex: 1 1 260px;
+}
+
+.settings-container .settings-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.events-page .page-title h1,
+.menus-page .page-title h1,
+.settings-container .settings-header h1 {
+  margin: 0 !important;
+  font-size: 1.55rem !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+.events-page .page-title p,
+.menus-page .page-title p {
+  margin: 0.3rem 0 0 !important;
+  color: var(--muted-foreground) !important;
+  font-size: 0.92rem !important;
+  font-weight: 500;
+}
+
+.settings-container .settings-title p {
+  margin: 0.3rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.events-page .header-actions,
+.menus-page .header-actions,
+.settings-container .settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-right: auto;
+}
+
+.events-page .header-actions .p-button.p-button-primary,
+.menus-page .header-actions .p-button.p-button-primary,
+.settings-container .settings-actions .p-button.p-button-success {
+  min-height: 42px;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+  box-shadow: 0 7px 20px hsla(24, 95%, 53%, 0.25) !important;
+  font-weight: 700 !important;
+}
+
+.menus-page .search-row,
+.events-page .filter-row,
+.events-page .calendar-controls {
+  margin-bottom: 1rem !important;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card-bg);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.045);
+}
+
+.menus-page .search-input {
+  width: min(360px, 100%) !important;
+  height: 42px;
+  border: 2px solid var(--border) !important;
+  border-radius: 12px !important;
+  background: var(--surface-ground, hsl(40, 10%, 97%)) !important;
+  padding: 0.7rem 1rem !important;
+}
+
+.menus-page .search-input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px hsla(24, 95%, 53%, 0.14) !important;
+  background: #fff !important;
+}
+
+.events-page .events-panel,
+.menus-page .p-datatable,
+.settings-container .p-card {
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  background: var(--card-bg) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.055) !important;
+  overflow: hidden;
+}
+
+.events-page .p-panel-header,
+.settings-container .p-card-header {
+  background: hsl(40, 10%, 96%) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.events-page .calendar-cell {
+  border-radius: 14px !important;
+  border-color: var(--border) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.045) !important;
+}
+
+.event-dialog,
+.event-detail-dialog,
+.menu-detail-dialog,
+.menu-form-dialog,
+.menu-support-dialog,
+.event-date-dialog {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+}
+
+.event-dialog .p-dialog-header,
+.event-detail-dialog .p-dialog-header,
+.menu-detail-dialog .p-dialog-header,
+.menu-form-dialog .p-dialog-header,
+.menu-support-dialog .p-dialog-header,
+.event-date-dialog .p-dialog-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+  color: #fff !important;
+  padding: 1.1rem 1.5rem !important;
+  border-bottom: 0 !important;
+}
+
+.event-dialog .dialog-title,
+.event-detail-dialog .dialog-title,
+.menu-form-dialog .dialog-title,
+.menu-detail-dialog .detail-dialog-header,
+.menu-support-dialog .p-dialog-title,
+.event-date-dialog .p-dialog-title {
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+
+.event-dialog .p-dialog-content,
+.event-detail-dialog .p-dialog-content,
+.menu-detail-dialog .p-dialog-content,
+.menu-form-dialog .p-dialog-content,
+.menu-support-dialog .p-dialog-content,
+.event-date-dialog .p-dialog-content {
+  background: hsl(40, 10%, 98%) !important;
+}
+
+@media (max-width: 900px) {
+  .dishes-container .header-card,
+  .products-container .header-card,
+  .tools-page .header-card {
+    padding: 1.25rem !important;
+  }
+
+  .dishes-container .gradient-title,
+  .products-container .gradient-title,
+  .tools-page .gradient-title {
+    font-size: 1.55rem !important;
+  }
+
+  .dishes-container .title-icon,
+  .products-container .title-icon,
+  .tools-page .title-icon {
+    width: 52px !important;
+    height: 52px !important;
+  }
+
+  .dishes-container .filter-actions,
+  .products-container .filter-actions,
+  .tools-page .filter-actions {
+    width: 100%;
+    margin-right: 0 !important;
+    padding-right: 0;
+    border-right: 0 !important;
+  }
+}

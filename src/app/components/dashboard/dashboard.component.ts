@@ -15,6 +15,7 @@ import {
   DashboardStats, 
   UpcomingEvent, 
   LowStockAlert,
+  LowStockResponse,
   ApiEvent,
   ApiDish
 } from '../../core/models/api.models';
@@ -505,6 +506,7 @@ export class DashboardComponent implements OnInit {
     );
 
     this.lowStockAlerts$ = this.dashboardService.getLowStockAlerts().pipe(
+      map((response: LowStockResponse) => [...(response.products || []), ...(response.tools || [])]),
       catchError(error => {
         if (error?.status === 404) {
           // Fallback for environments where the dedicated endpoint is missing
@@ -527,18 +529,19 @@ export class DashboardComponent implements OnInit {
         const items = response?.items || [];
         return items
           .map(raw => {
-            const eventDate = (raw as any).event_date || (raw as any).date;
-            const guestCount = (raw as any).guest_count || (raw as any).participants || 0;
+            const eventDate = (raw as any).date;
+            const guestCount = (raw as any).guest_count || 0;
             const status = this.normalizeStatus((raw as any).status);
-            const eventType = (raw as any).event_type || 'אחר';
+            const menuType = (raw as any).menu_type || 'אחר';
             return {
               id: Number(raw.id),
               name: raw.name,
               date: eventDate,
-              event_type: eventType,
+              menu_type: menuType,
               guest_count: guestCount,
               status,
-              location: (raw as any).location
+              address: (raw as any).address,
+              city: (raw as any).city
             } as UpcomingEvent;
           })
           .filter(event => {
@@ -592,7 +595,9 @@ export class DashboardComponent implements OnInit {
             id: product.id,
             name: product.name,
             category: product.category,
-            inventory_status: product.inventory_status
+            quantity_in_stock: product.quantity_in_stock ?? 0,
+            min_stock_level: product.min_stock_level ?? 0,
+            inventory_status: product.inventory_status ?? 'לא ידוע'
           }));
       }),
       catchError(fallbackError => {
@@ -612,10 +617,10 @@ export class DashboardComponent implements OnInit {
     ).subscribe(response => {
       const dishes = response.items;
       
-      // Category chart
+      // Category chart (by kosher type)
       const categoryCount: { [key: string]: number } = {};
       dishes.forEach(dish => {
-        categoryCount[dish.category] = (categoryCount[dish.category] || 0) + 1;
+        categoryCount[dish.kosher_type] = (categoryCount[dish.kosher_type] || 0) + 1;
       });
 
       this.dishCategoryData = {

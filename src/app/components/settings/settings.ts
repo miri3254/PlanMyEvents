@@ -1,8 +1,8 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { take, takeUntil } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
@@ -16,6 +16,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { FieldsetModule } from 'primeng/fieldset';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { TagModule } from 'primeng/tag';
 import {
   DashboardWidgetConfig,
   DashboardWidgetGroup,
@@ -24,6 +25,10 @@ import {
 } from '../../core/constants/app.constants';
 import { LookupService } from '../../core/services/lookup.service';
 import { ThemeService, Theme } from '../../core/services/theme.service';
+import { UnitConversionService, UnitConversionCreate } from '../../core/services/unit-conversion.service';
+import { UnitConversion } from '../../core/models';
+import { ApiMenuService } from '../../services/api-menu.service';
+import { ApiLookupService } from '../../services/api-lookup.service';
 
 interface AppSettings {
   general: {
@@ -44,8 +49,7 @@ interface AppSettings {
   events: {
     autoSelectCurrentEvent: boolean;
     showEventInfoInHeader: boolean;
-    defaultEventType: string;
-    defaultFoodType: string;
+    defaultMenuType: string;
     maxEventsHistory: number;
   };
   products: {
@@ -80,11 +84,13 @@ interface AppSettings {
     FloatLabelModule,
     FieldsetModule,
     ToggleButtonModule,
-    MultiSelectModule
+    MultiSelectModule,
+    TagModule
   ],
   templateUrl: './settings.html',
   styleUrls: ['./settings.scss'],
-  providers: [MessageService]
+  providers: [MessageService],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SettingsComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
@@ -93,6 +99,19 @@ export class SettingsComponent implements OnInit, OnDestroy {
   lookupData: LookupData | null = null;
   currentTheme: Theme = 'light';
   isDarkMode = false;
+
+  // Unit Conversions
+  unitConversions: UnitConversion[] = [];
+  loadingConversions = false;
+  private retryLoadConversions = 0;
+  private readonly maxRetries = 3;
+  measurementUnitsOptions: { label: string; value: string }[] = [];
+  newConversion: UnitConversionCreate = {
+    fromUnit: '',
+    toUnit: '',
+    factor: 1,
+    description: ''
+  };
 
   readonly currencyOptions = [
     { label: 'שקל חדש (₪)', value: 'ILS' },
@@ -114,9 +133,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   dishCategories: { label: string; value: string }[] = [];
   kosherTypes: { label: string; value: string }[] = [];
-  eventTypes: { label: string; value: string }[] = [];
-  foodTypes: { label: string; value: string }[] = [];
+  // menuTypes removed: now loaded from menu templates API
+  menuTypes: { label: string; value: string }[] = [];
   productCategories: { label: string; value: string }[] = [];
+  eventCategories: string[] = [];
+  newEventCategory = '';
+  loadingEventCategories = false;
 
   viewOptions = [
     { label: 'טבלה', value: 'table' },
@@ -124,34 +146,31 @@ export class SettingsComponent implements OnInit, OnDestroy {
   ];
 
   readonly listKeys: LookupListKey[] = [
-    'dishCategories',
     'kosherTypes',
     'measurementUnits',
     'productCategories',
     'inventoryStatuses',
-    'eventTypes',
+    'eventStatuses',
     'toolCategories',
     'toolSubCategories'
   ];
 
   listDrafts: Record<LookupListKey, string> = {
-    dishCategories: '',
     kosherTypes: '',
     measurementUnits: '',
     productCategories: '',
     inventoryStatuses: '',
-    eventTypes: '',
+    eventStatuses: '',
     toolCategories: '',
     toolSubCategories: ''
   };
 
   editableLists: Record<LookupListKey, string[]> = {
-    dishCategories: [],
     kosherTypes: [],
     measurementUnits: [],
     productCategories: [],
     inventoryStatuses: [],
-    eventTypes: [],
+    eventStatuses: [],
     toolCategories: [],
     toolSubCategories: []
   };
@@ -219,12 +238,18 @@ export class SettingsComponent implements OnInit, OnDestroy {
     },
     {
       title: 'ניהול לוח בקרה',
-      description: 'קבע אילו סוגי אירועים ותובנות מזינים את הוויזואליזציות בלוח הבקרה.',
+      description: 'קבע אילו סוגי תפריטים ותובנות מזינים את הוויזואליזציות בלוח הבקרה.',
       lists: [
         {
-          key: 'eventTypes' as LookupListKey,
-          label: 'סוגי אירועים',
-          placeholder: 'הוסף סוג אירוע',
+          key: 'menuTypes' as LookupListKey,
+          label: 'סוגי תפריטים',
+          placeholder: 'הוסף סוג תפריט',
+          icon: 'pi pi-book'
+        },
+        {
+          key: 'eventStatuses' as LookupListKey,
+          label: 'סטטוסי אירוע',
+          placeholder: 'הוסף סטטוס אירוע',
           icon: 'pi pi-calendar'
         }
       ]
@@ -261,7 +286,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
   constructor(
     private messageService: MessageService,
     private lookupService: LookupService,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private unitConversionService: UnitConversionService,
+    private menuService: ApiMenuService,
+    private apiLookupService: ApiLookupService,
+    private cdr: ChangeDetectorRef
   ) {
     this.settings = this.buildDefaultSettings();
     this.currentTheme = this.themeService.getCurrentTheme();
@@ -280,6 +309,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.dashboardCollections.dashboardSections = data.dashboardSections.map(widget => ({ ...widget }));
         this.dashboardCollections.dashboardMetrics = data.dashboardMetrics.map(widget => ({ ...widget }));
         this.syncSettingsWithLookups(data);
+        
+        // Update measurement units options for conversion dropdowns
+        this.measurementUnitsOptions = data.measurementUnits.map(u => ({ label: u, value: u }));
       });
 
     this.themeService.theme$
@@ -290,6 +322,68 @@ export class SettingsComponent implements OnInit, OnDestroy {
       });
 
     this.loadSettings();
+    this.loadUnitConversions();
+    this.loadMenuTypes();
+    this.loadEventCategories();
+  }
+
+  loadEventCategories(): void {
+    this.loadingEventCategories = true;
+    this.apiLookupService.getAllLookupData().pipe(take(1)).subscribe({
+      next: data => {
+        this.eventCategories = [...(data.event_categories || [])];
+        this.loadingEventCategories = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.loadingEventCategories = false;
+        this.notify('error', 'שגיאה', 'לא ניתן לטעון את קטגוריות האירועים.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  addEventCategory(): void {
+    const value = this.newEventCategory.trim();
+    if (!value || this.eventCategories.includes(value)) {
+      return;
+    }
+    this.apiLookupService.addLookupValue('event_categories', value).pipe(take(1)).subscribe({
+      next: () => {
+        this.newEventCategory = '';
+        this.notify('success', 'נוסף בהצלחה', 'קטגוריית האירוע נוספה.');
+        this.loadEventCategories();
+      },
+      error: () => this.notify('error', 'שגיאה', 'לא ניתן להוסיף את הקטגוריה.')
+    });
+  }
+
+  updateEventCategory(index: number): void {
+    const value = (this.eventCategories[index] || '').trim();
+    if (!value) {
+      this.loadEventCategories();
+      return;
+    }
+    this.apiLookupService.updateLookupValue('event_categories', index, value).pipe(take(1)).subscribe({
+      next: () => {
+        this.notify('success', 'עודכן בהצלחה', 'קטגוריית האירוע עודכנה.');
+        this.loadEventCategories();
+      },
+      error: () => {
+        this.notify('error', 'שגיאה', 'לא ניתן לעדכן את הקטגוריה.');
+        this.loadEventCategories();
+      }
+    });
+  }
+
+  deleteEventCategory(index: number): void {
+    this.apiLookupService.deleteLookupValue('event_categories', index).pipe(take(1)).subscribe({
+      next: () => {
+        this.notify('info', 'הקטגוריה הוסרה', 'אירועים קיימים נשארו ללא שינוי.');
+        this.loadEventCategories();
+      },
+      error: () => this.notify('error', 'שגיאה', 'לא ניתן להסיר את הקטגוריה.')
+    });
   }
 
   ngOnDestroy(): void {
@@ -476,9 +570,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   private buildDefaultSettings(): AppSettings {
     const lookup = this.lookupService.getSnapshot();
-    const firstCategory = lookup.dishCategories[0] || '';
     const firstKosher = lookup.kosherTypes[0] || '';
-    const firstEvent = lookup.eventTypes[0] || '';
     const firstProductCategory = lookup.productCategories[0] || '';
 
     return {
@@ -493,15 +585,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
         defaultServingSize: 4,
         showPricesInCards: true,
         autoSaveChanges: true,
-        defaultCategory: firstCategory,
+        defaultCategory: '',
         defaultKosherType: firstKosher,
         showIngredientsCount: true
       },
       events: {
         autoSelectCurrentEvent: true,
         showEventInfoInHeader: true,
-        defaultEventType: firstEvent,
-        defaultFoodType: firstKosher,
+        defaultMenuType: '', // menuType now loaded from menu templates API
         maxEventsHistory: 50
       },
       products: {
@@ -521,39 +612,21 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   private updateSelectOptions(data: LookupData): void {
-    this.dishCategories = data.dishCategories.map(value => ({ label: value, value }));
     this.kosherTypes = data.kosherTypes.map(value => ({ label: value, value }));
-    this.eventTypes = data.eventTypes.map(value => ({ label: value, value }));
-    this.foodTypes = data.kosherTypes.map(value => ({ label: value, value }));
     this.productCategories = data.productCategories.map(value => ({ label: value, value }));
   }
 
   private syncSettingsWithLookups(data: LookupData): void {
-    this.ensureSettingValues('dishCategories', data.dishCategories);
     this.ensureSettingValues('kosherTypes', data.kosherTypes);
-    this.ensureSettingValues('eventTypes', data.eventTypes);
     this.ensureSettingValues('productCategories', data.productCategories);
   }
 
   private ensureSettingValues(key: LookupListKey, values: string[]): void {
     const firstValue = values[0] || '';
     switch (key) {
-      case 'dishCategories':
-        if (!values.includes(this.settings.dishes.defaultCategory)) {
-          this.settings.dishes.defaultCategory = firstValue;
-        }
-        break;
       case 'kosherTypes':
         if (!values.includes(this.settings.dishes.defaultKosherType)) {
           this.settings.dishes.defaultKosherType = firstValue;
-        }
-        if (!values.includes(this.settings.events.defaultFoodType)) {
-          this.settings.events.defaultFoodType = firstValue;
-        }
-        break;
-      case 'eventTypes':
-        if (!values.includes(this.settings.events.defaultEventType)) {
-          this.settings.events.defaultEventType = firstValue;
         }
         break;
       case 'productCategories':
@@ -572,22 +645,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     nextValue: string
   ): void {
     switch (key) {
-      case 'dishCategories':
-        if (this.settings.dishes.defaultCategory === previousValue) {
-          this.settings.dishes.defaultCategory = nextValue;
-        }
-        break;
       case 'kosherTypes':
         if (this.settings.dishes.defaultKosherType === previousValue) {
           this.settings.dishes.defaultKosherType = nextValue;
-        }
-        if (this.settings.events.defaultFoodType === previousValue) {
-          this.settings.events.defaultFoodType = nextValue;
-        }
-        break;
-      case 'eventTypes':
-        if (this.settings.events.defaultEventType === previousValue) {
-          this.settings.events.defaultEventType = nextValue;
         }
         break;
       case 'productCategories':
@@ -615,5 +675,136 @@ export class SettingsComponent implements OnInit, OnDestroy {
     detail: string
   ): void {
     this.messageService.add({ severity, summary, detail });
+  }
+
+  // ========================================
+  // Unit Conversions
+  // ========================================
+
+  loadMenuTypes(): void {
+    this.menuService.getMenuTemplates()
+      .pipe(take(1))
+      .subscribe({
+        next: (templates) => {
+          this.menuTypes = templates.map(t => ({ label: t.name, value: t.name }));
+        },
+        error: () => { /* non-critical, leave empty */ }
+      });
+  }
+
+  loadUnitConversions(): void {
+    this.loadingConversions = true;
+    this.retryLoadConversions = 0;
+    this.performLoadUnitConversions();
+  }
+
+  private performLoadUnitConversions(): void {
+    this.unitConversionService.getAll()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.unitConversions = response.items;
+          this.loadingConversions = false;
+          this.retryLoadConversions = 0;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Error loading unit conversions:', err);
+          
+          // Try to seed conversions if first attempt failed
+          if (this.retryLoadConversions < this.maxRetries) {
+            this.retryLoadConversions++;
+            console.log(`Seeding conversions (attempt ${this.retryLoadConversions}/${this.maxRetries})`);
+            
+            this.unitConversionService.seedConversions()
+              .pipe(takeUntil(this.destroy$))
+              .subscribe({
+                next: () => {
+                  console.log('Seed successful, retrying load');
+                  // Small delay before retry
+                  setTimeout(() => this.performLoadUnitConversions(), 500);
+                },
+                error: (seedErr) => {
+                  console.error('Error seeding conversions:', seedErr);
+                  // If seed also failed, give up
+                  this.notify('error', 'שגיאה', 'לא ניתן לטעון או להוסיף המרות יחידות מידה');
+                  this.loadingConversions = false;
+                }
+              });
+          } else {
+            // Max retries reached
+            this.notify('error', 'שגיאה', 'לא ניתן לטעון המרות יחידות מידה');
+            this.loadingConversions = false;
+          }
+        }
+      });
+  }
+
+  addConversion(): void {
+    if (!this.newConversion.fromUnit || !this.newConversion.toUnit || !this.newConversion.factor) {
+      this.notify('warn', 'שדות חסרים', 'יש למלא את כל השדות');
+      return;
+    }
+
+    if (this.newConversion.fromUnit === this.newConversion.toUnit) {
+      this.notify('warn', 'שגיאה', 'לא ניתן להמיר יחידה לעצמה');
+      return;
+    }
+
+    this.unitConversionService.create(this.newConversion)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (created) => {
+          this.unitConversions.push(created);
+          this.newConversion = { fromUnit: '', toUnit: '', factor: 1, description: '' };
+          this.notify('success', 'נוסף', 'המרה חדשה נוספה בהצלחה');
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          const msg = err.error?.detail || 'לא ניתן להוסיף המרה';
+          this.notify('error', 'שגיאה', msg);
+        }
+      });
+  }
+
+  updateConversion(conv: UnitConversion): void {
+    if (conv.isSystem) return;
+    
+    this.unitConversionService.update(conv.id, { factor: conv.factor })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.notify('success', 'עודכן', 'ערך ההמרה עודכן');
+        },
+        error: (err) => {
+          const msg = err.error?.detail || 'לא ניתן לעדכן ההמרה';
+          this.notify('error', 'שגיאה', msg);
+        }
+      });
+  }
+
+  deleteConversion(id: number): void {
+    this.unitConversionService.remove(id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.unitConversions = this.unitConversions.filter(c => c.id !== id);
+          this.notify('success', 'נמחק', 'ההמרה נמחקה');
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          const msg = err.error?.detail || 'לא ניתן למחוק המרה';
+          this.notify('error', 'שגיאה', msg);
+        }
+      });
+  }
+
+  // TrackBy functions for performance optimization
+  trackById(index: number, item: any): any {
+    return item && item.id ? item.id : index;
+  }
+
+  trackByIndex(index: number, item: any): number {
+    return index;
   }
 }

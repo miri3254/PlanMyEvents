@@ -1,0 +1,539 @@
+<div class="menus-page" dir="rtl">
+  <div class="page-header">
+    <div class="page-icon">
+      <i class="pi pi-book"></i>
+    </div>
+    <div class="page-title">
+      <h1>תפריטים</h1>
+      <p>ניהול תבניות תפריטים לאירועים</p>
+    </div>
+    <div class="header-actions">
+      <p-button
+        label="תפריט חדש"
+        icon="pi pi-plus"
+        severity="primary"
+        size="small"
+        (onClick)="openCreateForm()">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Filters
+  <div class="filter-row">
+    <p-button
+      label="הכל"
+      size="small"
+      [severity]="selectedFilter === 'all' ? 'primary' : 'secondary'"
+      [outlined]="selectedFilter !== 'all'"
+      (onClick)="setFilter('all')">
+    </p-button>
+    <p-button
+      *ngFor="let opt of menuTypeOptions"
+      [label]="opt.label"
+      size="small"
+      [severity]="selectedFilter === opt.value ? 'primary' : 'secondary'"
+      [outlined]="selectedFilter !== opt.value"
+      (onClick)="setFilter(opt.value)">
+    </p-button>
+  </div> -->
+
+  <!-- Search -->
+  <div class="search-row">
+    <input pInputText
+      [(ngModel)]="searchTerm"
+      (input)="onSearch()"
+      placeholder="חיפוש תפריט..."
+      class="search-input" />
+  </div>
+
+  <!-- Table -->
+  <p-table
+    [value]="filteredMenus"
+    [loading]="loading"
+    responsiveLayout="scroll"
+    styleClass="p-datatable-sm themed-table">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>שם התפריט</th>
+        <th>כשרות</th>
+        <th>מינימום אורחים</th>
+        <th>מחיר לאורח</th>
+        <th>תפריט מגשים</th>
+        <th>קטגוריות</th>
+        <th class="text-center">פעולות</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-menu>
+      <tr class="clickable-row" (click)="openDetails(menu)">
+        <td>
+          <div class="menu-name">
+            <span>{{ menu.name }}</span>
+            <small *ngIf="menu.description">{{ menu.description }}</small>
+          </div>
+        </td>
+        <td>
+          <span class="kosher-badge" [ngClass]="getKosherClass(menu.kosher_type || 'פרווה')">{{ menu.kosher_type || 'פרווה' }}</span>
+        </td>
+        <td>{{ menu.min_guests }}</td>
+        <td>{{ menu.base_price_per_guest ? '₪' + menu.base_price_per_guest : '—' }}</td>
+        <td>
+          <i class="pi" [class.pi-check]="menu.is_tray_menu" [class.pi-times]="!menu.is_tray_menu"
+             [style.color]="menu.is_tray_menu ? 'var(--green-500)' : 'var(--red-400)'"></i>
+        </td>
+        <td>
+          <p-badge [value]="getCategoriesCount(menu)" severity="info"></p-badge>
+        </td>
+        <td class="text-center actions-cell" (click)="$event.stopPropagation()">
+          <p-button
+            icon="pi pi-eye"
+            size="small"
+            [text]="true"
+            (onClick)="openDetails(menu)"
+            pTooltip="פרטים">
+          </p-button>
+          <p-button
+            icon="pi pi-pencil"
+            size="small"
+            [text]="true"
+            (onClick)="openEditForm(menu)"
+            pTooltip="עריכה">
+          </p-button>
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            size="small"
+            [text]="true"
+            (onClick)="deleteMenu(menu)"
+            pTooltip="מחיקה">
+          </p-button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7" class="empty-message">
+          <i class="pi pi-inbox"></i>
+          <p>אין תפריטים להצגה</p>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <!-- Detail Dialog -->
+  <p-dialog
+    [(visible)]="detailVisible"
+    [modal]="true"
+    [style]="{ width: '90vw', maxWidth: '1000px' }"
+    [contentStyle]="{ 'max-height': '80vh', 'overflow': 'auto' }"
+    [rtl]="true"
+    [dismissableMask]="true"
+    [draggable]="false"
+    styleClass="menu-detail-dialog"
+    (onHide)="closeDetails()">
+    <ng-template pTemplate="header">
+      <div class="detail-dialog-header">
+        <span>{{ selectedMenu?.name || 'פרטי תפריט' }}</span>
+        <span *ngIf="selectedMenu" class="kosher-badge" [ngClass]="getKosherClass(selectedMenu.kosher_type || 'פרווה')">{{ selectedMenu.kosher_type || 'פרווה' }}</span>
+      </div>
+    </ng-template>
+
+    <ng-container *ngIf="selectedMenu">
+      <div class="detail-grid">
+        <div class="info-row">
+          <span class="label">כשרות</span>
+          <span class="value kosher-badge" [ngClass]="getKosherClass(selectedMenu.kosher_type || 'פרווה')">{{ selectedMenu.kosher_type || 'פרווה' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">מינימום אורחים</span>
+          <span class="value">{{ selectedMenu.min_guests }}</span>
+        </div>
+        <div class="info-row" *ngIf="selectedMenu.base_price_per_guest">
+          <span class="label">מחיר לאורח</span>
+          <span class="value">₪{{ selectedMenu.base_price_per_guest }}</span>
+        </div>
+        <div class="info-row" *ngIf="selectedMenu.description">
+          <span class="label">תיאור</span>
+          <span class="value">{{ selectedMenu.description }}</span>
+        </div>
+      </div>
+
+      <p-divider></p-divider>
+
+      <!-- Actions for adding structure -->
+      <div class="menu-structure-actions">
+        <p-button 
+          label="הוסף סעודה"
+          icon="pi pi-plus"
+          size="small"
+          severity="secondary"
+          [outlined]="true"
+          pTooltip="הוסף תת-סעודה (כמו ליל שבת, סעודת בוקר)"
+          (onClick)="openSubMealForm()">
+        </p-button>
+        <p-button 
+          label="הוסף קטגוריה"
+          icon="pi pi-folder-plus"
+          size="small"
+          severity="secondary"
+          [outlined]="true"
+          pTooltip="הוסף קטגוריה (כמו סלטים, מנה עיקרית)"
+          (onClick)="openCategoryForm()">
+        </p-button>
+      </div>
+
+      <!-- Sub-meals with categories and dishes -->
+      <ng-container *ngIf="selectedMenu.sub_meals && selectedMenu.sub_meals.length > 0">
+        <div *ngFor="let subMeal of selectedMenu.sub_meals" class="sub-meal-section">
+          <h3 class="sub-meal-title">
+            <i class="pi pi-calendar"></i> {{ subMeal.name }}
+            <small *ngIf="subMeal.is_splittable" class="split-label"> · תומך בפיצול
+              <span *ngIf="subMeal.split_extra_charge">(+₪{{ subMeal.split_extra_charge }})</span>
+            </small>
+          </h3>
+
+          <div *ngIf="subMeal.categories && subMeal.categories.length > 0" class="categories-list">
+            <div *ngFor="let cat of subMeal.categories" class="category-section">
+              <div class="category-header">
+                <span class="category-title">{{ cat.name_hebrew }}</span>
+                <span *ngIf="cat.quota" class="category-quota">{{ cat.quota }} לבחירה</span>
+                <span *ngIf="cat.tray_price" class="category-tray-price">₪{{ cat.tray_price }} למגש</span>
+                <span class="dishes-count-badge" *ngIf="cat.dish_mappings?.length">{{ cat.dish_mappings!.length }} מנות</span>
+                <p-button icon="pi pi-plus" size="small" [text]="true" severity="success"
+                  pTooltip="הוסף מנה לקטגוריה" (onClick)="openDishPicker(cat)"></p-button>
+                <p-button icon="pi pi-trash" size="small" [text]="true" severity="danger"
+                  pTooltip="מחק קטגוריה" (onClick)="deleteCategory(cat, subMeal)"></p-button>
+              </div>
+
+              <div *ngIf="cat.dish_mappings && cat.dish_mappings.length > 0" class="dishes-in-category">
+                <div *ngFor="let dish of cat.dish_mappings" class="dish-item"
+                     [class.upgrade-dish]="dish.is_upgrade">
+
+                  <!-- Normal view -->
+                  <ng-container *ngIf="!dishEditMap[$any(dish.id)]">
+                    <span class="dish-name">{{ dish.dish_name }}</span>
+                    <span class="dish-kosher kosher-badge small" [ngClass]="getKosherClass(dish.dish_kosher_type || '')">{{ dish.dish_kosher_type }}</span>
+                    <span *ngIf="dish.dish_client_price" class="dish-price">₪{{ dish.dish_client_price }}</span>
+                    <p-tag *ngIf="dish.is_upgrade" value="שדרוג" severity="warn" styleClass="upgrade-tag"></p-tag>
+                    <span *ngIf="dish.is_upgrade && dish.extra_charge" class="dish-extra-charge-badge">+₪{{ dish.extra_charge }} לסועד</span>
+                    <p-button icon="pi pi-pencil" size="small" [text]="true" severity="secondary"
+                      pTooltip="ערוך הגדרות" (onClick)="openDishEdit(dish)"></p-button>
+                    <p-button icon="pi pi-trash" size="small" [text]="true" severity="danger"
+                      pTooltip="הסר מקטגוריה" (onClick)="removeDishFromCat(dish.id!, cat)"></p-button>
+                  </ng-container>
+
+                  <!-- Inline edit view -->
+                  <ng-container *ngIf="dishEditMap[$any(dish.id)]">
+                    <span class="dish-name edit-mode-name">{{ dish.dish_name }}</span>
+                    <p-checkbox [(ngModel)]="dishEditMap[$any(dish.id)].is_upgrade" [binary]="true" label="שדרוג"></p-checkbox>
+                    <p-inputNumber
+                      [(ngModel)]="dishEditMap[$any(dish.id)].extra_charge"
+                      [disabled]="!dishEditMap[$any(dish.id)].is_upgrade"
+                      [min]="0" mode="currency" currency="ILS" locale="he-IL"
+                      placeholder="תוספת לסועד ₪"
+                      [style]="{ width: '130px' }">
+                    </p-inputNumber>
+                    <p-button icon="pi pi-check" size="small" severity="success" [text]="true"
+                      pTooltip="שמור" (onClick)="saveDishEdit(dish)"></p-button>
+                    <p-button icon="pi pi-times" size="small" severity="secondary" [text]="true"
+                      pTooltip="ביטול" (onClick)="cancelDishEdit(dish)"></p-button>
+                  </ng-container>
+
+                </div>
+              </div>
+              <div *ngIf="!cat.dish_mappings || cat.dish_mappings.length === 0" class="no-dishes-msg">
+                <small><i class="pi pi-info-circle"></i> אין מנות משויכות</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Direct categories (flat, for non-sub-meal menus) -->
+      <ng-container *ngIf="selectedMenu.categories && selectedMenu.categories.length > 0 && (!selectedMenu.sub_meals || selectedMenu.sub_meals.length === 0)">
+        <h3>קטגוריות ומנות</h3>
+        <div class="categories-list">
+          <div *ngFor="let cat of selectedMenu.categories" class="category-section">
+            <div class="category-header">
+              <span class="category-title">{{ cat.name_hebrew }}</span>
+              <span *ngIf="cat.quota" class="category-quota">{{ cat.quota }} לבחירה</span>
+              <span *ngIf="cat.tray_price" class="category-tray-price">₪{{ cat.tray_price }} למגש</span>
+              <span class="dishes-count-badge" *ngIf="cat.dish_mappings?.length">{{ cat.dish_mappings!.length }} מנות</span>
+              <p-button icon="pi pi-plus" size="small" [text]="true" severity="success"
+                pTooltip="הוסף מנה" (onClick)="openDishPicker(cat)"></p-button>
+              <p-button icon="pi pi-trash" size="small" [text]="true" severity="danger"
+                pTooltip="מחק קטגוריה" (onClick)="deleteCategory(cat)"></p-button>
+            </div>
+
+            <div *ngIf="cat.dish_mappings && cat.dish_mappings.length > 0" class="dishes-in-category">
+              <div *ngFor="let dish of cat.dish_mappings" class="dish-item"
+                   [class.upgrade-dish]="dish.is_upgrade">
+
+                <!-- Normal view -->
+                <ng-container *ngIf="!dishEditMap[$any(dish.id)]">
+                  <span class="dish-name">{{ dish.dish_name }}</span>
+                  <span class="dish-kosher kosher-badge small" [ngClass]="getKosherClass(dish.dish_kosher_type || '')">{{ dish.dish_kosher_type }}</span>
+                  <span *ngIf="dish.dish_client_price" class="dish-price">₪{{ dish.dish_client_price }}</span>
+                  <p-tag *ngIf="dish.is_upgrade" value="שדרוג" severity="warn" styleClass="upgrade-tag"></p-tag>
+                  <span *ngIf="dish.is_upgrade && dish.extra_charge" class="dish-extra-charge-badge">+₪{{ dish.extra_charge }} לסועד</span>
+                  <p-button icon="pi pi-pencil" size="small" [text]="true" severity="secondary"
+                    pTooltip="ערוך הגדרות" (onClick)="openDishEdit(dish)"></p-button>
+                  <p-button icon="pi pi-trash" size="small" [text]="true" severity="danger"
+                    pTooltip="הסר" (onClick)="removeDishFromCat(dish.id!, cat)"></p-button>
+                </ng-container>
+
+                <!-- Inline edit view -->
+                <ng-container *ngIf="dishEditMap[$any(dish.id)]">
+                  <span class="dish-name edit-mode-name">{{ dish.dish_name }}</span>
+                  <p-checkbox [(ngModel)]="dishEditMap[$any(dish.id)].is_upgrade" [binary]="true" label="שדרוג"></p-checkbox>
+                  <p-inputNumber
+                    [(ngModel)]="dishEditMap[$any(dish.id)].extra_charge"
+                    [disabled]="!dishEditMap[$any(dish.id)].is_upgrade"
+                    [min]="0" mode="currency" currency="ILS" locale="he-IL"
+                    placeholder="תוספת לסועד ₪"
+                    [style]="{ width: '130px' }">
+                  </p-inputNumber>
+                  <p-button icon="pi pi-check" size="small" severity="success" [text]="true"
+                    pTooltip="שמור" (onClick)="saveDishEdit(dish)"></p-button>
+                  <p-button icon="pi pi-times" size="small" severity="secondary" [text]="true"
+                    pTooltip="ביטול" (onClick)="cancelDishEdit(dish)"></p-button>
+                </ng-container>
+
+              </div>
+            </div>
+            <div *ngIf="!cat.dish_mappings || cat.dish_mappings.length === 0" class="no-dishes-msg">
+              <small><i class="pi pi-info-circle"></i> אין מנות משויכות</small>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </ng-container>
+  </p-dialog>
+
+  <!-- Dish Picker Dialog (for adding a dish to a category) -->
+  <p-dialog
+    [(visible)]="dishPickerVisible"
+    [modal]="true"
+    [style]="{ width: '700px' }"
+    [contentStyle]="{ 'max-height': '60vh', 'overflow': 'auto' }"
+    [rtl]="true"
+    [dismissableMask]="true"
+    [draggable]="false"
+    styleClass="menu-support-dialog"
+    header="בחירת מנות לקטגוריה: {{ dishPickerCategory?.name_hebrew }}">
+
+    <div class="dish-picker-header">
+      <div class="dish-picker-search">
+        <input pInputText [(ngModel)]="dishPickerSearch" placeholder="חיפוש מנה..." class="w-full"
+          (input)="filterPickerDishes()" />
+      </div>
+      <div class="selected-count" *ngIf="selectedPickerDishes.length > 0">
+        <p-tag [value]="selectedPickerDishes.length + ' מנות נבחרו'" severity="info"></p-tag>
+      </div>
+    </div>
+
+    <div class="dish-picker-list">
+      <div *ngFor="let dish of filteredPickerDishes" 
+           class="picker-dish-item"
+           [class.selected]="isDishSelected(dish)"
+           (click)="toggleDishSelection(dish)">
+        <p-checkbox 
+          [binary]="true" 
+          [ngModel]="isDishSelected(dish)" 
+          (click)="$event.stopPropagation()"
+          (onChange)="toggleDishSelection(dish)">
+        </p-checkbox>
+        <span class="picker-dish-name">{{ dish.name }}</span>
+        <span class="kosher-badge small" [ngClass]="getKosherClass(dish.kosher_type)">{{ dish.kosher_type }}</span>
+        <span *ngIf="dish.client_price" class="picker-dish-price">₪{{ dish.client_price }}</span>
+      </div>
+      <div *ngIf="filteredPickerDishes.length === 0" class="empty-picker-msg">
+        <small>לא נמצאו מנות</small>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <div class="dish-picker-footer">
+        <p-button 
+          label="ביטול" 
+          severity="secondary" 
+          [text]="true" 
+          (onClick)="dishPickerVisible = false">
+        </p-button>
+        <p-button 
+          [label]="'הוסף ' + selectedPickerDishes.length + ' מנות'"
+          icon="pi pi-check"
+          [disabled]="selectedPickerDishes.length === 0"
+          [loading]="dishPickerSubmitting"
+          (onClick)="addSelectedDishes()">
+        </p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Create/Edit Dialog -->
+  <p-dialog
+    [(visible)]="menuFormVisible"
+    [modal]="true"
+    [style]="{ width: '600px' }"
+    [rtl]="true"
+    [dismissableMask]="false"
+    [draggable]="false"
+    styleClass="menu-form-dialog"
+    [header]="menuFormMode === 'create' ? 'תפריט חדש' : 'עריכת תפריט'"
+    (onHide)="closeForm()">
+
+    <div class="menu-form" *ngIf="menuForm">
+      <div class="form-field">
+        <label>סוג כשרות *</label>
+        <p-select
+          [(ngModel)]="menuForm.kosherType"
+          [options]="kosherTypeOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="בחר סוג כשרות"
+          class="w-full">
+        </p-select>
+      </div>
+      <div class="form-field">
+        <label>שם התפריט *</label>
+        <input pInputText [(ngModel)]="menuForm.name" placeholder="שם התפריט" class="w-full" />
+      </div>
+      <div class="form-field">
+        <label>תיאור</label>
+        <input pInputText [(ngModel)]="menuForm.description" placeholder="תיאור קצר" class="w-full" />
+      </div>
+      <div class="form-field">
+        <label>מינימום אורחים</label>
+        <p-inputnumber [(ngModel)]="menuForm.minGuests" [min]="0" mode="decimal" class="w-full"></p-inputnumber>
+      </div>
+      <div class="form-field">
+        <label>מחיר לאורח</label>
+        <p-inputnumber [(ngModel)]="menuForm.basePricePerGuest" [min]="0" mode="currency" currency="ILS" locale="he-IL" class="w-full"></p-inputnumber>
+      </div>
+      <div class="form-field">
+        <label>תוספת כלים אמיתיים לאורח</label>
+        <p-inputnumber [(ngModel)]="menuForm.realDishesExtraPerGuest" [min]="0" mode="currency" currency="ILS" locale="he-IL" class="w-full" placeholder="תוספת מחיר לכלים אמיתיים"></p-inputnumber>
+        <small class="form-hint">תוספת מחיר לסועד כשנבחר כלים אמיתיים (לא חד"פ)</small>
+      </div>
+      <section *ngIf="menuForm.tableSettingItems && !menuForm.isTrayMenu">
+        <h3>כלי עריכת שולחן — חישוב אוטומטי</h3>
+        <p>הכמות היא לכל מקום ערוך. בשולחן מתוק עורכים לחצי ממספר המנות. קשרו את הפריטים פעם אחת לכל סוג כלים.</p>
+        <div *ngFor="let item of menuForm.tableSettingItems; let i = index" style="border-bottom:1px solid #ddd;padding:12px 0;display:grid;gap:8px">
+          <input pInputText [(ngModel)]="item.name" aria-label="תיאור כלי עריכה">
+          <label>כמות למקום ערוך <input type="number" min="0" step="1" [(ngModel)]="item.quantity"></label>
+          <label>לפי <select [(ngModel)]="item.quantity_basis"><option [ngValue]="undefined">לכל מקום ערוך</option><option value="place_setting">לכל מקום ערוך</option><option value="serving_group">לכל 8 מקומות ערוכים (בעיגול למעלה)</option></select></label>
+          <label>באירוע חד פעמי <select [(ngModel)]="item.disposable_tool_id"><option [ngValue]="null">טרם קושר כלי</option><option *ngFor="let tool of tableSettingTools" [ngValue]="tool.id">{{ tool.name }} — {{ tool.sub_category }}</option></select></label>
+          <label>באירוע עם כלים אמיתיים <select [(ngModel)]="item.real_tool_id"><option [ngValue]="null">טרם קושר כלי</option><option *ngFor="let tool of tableSettingTools" [ngValue]="tool.id">{{ tool.name }} — {{ tool.sub_category }}</option></select></label>
+          <button type="button" (click)="menuForm.tableSettingItems.splice(i, 1)">הסר שורה</button>
+        </div>
+        <button type="button" (click)="menuForm.tableSettingItems.push({name: '', quantity: 1})">הוסף כלי לעריכה</button>
+      </section>
+      <div class="form-field checkbox-field">
+        <p-checkbox [(ngModel)]="menuForm.isTrayMenu" [binary]="true" inputId="isTrayMenu"></p-checkbox>
+        <label for="isTrayMenu">תפריט מגשים</label>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="ביטול" severity="secondary" [text]="true" (onClick)="closeForm()"></p-button>
+      <p-button
+        [label]="menuFormMode === 'create' ? 'צור תפריט' : 'שמור'"
+        icon="pi pi-check"
+        [loading]="menuFormSubmitting"
+        [disabled]="!isFormValid()"
+        (onClick)="submitForm()">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Sub-Meal Form Dialog -->
+  <p-dialog
+    [(visible)]="subMealFormVisible"
+    [style]="{ width: '400px' }"
+    [modal]="true"
+    [draggable]="false"
+    styleClass="menu-support-dialog"
+    header="הוספת סעודה">
+
+    <div class="form-field">
+      <label>שם הסעודה *</label>
+      <input pInputText [(ngModel)]="subMealForm.name" placeholder="לדוגמה: ליל שבת" class="w-full" />
+    </div>
+    <div class="form-field">
+      <label>סדר תצוגה</label>
+      <p-inputnumber [(ngModel)]="subMealForm.displayOrder" [min]="0" class="w-full"></p-inputnumber>
+    </div>
+    <div class="form-field checkbox-field">
+      <p-checkbox [(ngModel)]="subMealForm.isSplittable" [binary]="true" inputId="isSplittable"></p-checkbox>
+      <label for="isSplittable">תומך בפיצול אורחים</label>
+    </div>
+    <div class="form-field" *ngIf="subMealForm.isSplittable">
+      <label>תוספת לפיצול (₪)</label>
+      <p-inputnumber [(ngModel)]="subMealForm.splitExtraCharge" [min]="0" mode="currency" currency="ILS" locale="he-IL" class="w-full"></p-inputnumber>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="ביטול" severity="secondary" [text]="true" (onClick)="closeSubMealForm()"></p-button>
+      <p-button
+        label="הוסף סעודה"
+        icon="pi pi-check"
+        [loading]="subMealFormSubmitting"
+        [disabled]="!subMealForm.name"
+        (onClick)="submitSubMealForm()">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Category Form Dialog -->
+  <p-dialog
+    [(visible)]="categoryFormVisible"
+    [style]="{ width: '450px' }"
+    [modal]="true"
+    [draggable]="false"
+    styleClass="menu-support-dialog"
+    header="הוספת קטגוריה">
+
+    <div class="form-field">
+      <label>שם הקטגוריה (עברית) *</label>
+      <input pInputText [(ngModel)]="categoryForm.nameHebrew" placeholder="לדוגמה: סלטים" class="w-full" />
+    </div>
+    <div class="form-field">
+      <label>שם מזהה (אנגלית)</label>
+      <input pInputText [(ngModel)]="categoryForm.name" placeholder="לדוגמה: salads" class="w-full" />
+    </div>
+    <div class="form-field" *ngIf="subMealsForSelect.length > 0">
+      <label>שייך לסעודה (אופציונלי)</label>
+      <p-select
+        [options]="subMealsForSelect"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="categoryForm.subMealId"
+        placeholder="בחר סעודה או השאר ריק"
+        [showClear]="true"
+        class="w-full">
+      </p-select>
+    </div>
+    <div class="form-field">
+      <label>כמות לבחירה (quota)</label>
+      <p-inputnumber [(ngModel)]="categoryForm.quota" [min]="0" placeholder="כמות מנות לבחירה" class="w-full"></p-inputnumber>
+    </div>
+    <div class="form-field">
+      <label>סדר תצוגה</label>
+      <p-inputnumber [(ngModel)]="categoryForm.displayOrder" [min]="0" class="w-full"></p-inputnumber>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <p-button label="ביטול" severity="secondary" [text]="true" (onClick)="closeCategoryForm()"></p-button>
+      <p-button
+        label="הוסף קטגוריה"
+        icon="pi pi-check"
+        [loading]="categoryFormSubmitting"
+        [disabled]="!categoryForm.nameHebrew"
+        (onClick)="submitCategoryForm()">
+      </p-button>
+    </ng-template>
+  </p-dialog>
+
+  <p-toast position="top-right"></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+</div>

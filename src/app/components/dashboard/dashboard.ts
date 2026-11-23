@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -11,6 +11,20 @@ import { BadgeModule } from 'primeng/badge';
 import { RippleModule } from 'primeng/ripple';
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { TableModule } from 'primeng/table';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
+
+import { ApiDashboardService } from '../../services/api-dashboard.service';
+import {
+  DashboardStats,
+  ProfitabilityDashboard,
+  InventorySummary,
+  UpcomingEvent,
+  LowStockResponse,
+  EventProfitability
+} from '../../core/models/api.models';
 
 @Component({
   selector: 'app-dashboard',
@@ -18,6 +32,7 @@ import { ProgressBarModule } from 'primeng/progressbar';
   imports: [
     CommonModule,
     RouterModule,
+    FormsModule,
     ButtonModule,
     CardModule,
     TagModule,
@@ -27,114 +42,136 @@ import { ProgressBarModule } from 'primeng/progressbar';
     BadgeModule,
     RippleModule,
     TooltipModule,
-    ProgressBarModule
+    ProgressBarModule,
+    TableModule,
+    SelectButtonModule
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
 })
 export class DashboardComponent implements OnInit {
+  private dashboardService = inject(ApiDashboardService);
   
-  // Dashboard stats
-  totalDishes: number = 0;
-  totalIngredients: number = 0;
-  totalEvents: number = 0;
-  averageIngredientsPerDish: number = 0;
+  // Expose Math to template
+  Math = Math;
+
+  // Loading states
+  loading = true;
   
-  // Category distribution
-  dishCategoriesData: any;
-  dishCategoriesOptions: any;
+  // Period selection
+  selectedPeriod = 1;
+  periodOptions = [
+    { label: 'חודש', value: 1 },
+    { label: '3 חודשים', value: 3 },
+    { label: '6 חודשים', value: 6 },
+    { label: 'שנה', value: 12 }
+  ];
+
+  // Basic stats
+  stats: DashboardStats | null = null;
   
-  // Kosher type distribution
-  kosherTypesData: any;
-  kosherTypesOptions: any;
+  // Profitability data
+  profitability: ProfitabilityDashboard | null = null;
   
+  // Inventory
+  inventory: InventorySummary | null = null;
+  
+  // Upcoming events
+  upcomingEvents: UpcomingEvent[] = [];
+  
+  // Low stock
+  lowStock: LowStockResponse | null = null;
+
+  // Charts
+  revenueChartData: any;
+  revenueChartOptions: any;
+  expenseChartData: any;
+  expenseChartOptions: any;
+  profitTrendChartData: any;
+  profitTrendChartOptions: any;
+
   // Quick actions
   quickActions = [
     {
-      label: 'מנה חדשה',
+      label: 'אירוע חדש',
       icon: 'pi pi-plus',
-      route: '/dishes',
-      description: 'הוסף מנה חדשה למערכת',
+      route: '/events/new',
+      description: 'צור אירוע חדש',
       color: 'success' as const
     },
     {
-      label: 'ניהול מנות',
-      icon: 'pi pi-list',
-      route: '/dishes',
-      description: 'צפה וערוך מנות קיימות',
-      color: 'info' as const
-    },
-    {
-      label: 'תכנון אירוע',
+      label: 'ניהול אירועים',
       icon: 'pi pi-calendar',
-      route: '/dishes',
-      description: 'תכנן אירוע חדש',
-      color: 'warn' as const
+      route: '/events',
+      description: 'צפה באירועים קיימים',
+      color: 'info' as const
     },
     {
       label: 'ניהול מוצרים',
       icon: 'pi pi-box',
       route: '/products',
       description: 'נהל מלאי מוצרים',
+      color: 'warn' as const
+    },
+    {
+      label: 'ניהול מנות',
+      icon: 'pi pi-star',
+      route: '/dishes',
+      description: 'ערוך מנות קיימות',
       color: 'secondary' as const
-    }
-  ];
-  
-  // Recent activity (mock data for now)
-  recentActivity = [
-    {
-      type: 'dish',
-      action: 'נוסף',
-      title: 'חומוס ביתי',
-      time: 'לפני שעתיים',
-      icon: 'pi pi-plus'
-    },
-    {
-      type: 'event',
-      action: 'תוכנן',
-      title: 'ארוחת שבת',
-      time: 'אתמול',
-      icon: 'pi pi-calendar'
-    },
-    {
-      type: 'ingredient',
-      action: 'עודכן',
-      title: 'קמח לבן',
-      time: 'לפני 3 ימים',
-      icon: 'pi pi-pencil'
     }
   ];
 
   ngOnInit(): void {
-    this.loadDashboardData();
     this.initializeCharts();
+    this.loadDashboardData();
   }
 
   loadDashboardData(): void {
-    // TODO: Load real data from services
-    // For now using mock data
-    this.totalDishes = 12;
-    this.totalIngredients = 45;
-    this.totalEvents = 3;
-    this.averageIngredientsPerDish = 3.8;
+    this.loading = true;
     
-    this.updateCategoriesChart();
-    this.updateKosherTypesChart();
+    forkJoin({
+      stats: this.dashboardService.getDashboardStats(),
+      profitability: this.dashboardService.getProfitabilityDashboard(this.selectedPeriod),
+      inventory: this.dashboardService.getInventorySummary(),
+      upcoming: this.dashboardService.getUpcomingEvents(30),
+      lowStock: this.dashboardService.getLowStockAlerts()
+    }).subscribe({
+      next: (data) => {
+        this.stats = data.stats;
+        this.profitability = data.profitability;
+        this.inventory = data.inventory;
+        this.upcomingEvents = data.upcoming;
+        this.lowStock = data.lowStock;
+        
+        this.updateCharts();
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load dashboard data:', err);
+        this.loading = false;
+      }
+    });
   }
-  
+
+  onPeriodChange(): void {
+    this.dashboardService.getProfitabilityDashboard(this.selectedPeriod).subscribe({
+      next: (data) => {
+        this.profitability = data;
+        this.updateCharts();
+      }
+    });
+  }
+
   initializeCharts(): void {
-    // Common chart options for Hebrew RTL
     const commonOptions = {
       plugins: {
         legend: {
           position: 'bottom' as const,
           labels: {
             usePointStyle: true,
-            padding: 20,
-            font: {
-              family: 'Arial, sans-serif',
-              size: 12
-            }
+            padding: 15,
+            font: { family: 'Arial, sans-serif', size: 12 }
           }
         }
       },
@@ -142,88 +179,157 @@ export class DashboardComponent implements OnInit {
       maintainAspectRatio: false
     };
 
-    this.dishCategoriesOptions = {
+    this.revenueChartOptions = {
       ...commonOptions,
-      plugins: {
-        ...commonOptions.plugins,
-        title: {
-          display: true,
-          text: 'התפלגות מנות לפי קטגוריה'
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: (value: number) => '₪' + value.toLocaleString()
+          }
         }
       }
     };
 
-    this.kosherTypesOptions = {
+    this.expenseChartOptions = {
       ...commonOptions,
       plugins: {
         ...commonOptions.plugins,
-        title: {
-          display: true,
-          text: 'התפלגות מנות לפי סוג כשרות'
+        tooltip: {
+          callbacks: {
+            label: (context: any) => {
+              const value = context.raw || 0;
+              return `${context.label}: ₪${value.toLocaleString()}`;
+            }
+          }
+        }
+      }
+    };
+
+    this.profitTrendChartOptions = {
+      ...commonOptions,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: (value: number) => '₪' + value.toLocaleString()
+          }
         }
       }
     };
   }
 
-  updateCategoriesChart(): void {
-    this.dishCategoriesData = {
-      labels: ['מנה עיקרית', 'מנה ראשונה', 'תוספת', 'קינוח'],
+  updateCharts(): void {
+    if (!this.profitability) return;
+
+    // Revenue vs Profit trend chart
+    const trends = this.profitability.monthly_trends || [];
+    this.revenueChartData = {
+      labels: trends.map(t => t.month_name),
       datasets: [
         {
-          data: [5, 3, 2, 2],
-          backgroundColor: [
-            '#FF6384',
-            '#36A2EB', 
-            '#FFCE56',
-            '#4BC0C0'
-          ],
-          hoverBackgroundColor: [
-            '#FF6384CC',
-            '#36A2EBCC',
-            '#FFCE56CC', 
-            '#4BC0C0CC'
-          ]
+          label: 'הכנסות',
+          data: trends.map(t => t.total_revenue),
+          borderColor: '#36A2EB',
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: 'עלויות',
+          data: trends.map(t => t.total_cost),
+          borderColor: '#FF6384',
+          backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: 'רווח',
+          data: trends.map(t => t.gross_profit),
+          borderColor: '#4BC0C0',
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          fill: true,
+          tension: 0.4
         }
       ]
     };
-  }
 
-  updateKosherTypesChart(): void {
-    this.kosherTypesData = {
-      labels: ['חלבי', 'בשרי', 'פרווה'],
-      datasets: [
-        {
-          data: [4, 3, 5],
-          backgroundColor: [
-            '#007bff',
-            '#dc3545', 
-            '#28a745'
-          ],
-          hoverBackgroundColor: [
-            '#007bffCC',
-            '#dc3545CC',
-            '#28a745CC'
-          ]
-        }
-      ]
+    // Expense breakdown chart
+    const expenses = this.profitability.expense_by_category || [];
+    this.expenseChartData = {
+      labels: expenses.map(e => e.category),
+      datasets: [{
+        data: expenses.map(e => e.amount),
+        backgroundColor: expenses.map(e => e.color || '#999'),
+        hoverBackgroundColor: expenses.map(e => (e.color || '#999') + 'CC')
+      }]
+    };
+
+    // Monthly profit trend bar chart
+    this.profitTrendChartData = {
+      labels: trends.map(t => t.month_name),
+      datasets: [{
+        label: 'רווח גולמי',
+        data: trends.map(t => t.gross_profit),
+        backgroundColor: trends.map(t => t.gross_profit >= 0 ? '#4BC0C0' : '#FF6384'),
+        borderRadius: 8
+      }]
     };
   }
 
-  getActivityIcon(type: string): string {
-    switch (type) {
-      case 'dish': return 'pi pi-star';
-      case 'event': return 'pi pi-calendar';
-      case 'ingredient': return 'pi pi-list';
-      default: return 'pi pi-info-circle';
-    }
+  // Helper methods
+  formatCurrency(value: number): string {
+    return '₪' + (value || 0).toLocaleString('he-IL', { maximumFractionDigits: 0 });
   }
 
-  getActivityColor(type: string): "success" | "info" | "warn" | "danger" | "secondary" | "contrast" | null {
-    switch (type) {
-      case 'dish': return 'success';
-      case 'event': return 'warn';
-      case 'ingredient': return 'info';
+  formatPercent(value: number): string {
+    return (value || 0).toFixed(1) + '%';
+  }
+
+  getChangeIcon(value: number): string {
+    if (value > 0) return 'pi pi-arrow-up';
+    if (value < 0) return 'pi pi-arrow-down';
+    return 'pi pi-minus';
+  }
+
+  getChangeClass(value: number, positive: boolean = true): string {
+    if (value > 0) return positive ? 'text-green-500' : 'text-red-500';
+    if (value < 0) return positive ? 'text-red-500' : 'text-green-500';
+    return 'text-gray-500';
+  }
+
+  getProfitClass(profit: number): string {
+    if (profit > 0) return 'text-green-600';
+    if (profit < 0) return 'text-red-600';
+    return 'text-gray-600';
+  }
+
+  getMarginSeverity(margin: number): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
+    if (margin >= 30) return 'success';
+    if (margin >= 20) return 'info';
+    if (margin >= 10) return 'warn';
+    return 'danger';
+  }
+
+  getStatusSeverity(status: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
+    switch (status) {
+      case 'מאושר': return 'success';
+      case 'הסתיים': return 'info';
+      case 'מחכה לאישור': return 'warn';
+      case 'בוטל': return 'danger';
       default: return 'secondary';
     }
+  }
+
+  getInventoryHealthPercent(): number {
+    if (!this.inventory || this.inventory.total_products === 0) return 0;
+    return (this.inventory.healthy_stock_count / this.inventory.total_products) * 100;
+  }
+
+  getInventoryHealthColor(): string {
+    const percent = this.getInventoryHealthPercent();
+    if (percent >= 80) return 'success';
+    if (percent >= 50) return 'warning';
+    return 'danger';
   }
 }

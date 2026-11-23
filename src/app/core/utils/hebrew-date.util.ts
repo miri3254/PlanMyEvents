@@ -1,4 +1,4 @@
-import { HDate } from '@hebcal/core';
+import { HDate } from '@hebcal/hdate';
 import { HebrewDateParts } from '../models';
 
 export interface HebrewMonthOption {
@@ -6,71 +6,126 @@ export interface HebrewMonthOption {
   label: string;
 }
 
-const MONTH_LABELS: Record<number, string> = {
-  1: 'ניסן',
-  2: 'אייר',
-  3: 'סיון',
-  4: 'תמוז',
-  5: 'אב',
-  6: 'אלול',
-  7: 'תשרי',
-  8: 'חשוון',
-  9: 'כסלו',
-  10: 'טבת',
-  11: 'שבט',
-  12: 'אדר א׳',
-  13: 'אדר ב׳'
-};
+/* =========================
+   Conversions & Rendering
+========================= */
 
+/**
+ * הופך אובייקט Date לחלקי תאריך עברי
+ */
 export function toHebrewParts(date: Date): HebrewDateParts {
   const hd = new HDate(date);
   return {
     day: hd.getDate(),
     month: hd.getMonth(),
-    year: hd.getFullYear()
+    year: hd.getFullYear(),
   };
 }
 
+/**
+ * הופך חלקי תאריך עברי לאובייקט Date של JS
+ */
 export function hebrewPartsToGregorian(parts: HebrewDateParts): Date {
-  const hd = new HDate(parts.day, parts.month, parts.year);
-  return hd.greg();
+  return new HDate(parts.day, parts.month, parts.year).greg();
+}
+
+/**
+ * מחזיר תאריך מלא בגימטריה (למשל: י"ח בתשרי תשפ"ו)
+ */
+export function renderHebrewLabelFromParts(parts: HebrewDateParts): string {
+  return new HDate(parts.day, parts.month, parts.year).renderGematriya();
 }
 
 export function renderHebrewLabelFromDate(date: Date): string {
-  const hd = new HDate(date);
-  return hd.renderGematriya(false, false);
+  return new HDate(date).renderGematriya();
 }
 
-export function renderHebrewLabelFromParts(parts: HebrewDateParts): string {
-  const hd = new HDate(parts.day, parts.month, parts.year);
-  return hd.renderGematriya(false, false);
+/**
+ * החזרת היום בלבד בגימטריה (א, ב... טו, טז...)
+ */
+export function hebrewDayToLetters(
+  day: number,
+  month?: number,
+  year?: number
+): string {
+  // יוצרים אובייקט תאריך זמני כדי להשתמש במנגנון הרינדור של הספרייה
+  const hd = (month && year) 
+    ? new HDate(day, month, year) 
+    : new HDate(day, 1, 5785);
+    
+  return hd.renderGematriya().split(' ')[0];
 }
 
+/**
+ * החזרת השנה בגימטריה (למשל: תשפ״ו)
+ */
+export function hebrewYearToGematriya(year: number): string {
+  const hd = new HDate(1, 1, year);
+  const parts = hd.renderGematriya().split(' ');
+  return parts[parts.length - 1];
+}
+
+/* =========================
+   Months Logic (Corrected for Leap Years)
+========================= */
+
+/**
+ * מחזיר את שם החודש בעברית לפי מספר החודש ב-hdate
+ */
 export function getHebrewMonthLabel(month: number, year: number): string {
-  if (month === 12 && !HDate.isLeapYear(year)) {
-    return 'אדר';
+  // month הוא 1-based לפי HDate
+  if (!month || month < 1 || month > HDate.monthsInYear(year)) return '';
+  const isLeap = HDate.isLeapYear(year);
+  // טיפול מיוחד באדרים
+  if (isLeap) {
+    if (month === 6) return "אדר א'";
+    if (month === 7) return "אדר ב'";
+  } else {
+    if (month === 6) return "אדר";
   }
-  return MONTH_LABELS[month] || '';
+  // שאר החודשים - שלוף מהספריה
+  const hd = new HDate(1, month, year);
+  const parts = hd.renderGematriya().split(' ');
+  return parts.length > 1 ? parts[1] : '';
 }
 
+/**
+ * בונה רשימת אפשרויות לבחירת חודש בסדר כרונולוגי
+ */
 export function buildHebrewMonthOptions(year: number): HebrewMonthOption[] {
-  const monthsInYear = HDate.monthsInYear(year);
+  const isLeap = HDate.isLeapYear(year);
+  const count = isLeap ? 13 : 12;
   const options: HebrewMonthOption[] = [];
-  for (let month = 1; month <= monthsInYear; month++) {
+
+  for (let m = 1; m <= count; m++) {
     options.push({
-      value: month,
-      label: getHebrewMonthLabel(month, year)
+      value: m,
+      label: getHebrewMonthLabel(m, year),
     });
   }
+
   return options;
 }
 
-export function getHebrewYearsRange(centerYear: number, past = 1, future = 5): number[] {
-  const years: number[] = [];
-  for (let offset = -past; offset <= future; offset++) {
-    years.push(centerYear + offset);
-  }
-  return years;
+export function formatHebrewMonthTitle(month: number, year: number): string {
+  return `${getHebrewMonthLabel(month, year)} ${hebrewYearToGematriya(year)}`;
+}
+
+export function getHebrewMonthLength(month: number, year: number): number {
+  return HDate.daysInMonth(month, year);
+}
+
+/* =========================
+   Navigation & Validation
+========================= */
+
+export function shiftHebrewMonth(parts: HebrewDateParts, offset: number): HebrewDateParts {
+  const hd = new HDate(1, parts.month, parts.year).add(offset, 'month');
+  return {
+    day: 1,
+    month: hd.getMonth(),
+    year: hd.getFullYear(),
+  };
 }
 
 export function sanitizeHebrewParts(parts: Partial<HebrewDateParts>, fallbackYear: number): HebrewDateParts {
@@ -82,20 +137,10 @@ export function sanitizeHebrewParts(parts: Partial<HebrewDateParts>, fallbackYea
   return { day, month, year };
 }
 
-export function formatHebrewMonthTitle(month: number, year: number): string {
-  const label = getHebrewMonthLabel(month, year);
-  return label ? `${label} ${year}` : `${year}`;
-}
-
-export function getHebrewMonthLength(month: number, year: number): number {
-  return HDate.daysInMonth(month, year);
-}
-
-export function shiftHebrewMonth(parts: HebrewDateParts, offset: number): HebrewDateParts {
-  const base = new HDate(1, parts.month, parts.year).add(offset, 'month');
-  return {
-    day: 1,
-    month: base.getMonth(),
-    year: base.getFullYear()
-  };
+export function getHebrewYearsRange(centerYear: number, past = 1, future = 5): number[] {
+  const years: number[] = [];
+  for (let y = centerYear - past; y <= centerYear + future; y++) {
+    years.push(y);
+  }
+  return years;
 }

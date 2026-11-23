@@ -1,70 +1,189 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { BaseApiService } from '../core/services/base-api.service';
-import { 
-  ApiEvent, 
-  EventCreate, 
-  EventUpdate, 
-  EventStatusUpdate, 
-  EventDish,
+import {
+  ApiEvent,
+  EventCreate,
+  EventUpdate,
+  EventStatusUpdate,
+  EventPriceUpdate,
+  DeliveryNoteTemplate,
+  ApiEventDish,
+  EventDishCreate,
   EventsQueryParams,
   ApiResponse,
-  ShoppingListItem,
   ShoppingListResponse,
-  EquipmentListItem,
-  EquipmentListResponse
+  EquipmentListResponse,
+  EventCalculationSettings,
+  EventCalculationSummary
 } from '../core/models/api.models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiEventService extends BaseApiService {
 
+  // ========================================
   // Events CRUD
+  // ========================================
+
   getEvents(params?: EventsQueryParams): Observable<ApiResponse<ApiEvent>> {
     return this.get<ApiResponse<ApiEvent>>('/events', params);
   }
 
-  getEvent(eventId: string): Observable<ApiEvent> {
+  getEvent(eventId: number): Observable<ApiEvent> {
     return this.get<ApiEvent>(`/events/${eventId}`);
+  }
+
+  getEventsByRange(start: string, end: string): Observable<ApiEvent[]> {
+    return this.get<ApiEvent[]>('/events/range', { start, end });
+  }
+
+  getDeliveryNoteTemplates(): Observable<DeliveryNoteTemplate[]> {
+    return this.get<DeliveryNoteTemplate[]>('/events/delivery-note-templates');
   }
 
   createEvent(event: EventCreate): Observable<ApiEvent> {
     return this.post<ApiEvent>('/events', event);
   }
 
-  updateEvent(eventId: string, event: EventUpdate): Observable<ApiEvent> {
+  updateEvent(eventId: number, event: EventUpdate): Observable<ApiEvent> {
     return this.put<ApiEvent>(`/events/${eventId}`, event);
   }
 
-  updateEventStatus(eventId: string, status: EventStatusUpdate): Observable<ApiEvent> {
+  updateEventStatus(eventId: number, status: EventStatusUpdate): Observable<ApiEvent> {
     return this.patch<ApiEvent>(`/events/${eventId}/status`, status);
   }
 
-  deleteEvent(eventId: string): Observable<void> {
+  /** Update final price and recalculate discount */
+  updateEventPrice(eventId: number, finalPrice: number): Observable<ApiEvent> {
+    const data: EventPriceUpdate = { final_price: finalPrice };
+    return this.patch<ApiEvent>(`/events/${eventId}/price`, data);
+  }
+
+  deleteEvent(eventId: number): Observable<void> {
     return this.delete<void>(`/events/${eventId}`);
   }
 
-  // Event Dishes
-  addDishToEvent(eventId: string, dishData: { dish_id: number; quantity: number }): Observable<EventDish> {
-    return this.post<EventDish>(`/events/${eventId}/dishes`, dishData);
+  // ========================================
+  // Event Dishes - כולל draft ו-snapshot
+  // ========================================
+
+  /** הוספת מנה לאירוע - נשמרת מיד (ללא מצב ביניים של טיוטה) */
+  addDishToEvent(eventId: number, dishData: EventDishCreate): Observable<ApiEventDish> {
+    return this.post<ApiEventDish>(`/events/${eventId}/dishes`, dishData);
   }
 
-  updateEventDish(eventId: string, dishId: string, data: { quantity?: number; notes?: string }): Observable<EventDish> {
-    return this.put<EventDish>(`/events/${eventId}/dishes/${dishId}`, data);
+  /** שמירה מרובה של מנות */
+  bulkSaveDishes(eventId: number, dishes: EventDishCreate[], replace: boolean = false): Observable<{ message: string; success: boolean; count: number }> {
+    return this.post<{ message: string; success: boolean; count: number }>(`/events/${eventId}/dishes/bulk`, { dishes, replace });
   }
 
-  removeDishFromEvent(eventId: string, dishId: string): Observable<void> {
+  /** אישור סופי של מנות - לוכד snapshot prices */
+  finalizeDishes(eventId: number): Observable<{ message: string }> {
+    return this.post<{ message: string }>(`/events/${eventId}/dishes/finalize`, {});
+  }
+
+  updateEventDish(eventId: number, dishId: number, data: {
+    quantity?: number;
+    notes?: string;
+    is_upgrade?: boolean;
+    is_gift?: boolean;
+    extra_charge?: number;
+  }): Observable<ApiEventDish> {
+    return this.put<ApiEventDish>(`/events/${eventId}/dishes/${dishId}`, data);
+  }
+
+  removeDishFromEvent(eventId: number, dishId: number): Observable<void> {
     return this.delete<void>(`/events/${eventId}/dishes/${dishId}`);
   }
 
+  // ========================================
+  // Morning Split (שבת)
+  // ========================================
+
+  toggleMorningSplit(eventId: number, isSplit: boolean): Observable<ApiEvent> {
+    return this.patch<ApiEvent>(`/events/${eventId}/morning-split`, { is_morning_split: isSplit });
+  }
+
+  // ========================================
   // Event Lists
-  getShoppingList(eventId: string): Observable<ShoppingListResponse> {
+  // ========================================
+
+  getShoppingList(eventId: number): Observable<ShoppingListResponse> {
     return this.get<ShoppingListResponse>(`/events/${eventId}/shopping-list`);
   }
 
-  getEquipmentList(eventId: string): Observable<EquipmentListResponse> {
+  getEquipmentList(eventId: number): Observable<EquipmentListResponse> {
     return this.get<EquipmentListResponse>(`/events/${eventId}/equipment-list`);
+  }
+
+  // ========================================
+  // PDF למלצרים
+  // ========================================
+
+  printWaiterInstructions(eventId: number): void {
+    const url = `${environment.apiUrl}/events/${eventId}/waiter-pdf`;
+    window.open(url, '_blank');
+  }
+
+  getWaiterPdfUrl(eventId: number): string {
+    return `${environment.apiUrl}/events/${eventId}/waiter-pdf`;
+  }
+
+  // ========================================
+  // PDF לבעלי קייטרינג
+  // ========================================
+
+  printCateringPdf(eventId: number): void {
+    const url = `${environment.apiUrl}/events/${eventId}/catering-pdf`;
+    window.open(url, '_blank');
+  }
+
+  getCateringPdfUrl(eventId: number): string {
+    return `${environment.apiUrl}/events/${eventId}/catering-pdf`;
+  }
+
+  // ========================================
+  // PDF רשימת קניות
+  // ========================================
+
+  printShoppingPdf(eventId: number): void {
+    const url = `${environment.apiUrl}/events/${eventId}/shopping-pdf`;
+    window.open(url, '_blank');
+  }
+
+  getShoppingPdfUrl(eventId: number): string {
+    return `${environment.apiUrl}/events/${eventId}/shopping-pdf`;
+  }
+
+  getCalculationSummary(eventId: number): Observable<EventCalculationSummary> {
+    return this.get<EventCalculationSummary>(`/events/${eventId}/calculations/summary`);
+  }
+
+  updateCalculationSettings(eventId: number, settings: EventCalculationSettings): Observable<EventCalculationSummary> {
+    return this.put<EventCalculationSummary>(`/events/${eventId}/calculations/settings`, settings);
+  }
+
+  recalculateEvent(eventId: number): Observable<EventCalculationSummary> {
+    return this.post<EventCalculationSummary>(`/events/${eventId}/calculations/recalculate`, {});
+  }
+
+  getDishServingSelections(eventId: number): Observable<Array<{dish_id: number; set_type: string; set_id: number}>> {
+    return this.get<Array<{dish_id: number; set_type: string; set_id: number}>>(`/events/${eventId}/calculations/dish-serving-selections`);
+  }
+
+  updateDishServingSelections(eventId: number, selections: unknown[]): Observable<EventCalculationSummary> {
+    return this.put<EventCalculationSummary>(`/events/${eventId}/calculations/dish-serving-selections`, { selections });
+  }
+
+  updateManualTools(eventId: number, rows: unknown[]): Observable<EventCalculationSummary> {
+    return this.put<EventCalculationSummary>(`/events/${eventId}/calculations/manual-tools`, { rows });
+  }
+
+  printDeliverySheetPdf(eventId: number): void {
+    const url = `${environment.apiUrl}/events/${eventId}/delivery-sheet/pdf`;
+    window.open(url, '_blank');
   }
 }

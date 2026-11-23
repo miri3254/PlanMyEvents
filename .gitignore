@@ -49,3 +49,9 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+# Local logs, QA output and temp files
+*.log
+*_temp.txt
+build_out.txt
+qa-*.json
+/output/

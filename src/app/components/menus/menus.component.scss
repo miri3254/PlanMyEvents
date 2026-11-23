@@ -1,0 +1,385 @@
+// ====================================
+// Menus Component Styles
+// ====================================
+
+.menus-page {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+
+  .page-title {
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    p {
+      margin: 4px 0 0;
+      color: var(--text-color-secondary);
+      font-size: 0.9rem;
+    }
+  }
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.search-row {
+  margin-bottom: 16px;
+
+  .search-input {
+    width: 300px;
+    max-width: 100%;
+  }
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.03);
+  }
+}
+
+.menu-name {
+  display: flex;
+  flex-direction: column;
+
+  small {
+    color: var(--text-color-secondary);
+    font-size: 0.8rem;
+    margin-top: 2px;
+  }
+}
+
+.actions-cell {
+  white-space: nowrap;
+}
+
+.empty-message {
+  text-align: center;
+  padding: 2rem !important;
+  color: var(--text-color-secondary);
+
+  i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 8px;
+  }
+}
+
+// ====================================
+// Detail Dialog
+// ====================================
+
+.detail-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+
+  .info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .label {
+      font-size: 0.8rem;
+      color: var(--text-color-secondary);
+      font-weight: 500;
+    }
+
+    .value {
+      font-weight: 600;
+    }
+  }
+}
+
+// ====================================
+// Menu Structure Actions
+// ====================================
+
+.menu-structure-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+// ====================================
+// Sub-meal & Category Sections
+// ====================================
+
+.sub-meal-section {
+  margin-bottom: 24px;
+}
+
+.sub-meal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+
+  i {
+    color: var(--primary-color);
+  }
+
+  .split-label {
+    font-size: 0.8rem;
+    color: var(--text-color-secondary);
+    font-weight: normal;
+  }
+}
+
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.category-section {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+
+  .category-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .category-quota {
+    font-size: 0.8rem;
+    color: var(--text-color-secondary);
+    background: var(--surface-ground);
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+
+  .category-tray-price {
+    font-size: 0.8rem;
+    color: var(--green-600);
+  }
+
+  .dishes-count-badge {
+    font-size: 0.75rem;
+    background: var(--primary-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-right: auto;
+  }
+}
+
+.dishes-in-category {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.dish-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  &.upgrade-dish {
+    border-right: 3px solid var(--yellow-500);
+  }
+
+  .dish-name {
+    flex: 1;
+    font-size: 0.9rem;
+  }
+
+  .dish-price {
+    font-size: 0.85rem;
+    color: var(--text-color-secondary);
+    font-weight: 500;
+  }
+}
+
+.no-dishes-msg {
+  padding: 6px 8px;
+  color: var(--text-color-secondary);
+  font-style: italic;
+
+  i {
+    margin-left: 4px;
+  }
+}
+
+// Kosher badges (shared)
+.kosher-badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+
+  &.small {
+    font-size: 0.7rem;
+    padding: 1px 6px;
+  }
+}
+
+.kosher-badge-dairy {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+}
+
+.kosher-badge-meat {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+.kosher-badge-parve {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+::ng-deep .upgrade-tag {
+  font-size: 0.7rem !important;
+  padding: 1px 6px !important;
+}
+
+// ====================================
+// Dish Picker Dialog
+// ====================================
+
+.dish-picker-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  .dish-picker-search {
+    flex: 1;
+  }
+
+  .selected-count {
+    flex-shrink: 0;
+  }
+}
+
+.dish-picker-search {
+  margin-bottom: 12px;
+}
+
+.dish-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.picker-dish-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 2px solid transparent;
+
+  &:hover {
+    background: rgba(59, 130, 246, 0.08);
+  }
+
+  &.selected {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: var(--primary-color);
+  }
+
+  .picker-dish-name {
+    flex: 1;
+    font-weight: 500;
+  }
+
+  .picker-dish-price {
+    color: var(--text-color-secondary);
+    font-size: 0.85rem;
+  }
+}
+
+.empty-picker-msg {
+  text-align: center;
+  padding: 16px;
+  color: var(--text-color-secondary);
+}
+
+.dish-picker-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+// ====================================
+// Form Styles
+// ====================================
+
+.menu-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    label {
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+  }
+
+  .checkbox-field {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.dish-extra-charge-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--orange-500, #f97316);
+}
+
+.edit-mode-name {
+  font-weight: 600;
+  min-width: 80px;
+}

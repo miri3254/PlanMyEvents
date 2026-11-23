@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, EMPTY, expand, reduce } from 'rxjs';
 import { BaseApiService } from '../core/services/base-api.service';
 import { 
   ApiTool, 
@@ -19,7 +19,15 @@ export class ApiToolService extends BaseApiService {
     return this.get<ApiResponse<ApiTool>>('/tools', params);
   }
 
-  getTool(toolId: string): Observable<ApiTool> {
+  getAllTools(): Observable<ApiTool[]> {
+    return this.getTools({limit: 200}).pipe(
+      expand(page => page.skip + page.items.length < page.total && page.items.length > 0
+        ? this.getTools({limit: 200, skip: page.skip + page.items.length}) : EMPTY),
+      reduce((items: ApiTool[], page) => [...items, ...page.items], [])
+    );
+  }
+
+  getTool(toolId: number): Observable<ApiTool> {
     return this.get<ApiTool>(`/tools/${toolId}`);
   }
 
@@ -27,20 +35,20 @@ export class ApiToolService extends BaseApiService {
     return this.post<ApiTool>('/tools', tool);
   }
 
-  updateTool(toolId: string, tool: ToolUpdate): Observable<ApiTool> {
+  updateTool(toolId: number, tool: ToolUpdate): Observable<ApiTool> {
     return this.put<ApiTool>(`/tools/${toolId}`, tool);
   }
 
-  deleteTool(toolId: string): Observable<void> {
+  deleteTool(toolId: number): Observable<void> {
     return this.delete<void>(`/tools/${toolId}`);
   }
 
   // Bulk Operations
-  createMultipleTools(tools: ToolCreate[]): Observable<ApiTool[]> {
-    return this.post<ApiTool[]>('/tools/bulk', tools);
+  createMultipleTools(tools: ToolCreate[]): Observable<{ message: string; success: boolean; count: number }> {
+    return this.post<{ message: string; success: boolean; count: number }>('/tools/bulk', tools);
   }
 
-  deleteMultipleTools(toolIds: string[]): Observable<{ message: string; deleted_count: number; success: boolean }> {
+  deleteMultipleTools(toolIds: number[]): Observable<{ message: string; deleted_count: number; success: boolean }> {
     return this.delete<{ message: string; deleted_count: number; success: boolean }>(`/tools/bulk?ids=${toolIds.join(',')}`);
   }
 }

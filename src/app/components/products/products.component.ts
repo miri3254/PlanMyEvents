@@ -1,8 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, EMPTY, forkJoin, of } from 'rxjs';
-import { takeUntil, map, catchError } from 'rxjs/operators';
+import { ExcelExportService } from '../../services/excel-export.service';
+import { Subject, EMPTY, forkJoin, of, Observable } from 'rxjs';
+import { takeUntil, map, catchError, finalize } from 'rxjs/operators';
+import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import { ApiProductService } from '../../services/api-product.service';
 import { ApiLookupService } from '../../services/api-lookup.service';
 import { Product } from '../../core/models';
@@ -22,9 +24,10 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DividerModule } from 'primeng/divider';
 import { TooltipModule } from 'primeng/tooltip';
+import { TabsModule } from 'primeng/tabs';
 
-const FALLBACK_INVENTORY_STATUSES = ['במלאי', 'מלאי נמוך', 'אזל'];
-const FALLBACK_PRODUCT_CATEGORIES = ['מוצרי חלב', 'בשר ועוף', 'ירקות ופירות', 'תבלינים', 'יבשים', 'שמנים'];
+const FALLBACK_INVENTORY_STATUSES = ['במלאי', 'מלאי נמוך', 'אין במלאי'];
+const FALLBACK_PRODUCT_CATEGORIES = ['מוצרי חלב', 'מוצרי בשר', 'קטניות', 'שתיה', 'נוזלים', 'מוצרים יבשים', 'קפואים'];
 
 @Component({
   selector: 'app-products',
@@ -45,13 +48,34 @@ const FALLBACK_PRODUCT_CATEGORIES = ['מוצרי חלב', 'בשר ועוף', 'י
     SelectButtonModule,
     CheckboxModule,
     DividerModule,
-    TooltipModule
+    TooltipModule,
+    TabsModule,
+    LoadingOverlayComponent
   ],
   templateUrl: './products.html',
   styleUrls: ['./products.scss'],
   providers: [ConfirmationService, MessageService]
 })
 export class ProductsComponent implements OnInit, OnDestroy {
+  readonly drinkTypes = [
+    { label: 'אינו מוצר שתייה לחישוב אירוע', value: null },
+    { label: 'פפסי', value: 'pepsi' },
+    { label: 'פפסי מקס', value: 'pepsi_max' },
+    { label: 'מיץ — כל הטעמים במלאי משותף', value: 'orange_flavored' },
+    { label: 'מים', value: 'water' },
+    { label: 'סודה', value: 'soda' },
+  ];
+
+  onDrinkTypeChange(): void {
+    if (this.product.drinkType) {
+      this.product.unit = 'יחידות';
+      this.product.category = 'שתיה';
+      if (!this.product.name?.trim()) {
+        this.product.name = this.product.drinkType === 'orange_flavored' ? 'מיץ'
+          : this.drinkTypes.find(t => t.value === this.product.drinkType)?.label || '';
+      }
+    }
+  }
   // Data properties
   products: Product[] = [];
   filteredProducts: Product[] = [];
@@ -65,6 +89,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   filterInventoryStatus: string = '';
   productDialog: boolean = false;
   submitted: boolean = false;
+  isLoading = true;
   
   // Sorting state
   sortField: string = '';
@@ -87,6 +112,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   categories: { label: string; value: string }[] = [];
 
+  measurementUnits: { label: string; value: string }[] = [];
+
   statusOptions = [{ label: 'כל הסטטוסים', value: '' }];
   
   // For inline editing in table
@@ -96,7 +123,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
     private productService: ApiProductService,
     private lookupService: ApiLookupService,
     private confirmationService: ConfirmationService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private excelExportService: ExcelExportService
   ) {
     this.product = this.getEmptyProduct();
   }
@@ -107,7 +135,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   loadProducts(): void {
-    this.productService.getProducts()
+    this.isLoading = true;
+    this.productService.getProducts({ limit: 200 })
       .pipe(
         takeUntil(this.destroy$),
         map(response => response.items.map(this.mapApiProductToProduct)),
@@ -119,7 +148,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
             detail: 'טעינת המוצרים נכשלה'
           });
           return EMPTY;
-        })
+        }),
+        finalize(() => this.isLoading = false)
       )
       .subscribe(products => {
         this.products = products;
@@ -145,16 +175,26 @@ export class ProductsComponent implements OnInit, OnDestroy {
             console.warn('Failed to load product categories:', error);
             return of<string[]>([]);
           })
+        ),
+      units: this.lookupService
+        .getLookupCategory('measurement_units')
+        .pipe(
+          catchError(error => {
+            console.warn('Failed to load measurement units:', error);
+            return of<string[]>([]);
+          })
         )
     })
       .pipe(takeUntil(this.destroy$))
-      .subscribe(({ statuses, categories }) => {
+      .subscribe(({ statuses, categories, units }) => {
         // Lookup service now returns string arrays directly
         const statusList = statuses.length > 0 ? statuses : FALLBACK_INVENTORY_STATUSES;
         const categoryList = categories.length > 0 ? categories : FALLBACK_PRODUCT_CATEGORIES;
+        const unitList = units.length > 0 ? units : ['יחידות', 'ק״ג', 'ליטר', 'גרם', 'אגדים'];
 
         this.inventoryStatuses = statusList.map(status => ({ label: status, value: status }));
         this.categories = categoryList.map(category => ({ label: category, value: category }));
+        this.measurementUnits = unitList.map(unit => ({ label: unit, value: unit }));
         this.statusOptions = [{ label: 'כל הסטטוסים', value: '' }, ...this.inventoryStatuses];
 
         if (this.filterInventoryStatus && !statusList.includes(this.filterInventoryStatus)) {
@@ -174,6 +214,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
           this.product.category = categoryList[0];
         }
 
+        if (!this.product.unit && unitList.length) {
+          this.product.unit = unitList[0];
+        }
+
         this.buildInventorySummary();
       });
   }
@@ -183,24 +227,41 @@ export class ProductsComponent implements OnInit, OnDestroy {
     return {
       id: apiProduct.id,
       name: apiProduct.name,
-      inventoryStatus: apiProduct.inventory_status,
-      brand: apiProduct.brand || '',
-      packageQuantity: apiProduct.package_quantity || 0,
-      estimatedPrice: apiProduct.estimated_price,
+      drinkType: apiProduct.drink_type,
       category: apiProduct.category,
-      supplier: apiProduct.supplier || ''
+      unit: apiProduct.unit || 'יחידות',
+      packageQuantity: apiProduct.package_quantity,
+      estimatedPrice: apiProduct.estimated_price,
+      inventoryStatus: apiProduct.inventory_status || 'במלאי',
+      supplier: apiProduct.supplier,
+      brand: apiProduct.brand,
+      kosherType: apiProduct.kosher_type,
+      quantityInStock: apiProduct.quantity_in_stock,
+      minStockLevel: apiProduct.min_stock_level,
+      pricePerUnit: apiProduct.price_per_unit,
+      barcode: apiProduct.barcode,
+      notes: apiProduct.notes,
+      description: apiProduct.description
     };
   };
 
   private mapProductToCreatePayload(product: Product): ProductCreate {
     return {
       name: product.name.trim(),
+      drink_type: product.drinkType ?? null,
       category: product.category,
+      unit: product.unit || 'יחידות',
       package_quantity: product.packageQuantity,
       estimated_price: product.estimatedPrice,
-      inventory_status: product.inventoryStatus,
       supplier: product.supplier?.trim() || undefined,
-      brand: product.brand?.trim() || undefined
+      brand: product.brand?.trim() || undefined,
+      kosher_type: product.kosherType,
+      quantity_in_stock: product.quantityInStock,
+      min_stock_level: product.minStockLevel,
+      price_per_unit: product.pricePerUnit,
+      barcode: product.barcode?.trim() || undefined,
+      notes: product.notes?.trim() || undefined,
+      description: product.description?.trim() || undefined
     };
   }
 
@@ -222,8 +283,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.filteredProducts = this.products.filter(product => {
       const matchesSearch = !this.searchValue || 
         product.name.toLowerCase().includes(this.searchValue.toLowerCase()) ||
-        product.brand.toLowerCase().includes(this.searchValue.toLowerCase()) ||
-        product.supplier.toLowerCase().includes(this.searchValue.toLowerCase());
+        product.brand?.toLowerCase().includes(this.searchValue.toLowerCase()) ||
+        product.supplier?.toLowerCase().includes(this.searchValue.toLowerCase());
       
       const matchesStatus = !this.filterInventoryStatus || 
         product.inventoryStatus === this.filterInventoryStatus;
@@ -255,8 +316,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
     } else {
       // If no sorting, show newest first (by id which is timestamp)
       this.filteredProducts.sort((a, b) => {
-        const aId = parseInt(a.id) || 0;
-        const bId = parseInt(b.id) || 0;
+        const aId = a.id || 0;
+        const bId = b.id || 0;
         return bId - aId; // Descending order (newest first)
       });
     }
@@ -305,6 +366,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       acceptLabel: 'כן',
       rejectLabel: 'לא',
       accept: () => {
+        if (!product.id) return;
         this.productService.deleteProduct(product.id)
           .pipe(
             takeUntil(this.destroy$),
@@ -344,8 +406,9 @@ export class ProductsComponent implements OnInit, OnDestroy {
       acceptLabel: 'כן',
       rejectLabel: 'לא',
       accept: () => {
-        const ids = this.selectedProducts.map(product => product.id);
-        const request$ = ids.length > 1
+        const ids = this.selectedProducts.map(product => product.id).filter((id): id is number => id !== undefined);
+        if (ids.length === 0) return;
+        const request$: Observable<unknown> = ids.length > 1
           ? this.productService.deleteMultipleProducts(ids)
           : this.productService.deleteProduct(ids[0]);
 
@@ -399,7 +462,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       ? this.mapProductToUpdatePayload(this.product)
       : this.mapProductToCreatePayload(this.product);
 
-    const request$ = isUpdate
+    const request$ = isUpdate && this.product.id
       ? this.productService.updateProduct(this.product.id, payload as ProductUpdate)
       : this.productService.createProduct(payload as ProductCreate);
 
@@ -411,7 +474,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
           this.messageService.add({
             severity: 'error',
             summary: 'שגיאה',
-            detail: 'שמירת המוצר נכשלה',
+            detail: typeof error?.error?.detail === 'string' ? error.error.detail : 'שמירת המוצר נכשלה',
             life: 3000
           });
           return EMPTY;
@@ -466,10 +529,13 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   // Inline editing methods for table
   onRowEditInit(product: Product): void {
-    this.clonedProducts[product.id] = { ...product };
+    if (product.id) {
+      this.clonedProducts[product.id] = { ...product };
+    }
   }
 
   onRowEditSave(product: Product): void {
+    if (!product.id) return;
     const payload = this.mapProductToUpdatePayload(product);
 
     this.productService.updateProduct(product.id, payload)
@@ -491,7 +557,9 @@ export class ProductsComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe(() => {
-        delete this.clonedProducts[product.id];
+        if (product.id) {
+          delete this.clonedProducts[product.id];
+        }
         this.messageService.add({
           severity: 'success',
           summary: 'הצלחה',
@@ -503,13 +571,18 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   onRowEditCancel(product: Product, index: number): void {
-    if (this.clonedProducts[product.id]) {
+    if (product.id && this.clonedProducts[product.id]) {
       this.filteredProducts[index] = this.clonedProducts[product.id];
     }
-    delete this.clonedProducts[product.id];
+    if (product.id) {
+      delete this.clonedProducts[product.id];
+    }
   }
 
-  getStatusSeverity(status: string): 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast' | undefined {
+  getStatusSeverity(status: string | null | undefined): 'success' | 'warn' | 'danger' | 'info' | 'secondary' | 'contrast' | undefined {
+    if (!status) {
+      return 'info';
+    }
     const normalized = status.toLowerCase();
     if (normalized.includes('אזל') || normalized.includes('חסר') || normalized.includes('empty') || normalized.includes('out')) {
       return 'danger';
@@ -523,7 +596,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
     return 'info';
   }
 
-  getStatusIcon(status: string): string {
+  getStatusIcon(status: string | undefined): string {
+    if (!status) return 'pi pi-info-circle';
     const normalized = status.toLowerCase();
     if (normalized.includes('אזל') || normalized.includes('חסר') || normalized.includes('empty') || normalized.includes('out')) {
       return 'pi pi-times-circle';
@@ -537,44 +611,70 @@ export class ProductsComponent implements OnInit, OnDestroy {
     return 'pi pi-info-circle';
   }
 
-  trackByProduct(index: number, product: Product): string {
-    return product.id;
+  trackByProduct(index: number, product: Product): number {
+    return product.id ?? index;
   }
 
   isDisposableProduct(product: Product): boolean {
     return product.category === 'חד"פ';
   }
 
+  getComputedInventoryStatus(product: Product): string {
+    const qty = product.quantityInStock ?? 0;
+    const minLevel = product.minStockLevel ?? 0;
+    if (qty <= 0) {
+      return 'אזל';
+    }
+    if (qty <= minLevel) {
+      return 'מלאי נמוך';
+    }
+    return 'במלאי';
+  }
+
   private getEmptyProduct(): Product {
     return {
-      id: '',
+      id: 0,
       name: '',
-      inventoryStatus: this.inventoryStatuses[0]?.value || FALLBACK_INVENTORY_STATUSES[0],
+      inventoryStatus: 'במלאי',
       brand: '',
       packageQuantity: 1,
       estimatedPrice: 0,
       category: this.categories[0]?.value || FALLBACK_PRODUCT_CATEGORIES[0] || '',
-      supplier: ''
+      supplier: '',
+      unit: 'יחידות',
+      quantityInStock: 0,
+      minStockLevel: 0,
+      pricePerUnit: 0
     };
   }
 
   private buildInventorySummary(): void {
-    if (!this.inventoryStatuses.length) {
-      this.inventorySummary = [];
-      return;
-    }
+    // Build summary from actual product statuses, not from lookup values
+    const statusCounts = new Map<string, number>();
+    
+    this.products.forEach(product => {
+      const status = product.inventoryStatus || 'לא מוגדר';
+      statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
+    });
 
-    this.inventorySummary = this.inventoryStatuses.map(option => {
-      const count = this.products.filter(product => product.inventoryStatus === option.value).length;
-      const severity = this.getStatusSeverity(option.value);
+    this.inventorySummary = Array.from(statusCounts.entries()).map(([status, count]) => {
+      const severity = this.getStatusSeverity(status);
       return {
-        value: option.value,
-        label: option.label,
+        value: status,
+        label: status,
         count,
         severity,
-        icon: this.getStatusIcon(option.value),
+        icon: this.getStatusIcon(status),
         badgeClass: this.getFilterBadgeClass(severity)
       };
+    });
+    
+    // Sort by severity: danger first, then warn, then success
+    const severityOrder = { danger: 0, warn: 1, success: 2, info: 3, secondary: 4, contrast: 5 };
+    this.inventorySummary.sort((a, b) => {
+      const orderA = severityOrder[a.severity || 'info'] ?? 6;
+      const orderB = severityOrder[b.severity || 'info'] ?? 6;
+      return orderA - orderB;
     });
   }
 
@@ -591,5 +691,35 @@ export class ProductsComponent implements OnInit, OnDestroy {
       default:
         return 'filter-stat-neutral';
     }
+  }
+
+  exportShortages(): void {
+    const isShortage = (p: Product) =>
+      (p.minStockLevel ?? 0) > 0 && (p.quantityInStock ?? 0) < (p.minStockLevel ?? 0);
+
+    const headers = ['שם מוצר', 'כמות במלאי', 'כמות מינימום'];
+
+    const productShortages = this.products
+      .filter(p => p.category !== 'חד"פ' && isShortage(p))
+      .map(p => [p.name, p.quantityInStock ?? 0, p.minStockLevel ?? 0]);
+
+    const equipmentShortages = this.products
+      .filter(p => p.category === 'חד"פ' && isShortage(p))
+      .map(p => [p.name, p.quantityInStock ?? 0, p.minStockLevel ?? 0]);
+
+    this.excelExportService.exportSheets(
+      [
+        { name: 'חוסרי מוצרים', headers, rows: productShortages },
+        { name: 'חוסרי כלים',   headers, rows: equipmentShortages }
+      ],
+      `חוסרי_מוצרים_${this.excelExportService.todayString()}.xlsx`
+    );
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'יצוא הצליח',
+      detail: `הקובץ הורד בהצלחה (${productShortages.length} מוצרים, ${equipmentShortages.length} כלים)`,
+      life: 4000
+    });
   }
 }

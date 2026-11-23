@@ -1,5 +1,7 @@
 # Project Rules & Collaboration Guide
 
+> Current implementation map (2026-11-15): read `AGENTS.md` and `.ai/project_architecture.md` first. Business requirements/status are in `.ai/catering_requirements.md` and `.ai/implementation_status.md`. This older collaboration guide does not describe the current architecture. Use Hebrew for the current user's requests; there is no lint script in the inspected package, so use the documented available checks.
+
 ## Purpose
 This document captures working agreements, coding standards, and collaboration tips for the PlanMyEvents project. Update it whenever new expectations emerge.
 

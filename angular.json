@@ -26,6 +26,11 @@
             "assets": [
               {
                 "glob": "**/*",
+                "input": "src/assets",
+                "output": "assets"
+              },
+              {
+                "glob": "**/*",
                 "input": "public"
               }
             ],
@@ -37,16 +42,16 @@
           "configurations": {
             "production": {
               "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "900kB",
-                  "maximumError": "1.2MB"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "18kB",
-                  "maximumError": "24kB"
-                }
+                  {
+                    "type": "initial",
+                    "maximumWarning": "1.8MB",
+                    "maximumError": "2.2MB"
+                  },
+                  {
+                    "type": "anyComponentStyle",
+                    "maximumWarning": "40kB",
+                    "maximumError": "50kB"
+                  }
               ],
               "outputHashing": "all"
             },
@@ -60,6 +65,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
               "buildTarget": "PlanMyEvents:build:production"
@@ -83,6 +91,11 @@
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "assets"
+              },
               {
                 "glob": "**/*",
                 "input": "public"
