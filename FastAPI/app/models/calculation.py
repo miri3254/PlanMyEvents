@@ -28,6 +28,8 @@ class EventCalculationSettings(BaseModel):
     use_rectangular_for_square = Column(Boolean, default=False, nullable=False)
     table_overrides = Column(JSON, nullable=True)
     event_tool_set_items = Column(JSON, nullable=True)
+    # Caterer: total tablecloths = portions/8 (+spare); user marks how many rectangle vs square
+    tablecloth_split = Column(JSON, nullable=True)
 
     credit_card_enabled = Column(Boolean, default=False, nullable=False)
     credit_card_amount = Column(Float, nullable=True)

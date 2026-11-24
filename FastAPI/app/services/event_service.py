@@ -320,6 +320,7 @@ class EventService:
             "has_back_entrance": getattr(event, "has_back_entrance", False),
             "requires_carts": getattr(event, "requires_carts", False),
             "access_notes": getattr(event, "access_notes", None),
+            "seating_sides": getattr(event, "seating_sides", None) or [],
             "dishware_type": getattr(event, "dishware_type", None) or ("כלים אמיתיים" if getattr(event, "is_real_dishes", False) else "חד פעמי"),
             "delivery_contents_notes": getattr(event, "delivery_contents_notes", None),
             "last_minute_items": getattr(event, "last_minute_items", None),
@@ -360,6 +361,7 @@ class EventService:
                 "use_rectangular_for_square": calc_settings.use_rectangular_for_square,
                 "table_overrides": calc_settings.table_overrides,
                 "event_tool_set_items": calc_settings.event_tool_set_items,
+                "tablecloth_split": calc_settings.tablecloth_split,
                 "credit_card_enabled": calc_settings.credit_card_enabled,
                 "credit_card_amount": calc_settings.credit_card_amount,
                 "credit_card_installments": calc_settings.credit_card_installments,
@@ -1033,14 +1035,15 @@ class EventService:
             for ing in dish.ingredients:
                 if ing.product_id and ing.product_id in replaced_product_ids:
                     continue
-                key = ing.name or f"product_{ing.product_id}"
+                # Group by product when linked (ingredient rows usually have no free-text name).
+                key = f"product:{ing.product_id}" if ing.product_id else (ing.name or "ללא שם")
                 if key not in raw_items:
                     prod = None
                     if ing.product_id:
                         prod = self.db.query(Product).filter(Product.id == ing.product_id).first()
                     raw_items[key] = {
                         "product_id": ing.product_id,
-                        "name": ing.name or key,
+                        "name": (prod.name if prod else None) or ing.name or "רכיב ללא שם",
                         "product": prod,
                         "quantities": [],  # [(total_qty, unit_enum)]
                     }

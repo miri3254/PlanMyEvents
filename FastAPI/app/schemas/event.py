@@ -181,6 +181,7 @@ class EventCreate(BaseModel):
     has_back_entrance: bool = False
     requires_carts: bool = False
     access_notes: Optional[str] = None
+    seating_sides: Optional[list[dict[str, Any]]] = None  # [{side, places, arrangement}]
     dishware_type: Optional[str] = Field(None, max_length=50)
     delivery_contents_notes: Optional[str] = None
     last_minute_items: Optional[str] = None
@@ -228,6 +229,7 @@ class EventUpdate(BaseModel):
     has_back_entrance: Optional[bool] = None
     requires_carts: Optional[bool] = None
     access_notes: Optional[str] = None
+    seating_sides: Optional[list[dict[str, Any]]] = None  # [{side, places, arrangement}]
     dishware_type: Optional[str] = None
     delivery_contents_notes: Optional[str] = None
     last_minute_items: Optional[str] = None
@@ -300,6 +302,7 @@ class EventResponse(BaseModel):
     has_back_entrance: bool = False
     requires_carts: bool = False
     access_notes: Optional[str] = None
+    seating_sides: Optional[list[dict[str, Any]]] = None  # [{side, places, arrangement}]
     dishware_type: Optional[str] = None
     delivery_contents_notes: Optional[str] = None
     last_minute_items: Optional[str] = None

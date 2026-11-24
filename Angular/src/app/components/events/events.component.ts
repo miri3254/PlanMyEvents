@@ -40,7 +40,8 @@ import {
   LookupValue,
   EventCalculationSummary,
   RollSplit,
-  EventToolSetItem
+  EventToolSetItem,
+  SeatingSide
 } from '../../core/models/api.models';
 import { CalendarDay, HebrewDateParts, EventStatus, Event, EventOwner, EVENT_STATUSES } from '../../core/models';
 import {
@@ -124,6 +125,7 @@ function mapApiEventToEvent(apiEvent: ApiEvent): Event {
     onsiteContactPhone: apiEvent.onsite_contact_phone,
     hallOwnerName: apiEvent.hall_owner_name,
     hallOwnerPhone: apiEvent.hall_owner_phone,
+    seatingSides: apiEvent.seating_sides || [],
     hasNearbyParking: apiEvent.has_nearby_parking,
     hasBackEntrance: apiEvent.has_back_entrance,
     requiresCarts: apiEvent.requires_carts,
@@ -223,6 +225,7 @@ interface EventFormModel {
   onsiteContactPhone?: string;
   hallOwnerName?: string;
   hallOwnerPhone?: string;
+  seatingSides: SeatingSide[];
   hasNearbyParking: boolean;
   hasBackEntrance: boolean;
   requiresCarts: boolean;
@@ -679,6 +682,42 @@ export class EventsComponent implements OnInit, OnDestroy {
     return this.calculationSummary?.tool_requirements.find(row => row.source_type === 'tablecloths');
   }
 
+  /** סה"כ מפות לפי החישוב (מנות ÷ 8 + ספייר) – מהשרת; החלוקה למלבן/מרובע מסומנת ידנית. */
+  getTableclothRequiredTotal(): number {
+    const row = this.getTableclothRequirement();
+    const details = (row?.details || {}) as Record<string, number>;
+    return Number(details['base_quantity'] || 0) + Number(details['spare_quantity'] || 0) || Number(row?.quantity || 0);
+  }
+
+  getTableclothSplit(): { rectangle: number; square: number } {
+    const split = this.calculationSummary?.settings?.tablecloth_split || {};
+    return { rectangle: Number(split.rectangle || 0), square: Number(split.square || 0) };
+  }
+
+  onTableclothSplitChange(shape: 'rectangle' | 'square', value: number | null): void {
+    const settings = this.calculationSummary?.settings;
+    if (!settings) return;
+    const split = this.getTableclothSplit();
+    split[shape] = Math.max(0, Number(value || 0));
+    settings.tablecloth_split = split.rectangle || split.square ? split : null;
+    this.saveCalculationSettings();
+  }
+
+  addSeatingSide(): void {
+    this.eventForm.seatingSides.push({ side: '', places: null, arrangement: '' });
+  }
+
+  removeSeatingSide(index: number): void {
+    this.eventForm.seatingSides.splice(index, 1);
+  }
+
+  /** דף למוביל החוזר: מה אמור לחזור לקייטרינג + הוראות החזרה */
+  generateReturnSheetPdf(event: Event): void {
+    if (!event?.id) return;
+    this.eventService.printReturnSheetPdf(event.id);
+    this.messageService.add({ severity: 'info', summary: 'PDF נוצר', detail: 'דף המוביל החוזר נפתח בחלון חדש' });
+  }
+
   recalculateSelectedEvent(): void {
     if (!this.selectedEvent) return;
     this.calculationLoading = true;
@@ -1036,6 +1075,7 @@ export class EventsComponent implements OnInit, OnDestroy {
       onsiteContactPhone: event.onsiteContactPhone || '',
       hallOwnerName: event.hallOwnerName || '',
       hallOwnerPhone: event.hallOwnerPhone || '',
+      seatingSides: (event.seatingSides || []).map(side => ({ ...side })),
       hasNearbyParking: !!event.hasNearbyParking,
       hasBackEntrance: !!event.hasBackEntrance,
       requiresCarts: !!event.requiresCarts,
@@ -1662,7 +1702,7 @@ export class EventsComponent implements OnInit, OnDestroy {
     this.messageService.add({
       severity: 'info',
       summary: 'PDF נוצר',
-      detail: 'קובץ סיכום לבעל הקייטרינג נפתח בחלון חדש'
+      detail: 'רשימת האריזה נפתחה בחלון חדש'
     });
   }
 
@@ -2093,6 +2133,7 @@ export class EventsComponent implements OnInit, OnDestroy {
       onsiteContactPhone: '',
       hallOwnerName: '',
       hallOwnerPhone: '',
+      seatingSides: [],
       hasNearbyParking: false,
       hasBackEntrance: false,
       requiresCarts: false,
@@ -2366,6 +2407,9 @@ export class EventsComponent implements OnInit, OnDestroy {
       onsite_contact_phone: this.eventForm.onsiteContactPhone?.trim() || undefined,
       hall_owner_name: this.eventForm.hallOwnerName?.trim() || undefined,
       hall_owner_phone: this.eventForm.hallOwnerPhone?.trim() || undefined,
+      seating_sides: this.eventForm.seatingSides
+        .filter(side => side.side?.trim() || side.places)
+        .map(side => ({ side: side.side?.trim() || '', places: side.places ?? null, arrangement: side.arrangement?.trim() || '' })),
       has_nearby_parking: this.eventForm.hasNearbyParking,
       has_back_entrance: this.eventForm.hasBackEntrance,
       requires_carts: this.eventForm.requiresCarts,

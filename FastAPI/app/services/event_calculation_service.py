@@ -38,6 +38,8 @@ from app.schemas.calculation import (
 
 
 TABLE_SHAPE_LABELS = {"square": "מרובע", "round": "עגול", "rectangle": "מלבן"}
+BASIS_LABELS = {"table": "לפי שולחנות", "event": "לאירוע", "guest": "לפי סועדים", "dish_unit": "לפי יחידות מנה",
+                "place_setting": "לפי מקומות ערוכים", "serving_group": "כלי לכל 8 ערוכים"}
 
 
 class EventCalculationService:
@@ -371,6 +373,22 @@ class EventCalculationService:
                    'source_sheet': 'חישוב מפות', 'source_cell': cell, 'reserve_cell': 'A8',
                    'rule_version': 'workbook-2026-11-17', 'menu_template_id': template.id if template else None}
         trace.append({"type": "tablecloths", "shape": shape, "formula": formula, **details})
+        split = settings.tablecloth_split or {}
+        rect, square = int(split.get("rectangle") or 0), int(split.get("square") or 0)
+        if rect or square:
+            # Caterer: total = portions/8 (+spare); the user marks how many rectangle vs square.
+            if rect + square != quantity:
+                warnings.append(f"מפות: סומנו {rect} מלבן + {square} מרובע = {rect + square}, אבל לפי החישוב צריך {quantity}")
+            base_name = tool.name if tool else "מפות"
+            return [
+                CalculationRequirement(
+                    source_type="tablecloths", item_type="tool", tool_id=tool.id if tool else None,
+                    name=f"{base_name} {TABLE_SHAPE_LABELS.get(key, key)}", quantity=count, raw_quantity=float(count),
+                    unit="יחידות", formula_label=f"{formula}; חלוקה שסומנה: {count}", details={**details, "split_shape": key},
+                    category="מפות", is_reusable=True,
+                )
+                for key, count in (("rectangle", rect), ("square", square)) if count
+            ]
         return [
             CalculationRequirement(
                 source_type="tablecloths",
@@ -626,7 +644,7 @@ class EventCalculationService:
             for item in serving_set.items:
                 qty = self._quantity_by_basis(item.quantity, item.quantity_basis, event, ed.quantity, settings)
                 tool = item.tool or (self.db.query(Tool).filter(Tool.id == item.tool_id).first() if item.tool_id else None)
-                requirement = self._tool_req("serving", (tool.name if tool else item.name) or "כלי הגשה", qty, "יחידות", f"{item.quantity_basis} * {item.quantity}", item.tool_id, self._tool_is_reusable(tool, item.is_reusable if not serving_set.serving_mode else None))
+                requirement = self._tool_req("serving", (tool.name if tool else item.name) or "כלי הגשה", qty, "יחידות", f"{BASIS_LABELS.get(item.quantity_basis, item.quantity_basis)} × {item.quantity:g}", item.tool_id, self._tool_is_reusable(tool, item.is_reusable if not serving_set.serving_mode else None))
                 requirement.details = {"event_dish_id": ed.id, "dish_id": ed.dish_id, "set_id": serving_set.id, "serving_mode": serving_set.serving_mode}
                 result.append(requirement)
         return result
