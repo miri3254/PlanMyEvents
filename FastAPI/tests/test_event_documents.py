@@ -80,3 +80,34 @@ def test_shopping_list_uses_product_name(db):
     items = EventService(db).get_shopping_list(e.id)["items"]
     assert any(i["name"] == "קמח" for i in items)
     assert not any(i["name"].startswith("product_") for i in items)
+
+
+def test_desserts_split_and_toggle(db):
+    e = event(db, 70)
+    rows = {r.name: r.quantity for r in EventService(db).calculations.summarize(e).product_requirements if r.source_type == "dessert"}
+    assert rows == {"מוס": 27, "פחזנייה": 26, "טארטלטים": 26, "מקרונים": 26}  # ceil(70 × 1.5) = 105
+    EventService(db).calculations.get_settings(e.id).desserts_enabled = False  # summarize already created the row
+    db.commit()
+    assert not [r for r in EventService(db).calculations.summarize(e).product_requirements if r.source_type == "dessert"]
+
+
+def test_other_drinks_and_extra_tablecloths(db):
+    e = event(db, 80)
+    db.add(EventCalculationSettings(
+        event_id=e.id,
+        other_drinks=[{"name": "מים בטעמים", "quantity": 12, "notes": "תות"}, {"name": "", "quantity": 3}],
+        tablecloth_split={"rectangle": 8, "square": 4, "extra": [{"name": "מפת מזרח", "quantity": 2}]},
+    ))
+    db.commit()
+    summary = EventService(db).calculations.summarize(e)
+    other = [r for r in summary.product_requirements if r.source_type == "drink_other"]
+    assert [(r.name, r.quantity) for r in other] == [("מים בטעמים", 12)]
+    cloths = {r.name: r.quantity for r in summary.tool_requirements if r.source_type == "tablecloths"}
+    assert cloths == {"מפות מלבן": 8, "מפות מרובע": 4, "מפת מזרח": 2}
+    assert not any("מפות: סומנו" in w for w in summary.warnings)  # extras are not part of the 12 split
+
+
+def test_document_title_is_family_plus_menu(db):
+    e = event(db, 10, "תפריט בשרי")
+    e.name = "כהן"
+    assert EventDocumentsService.display_name(e) == "כהן – תפריט בשרי"

@@ -126,6 +126,12 @@ class EventDocumentsService:
         self.db = db
         self.calc = EventCalculationService(db)
 
+    @staticmethod
+    def display_name(event: Event) -> str:
+        """Caterer: event name = family name; unique name = family + menu."""
+        family, menu = (event.name or "").strip(), (event.menu_type or "").strip()
+        return f"{family} – {menu}" if menu and family and menu not in family else family
+
     # ── data ──────────────────────────────────────────────────────────
     def _context(self, event: Event) -> dict[str, Any]:
         summary = self.calc.summarize(event)
@@ -254,7 +260,7 @@ class EventDocumentsService:
 
     def serving_instructions_pdf(self, event: Event) -> BytesIO:
         ctx = self._context(event)
-        f = B.title("הוראות הגשה ועריכה", event.name)
+        f = B.title("הוראות הגשה ועריכה", self.display_name(event))
         f += [B.section("פרטי האירוע והאולם"), B.gap(4), B.info_grid(self._header_pairs(event, ctx)), B.gap()]
         f += [B.section("חלוקת מקומות בכל צד"), B.gap(4), *self._seating(event), B.gap()]
         setting = [B.section("הוראות עריכה"), B.gap(4),
@@ -287,7 +293,7 @@ class EventDocumentsService:
 
     def packing_list_pdf(self, event: Event) -> BytesIO:
         ctx = self._context(event)
-        f = B.title("רשימת אריזה", event.name)
+        f = B.title("רשימת אריזה", self.display_name(event))
         f += [B.info_grid(self._header_pairs(event, ctx)), B.gap()]
 
         def part(title: str, rows: list, headers=("פריט", "כמות", "יחידה / הערה")):
@@ -316,7 +322,7 @@ class EventDocumentsService:
 
     def delivery_sheet_pdf(self, event: Event) -> BytesIO:
         ctx = self._context(event)
-        f = B.title("דף הוראות למוביל – הלוך", event.name)
+        f = B.title("דף הוראות למוביל – הלוך", self.display_name(event))
         f += [B.section("פרטי האירוע ואנשי קשר"), B.gap(4), B.info_grid(self._header_pairs(event, ctx, driver=True)), B.gap()]
         f += [B.section("גישה ופריקה"), B.gap(4), B.info_grid([
             ("חניה קרובה", _yes(event.has_nearby_parking)), ("כניסה אחורית", _yes(event.has_back_entrance)),
@@ -353,7 +359,7 @@ class EventDocumentsService:
 
     def return_sheet_pdf(self, event: Event) -> BytesIO:
         ctx = self._context(event)
-        f = B.title("דף למוביל – חזור", event.name)
+        f = B.title("דף למוביל – חזור", self.display_name(event))
         f += [B.info_grid(self._header_pairs(event, ctx, driver=True)[:9]), B.gap()]
         reusable = [self._row(r) for r in self._reqs(ctx, "tool")
                     if _get(r, "is_reusable")]

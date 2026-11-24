@@ -30,6 +30,9 @@ class EventCalculationSettings(BaseModel):
     event_tool_set_items = Column(JSON, nullable=True)
     # Caterer: total tablecloths = portions/8 (+spare); user marks how many rectangle vs square
     tablecloth_split = Column(JSON, nullable=True)
+    # Caterer list 2026-11-24: desserts 1.5/guest split between 4 types; free 'other' drinks with notes
+    desserts_enabled = Column(Boolean, default=True, server_default='1', nullable=False)
+    other_drinks = Column(JSON, nullable=True)
 
     credit_card_enabled = Column(Boolean, default=False, nullable=False)
     credit_card_amount = Column(Float, nullable=True)

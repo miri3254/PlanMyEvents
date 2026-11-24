@@ -679,7 +679,44 @@ export class EventsComponent implements OnInit, OnDestroy {
   }
 
   getTableclothRequirement() {
-    return this.calculationSummary?.tool_requirements.find(row => row.source_type === 'tablecloths');
+    return this.calculationSummary?.tool_requirements.find(row => row.source_type === 'tablecloths' && !(row.details as Record<string, unknown> | undefined)?.['extra']);
+  }
+
+  /** Caterer: event name = family name; unique name = family + menu (display only). */
+  eventDisplayName(name: string | undefined, menuType: string | undefined): string {
+    const family = (name || '').trim();
+    const menu = (menuType || '').trim();
+    return menu && family && !family.includes(menu) ? `${family} – ${menu}` : family;
+  }
+
+  /** Caterer: the event contact can be chosen from the event owners. */
+  pickContactFromOwner(index: string): void {
+    const owner = this.eventForm.owners[Number(index)];
+    if (!owner || index === '') return;
+    this.eventForm.onsiteContactName = owner.name || '';
+    this.eventForm.onsiteContactPhone = owner.phone || '';
+  }
+
+  /** Additional different tablecloths (e.g. מזרח), on top of the portions/8 total. */
+  getTableclothExtras(): { name: string; quantity: number | null }[] {
+    const settings = this.calculationSummary?.settings;
+    if (!settings) return [];
+    settings.tablecloth_split ??= {};
+    settings.tablecloth_split.extra ??= [];
+    return settings.tablecloth_split.extra;
+  }
+
+  addTableclothExtra(): void {
+    this.getTableclothExtras().push({ name: '', quantity: null });
+  }
+
+  removeTableclothExtra(index: number): void {
+    this.getTableclothExtras().splice(index, 1);
+    this.saveTableclothExtras();
+  }
+
+  saveTableclothExtras(): void {
+    this.saveCalculationSettings();
   }
 
   /** סה"כ מפות לפי החישוב (מנות ÷ 8 + ספייר) – מהשרת; החלוקה למלבן/מרובע מסומנת ידנית. */
@@ -699,7 +736,7 @@ export class EventsComponent implements OnInit, OnDestroy {
     if (!settings) return;
     const split = this.getTableclothSplit();
     split[shape] = Math.max(0, Number(value || 0));
-    settings.tablecloth_split = split.rectangle || split.square ? split : null;
+    settings.tablecloth_split = { ...(settings.tablecloth_split || {}), rectangle: split.rectangle, square: split.square };
     this.saveCalculationSettings();
   }
 
