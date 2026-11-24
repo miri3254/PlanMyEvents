@@ -338,6 +338,30 @@ export class DishesComponent implements OnInit, OnDestroy {
     }
 
     // חיפוש המרה ישירה
+    const paths = new Map<string, Array<{ toUnit: string; factor: number }>>();
+    for (const conversion of this.unitConversions) {
+      const outgoing = paths.get(conversion.fromUnit) ?? [];
+      outgoing.push({ toUnit: conversion.toUnit, factor: conversion.factor });
+      paths.set(conversion.fromUnit, outgoing);
+    }
+
+    const queue: Array<{ unit: string; factor: number }> = [{ unit: fromUnit, factor: 1 }];
+    const visited = new Set<string>([fromUnit]);
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      for (const edge of paths.get(current.unit) ?? []) {
+        if (visited.has(edge.toUnit)) continue;
+        const factor = current.factor * edge.factor;
+        if (edge.toUnit === toUnit) return quantity * factor;
+        visited.add(edge.toUnit);
+        queue.push({ unit: edge.toUnit, factor });
+      }
+    }
+    return null;
+
+    /* Retired fixed-base conversion implementation; the graph above is the
+       only active calculation path. */
+    /*
     const directConversion = this.unitConversions.find(
       c => c.fromUnit === fromUnit && c.toUnit === toUnit
     );
@@ -380,6 +404,7 @@ export class DishesComponent implements OnInit, OnDestroy {
 
     // אם אין המרה - מחזיר null
     return null;
+    */
   }
 
   // ========================================
@@ -833,60 +858,73 @@ export class DishesComponent implements OnInit, OnDestroy {
   }
 
   /** חישוב מחיר עלות פנימי (base_price) מסכום מרכיבים עם המרת יחידות */
-  calculateBasePrice(): number {
-    if (!this.editingDish?.ingredients?.length) return 0;
+  calculateBasePrice(): number | null {
+    if (!this.editingDish?.ingredients?.length || !this.editingDish.servingSize || this.editingDish.servingSize <= 0) return null;
     let total = 0;
     for (const ingredient of this.editingDish.ingredients) {
       const quantity = ingredient.quantity;
-      if (quantity == null || !ingredient.unit) continue;  // amount missing in recipe
+      const unit = ingredient.unit;
+      if (typeof quantity !== 'number' || !unit) return null;
       const product = this.products.find(p => p.id === ingredient.productId);
-      if (product?.estimatedPrice) {
+      if (!product) return null;
+      if (product) {
         const packageQty = product.packageQuantity || 1;
         // מחיר ליחידת מוצר (מחיר אריזה / כמות באריזה)
-        const pricePerProductUnit = product.estimatedPrice / packageQty;
+        const pricePerProductUnit = product.pricePerUnit ?? (
+          product.estimatedPrice == null ? null : product.estimatedPrice / packageQty
+        );
+        if (pricePerProductUnit == null) return null;
         
         // המרת כמות מרכיב ליחידת מוצר
         const convertedQuantity = this.convertUnits(
           quantity,
-          ingredient.unit,
+          unit,
           product.unit || 'גרם'
         );
         
         if (convertedQuantity !== null) {
           total += pricePerProductUnit * convertedQuantity;
-        } else {
-          // אם אין המרה, משתמש בכמות ישירה (התנהגות קודמת)
-          total += pricePerProductUnit * quantity;
-        }
+        } else return null;
       }
     }
-    return Math.round(total * 100) / 100;
+    return Math.round((total / this.editingDish.servingSize) * 100) / 100;
+  }
+
+  getCalculatedBasePriceLabel(): string {
+    const price = this.calculateBasePrice();
+    if (price === null) return 'נדרשת תפוקה לסועדים וכל נתוני הרכיבים';
+    return `${price.toLocaleString('he-IL', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₪`;
   }
 
   recalculateBasePrice(): void {
     if (this.editingDish) {
-      this.editingDish.basePrice = this.calculateBasePrice();
+      const calculatedPrice = this.calculateBasePrice();
+      if (calculatedPrice !== null) this.editingDish.basePrice = calculatedPrice;
     }
   }
 
   getIngredientPriceInfo(ingredient: DishIngredient): { pricePerUnit: number; totalPrice: number; converted: boolean } | null {
     const quantity = ingredient.quantity;
-    if (quantity == null || !ingredient.unit) return null;
+    const unit = ingredient.unit;
+    if (typeof quantity !== 'number' || !unit) return null;
     const product = this.products.find(p => p.id === ingredient.productId);
-    if (!product?.estimatedPrice) return null;
+    if (!product) return null;
     const packageQty = product.packageQuantity || 1;
-    const pricePerProductUnit = product.estimatedPrice / packageQty;
+    const pricePerProductUnit = product.pricePerUnit ?? (
+      product.estimatedPrice == null ? null : product.estimatedPrice / packageQty
+    );
+    if (pricePerProductUnit == null) return null;
     
     // המרת כמות מרכיב ליחידת מוצר
     const convertedQuantity = this.convertUnits(
       quantity,
-      ingredient.unit,
+      unit,
       product.unit || 'גרם'
     );
     
-    const wasConverted = convertedQuantity !== null && ingredient.unit !== product.unit;
-    const quantityToUse = convertedQuantity !== null ? convertedQuantity : quantity;
-    const totalPrice = pricePerProductUnit * quantityToUse;
+    if (convertedQuantity === null) return null;
+    const wasConverted = unit !== product.unit;
+    const totalPrice = pricePerProductUnit * convertedQuantity;
     
     return {
       pricePerUnit: Math.round(pricePerProductUnit * 100) / 100,

@@ -7,6 +7,7 @@ Provides:
   - Base unit normalization (e.g., kg→gram, liter→ml)
 """
 
+from collections import deque
 from typing import Optional, List, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
@@ -47,9 +48,22 @@ SYSTEM_CONVERSIONS = [
 
 # Default user conversions - can be changed by user
 DEFAULT_USER_CONVERSIONS = [
+    # These defaults bridge weight and volume only as editable estimates.
+    # Ingredients have different densities, so the caterer may refine them.
+    (UnitType.CUP, UnitType.GRAM, 240.0, "1 כוס = 240 גרם (הערכה כללית, ניתנת לשינוי)"),
+    (UnitType.GRAM, UnitType.CUP, 1.0 / 240.0, "1 גרם = 1/240 כוס (הערכה כללית, ניתנת לשינוי)"),
     (UnitType.TABLESPOON, UnitType.GRAM, 15.0, "1 כף = 15 גרם (ניתן לשינוי)"),
+    (UnitType.GRAM, UnitType.TABLESPOON, 1.0 / 15.0, "1 גרם = 1/15 כף (ניתן לשינוי)"),
     (UnitType.TEASPOON, UnitType.GRAM, 5.0, "1 כפית = 5 גרם (ניתן לשינוי)"),
+    (UnitType.GRAM, UnitType.TEASPOON, 1.0 / 5.0, "1 גרם = 1/5 כפית (ניתן לשינוי)"),
     (UnitType.PINCH, UnitType.GRAM, 0.5, "1 קורט = 0.5 גרם (ניתן לשינוי)"),
+    (UnitType.GRAM, UnitType.PINCH, 2.0, "1 גרם = 2 קורט (ניתן לשינוי)"),
+    (UnitType.TABLESPOON, UnitType.ML, 15.0, "1 כף = 15 מ\"ל (ניתן לשינוי)"),
+    (UnitType.ML, UnitType.TABLESPOON, 1.0 / 15.0, "1 מ\"ל = 1/15 כף (ניתן לשינוי)"),
+    (UnitType.TEASPOON, UnitType.ML, 5.0, "1 כפית = 5 מ\"ל (ניתן לשינוי)"),
+    (UnitType.ML, UnitType.TEASPOON, 1.0 / 5.0, "1 מ\"ל = 1/5 כפית (ניתן לשינוי)"),
+    (UnitType.PINCH, UnitType.ML, 0.5, "1 קורט = 0.5 מ\"ל (ניתן לשינוי)"),
+    (UnitType.ML, UnitType.PINCH, 2.0, "1 מ\"ל = 2 קורט (ניתן לשינוי)"),
 ]
 
 
@@ -105,11 +119,12 @@ class UnitConversionService:
         if existing:
             raise AppException(400, "המרה זו כבר קיימת")
         
-        # Validate same category
+        # Allow an explicit, editable weight/volume estimate, but never mix a
+        # count unit with weight or volume.
         from_cat = UNIT_CATEGORY_MAP.get(from_unit)
         to_cat = UNIT_CATEGORY_MAP.get(to_unit)
-        if from_cat != to_cat:
-            raise AppException(400, "ניתן להמיר רק בין יחידות מאותו סוג (משקל, נפח, או כמות)")
+        if from_cat != to_cat and {from_cat, to_cat} != {UnitCategory.WEIGHT, UnitCategory.VOLUME}:
+            raise AppException(400, "ניתן להמיר בין יחידות מאותו סוג, או בין משקל לנפח כהערכה ניתנת לעריכה")
         
         conversion = UnitConversion(
             from_unit=from_unit,
@@ -206,10 +221,7 @@ class UnitConversionService:
             raise AppException(400, f"יחידת מידה לא מוגדרת בקטגוריה: {parsed_from.value} או {parsed_to.value}")
         
         if from_cat != to_cat:
-            raise AppException(
-                400, 
-                f"לא ניתן להמיר בין {parsed_from.value} ({from_cat.value}) ל-{parsed_to.value} ({to_cat.value})"
-            )
+            return self._convert_via_path(value, parsed_from, parsed_to)
         
         # Try direct conversion first
         direct = self.get_conversion(parsed_from, parsed_to)
@@ -239,6 +251,38 @@ class UnitConversionService:
         raise AppException(
             400,
             f"לא נמצאה דרך להמיר מ-{parsed_from.value} ל-{parsed_to.value}. יש להגדיר המרה בהגדרות."
+        )
+
+    def _convert_via_path(
+        self,
+        value: float,
+        from_unit: UnitType,
+        to_unit: UnitType,
+    ) -> Tuple[float, List[str]]:
+        """Resolve an explicit, editable cross-category conversion path."""
+        adjacency: dict[UnitType, list[tuple[UnitType, float]]] = {}
+        for conversion in self.get_all():
+            adjacency.setdefault(conversion.from_unit, []).append(
+                (conversion.to_unit, float(conversion.factor))
+            )
+
+        queue = deque([(from_unit, 1.0, [from_unit.value])])
+        visited = {from_unit}
+        while queue:
+            current, factor, path = queue.popleft()
+            for target, edge_factor in adjacency.get(current, []):
+                if target in visited:
+                    continue
+                target_factor = factor * edge_factor
+                target_path = [*path, target.value]
+                if target == to_unit:
+                    return value * target_factor, target_path
+                visited.add(target)
+                queue.append((target, target_factor, target_path))
+
+        raise AppException(
+            400,
+            f"לא נמצאה דרך להמיר מ-{from_unit.value} ל-{to_unit.value}. יש להגדיר המרה בהגדרות."
         )
 
     def calculate_inventory_deduction(

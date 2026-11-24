@@ -374,7 +374,7 @@
                   <label class="field-label">מחיר עלות (₪)</label>
                   <div class="cost-display-box">
                     <i class="pi pi-calculator"></i>
-                    <span class="cost-value">{{ calculateBasePrice() | number:'1.0-2' }} ₪</span>
+                    <span class="cost-value">{{ getCalculatedBasePriceLabel() }}</span>
                   </div>
                   <small class="price-hint">מחושב אוטומטית מסכום המרכיבים</small>
                 </div>
@@ -516,7 +516,7 @@
 
             <p-divider></p-divider>
             <div class="ingredients-summary">
-              <span style="font-weight: bold; background-color: #e5ff21; padding: 5px;">עלות מרכיבים מחושבת: <strong>{{ calculateBasePrice() | number:'1.0-2' }} ₪</strong></span>
+              <span style="font-weight: bold; background-color: #e5ff21; padding: 5px;">עלות מרכיבים מחושבת: <strong>{{ getCalculatedBasePriceLabel() }}</strong></span>
             </div>
           </div>
         </p-tabpanel>
