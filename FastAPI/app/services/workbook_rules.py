@@ -19,7 +19,7 @@ for key, name, amount, unit, row in [
     ('almond_sesame', 'שקדים ושומשום', 25, 'גרם', 9),
     ('munchies', 'מנצס', 12, 'גרם', 10), ('pine_nuts', 'צנוברים', 6, 'גרם', 11),
     ('rice_topping', 'תערובת שקדים חמוציות וסילאן', 50, 'גרם', 12),
-    ('snacks', 'נשנושים — יחידה לבירור', .05, None, 13),
+    ('snacks', 'נשנושים — מקדם לבירור', .05, 'חבילה', 13),
     ('citrus_sauce', 'רוטב חסה הדרים', 70, 'מ״ל', 18),
     ('soy_sauce', 'רוטב כרוב סויה', 50, 'מ״ל', 19),
     ('mayo_sauce', 'רוטב חסה מיונז', 70, 'מ״ל', 20),
@@ -33,8 +33,8 @@ for key, name, divisor, column in [
     ('cherry', 'עגבניות שרי', 60, 'G'), ('green_onion', 'בצל ירוק', 30, 'H'),
     ('parsley', 'פטרוזיליה', 60, 'I'), ('mushrooms', 'פטריות', 40, 'J'), ('sprouts', 'נבטים עבים', 30, 'K'),
 ]:
-    PRESETS['fresh_'+key] = dict(key='fresh_'+key, name=name+' — יחידה לבירור', factor=1,
-        divisor=divisor, unit=None, sheet=FRESH_SHEET, cell=f'{column}5/{column}6', group='סלטים חיים', audience_fraction=1)
+    PRESETS['fresh_'+key] = dict(key='fresh_'+key, name=name, factor=1,
+        divisor=divisor, unit=('חבילה' if key in ('iceberg', 'lettuce', 'green_onion', 'parsley', 'mushrooms') else 'ק\"ג'), sheet=FRESH_SHEET, cell=f'{column}5/{column}6', group='סלטים חיים', audience_fraction=1)
 
 PRESETS['salad_liters'] = dict(key='salad_liters', name='סלט לשליחה — ליטר לכל 3 שולחנות',
     factor=1, divisor=24, unit='ליטר', sheet=SALAD_SHEET, cell='C3:C4', group='סלטים לשליחה', audience_fraction=1)

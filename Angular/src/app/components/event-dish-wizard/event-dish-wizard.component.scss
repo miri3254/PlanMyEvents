@@ -655,3 +655,8 @@
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
 }
+
+.extras-panel { padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--surface-border, #ddd); border-radius: 12px; background: var(--surface-card, white); }
+.extras-panel label { display: inline-flex; align-items: center; gap: .5rem; margin: .5rem; }
+.extras-panel select, .extras-panel input, .extras-panel button { max-width: 100%; padding: .5rem; }
+.extras-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; padding: .5rem; border-bottom: 1px solid var(--surface-border, #ddd); }

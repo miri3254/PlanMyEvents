@@ -12,7 +12,7 @@ RULES = {
 # Exact legacy template keys only; event_category is deliberately never read.
 LEGACY_PROFILES = {
     'SHABBAT': 'shabbat', 'שבת': 'shabbat', 'תפריט שבת': 'shabbat',
-    'שולחן מתוק': 'sweet', 'אירוע מתוק': 'sweet',
+    'שולחן מתוק': 'sweet', 'אירוע מתוק': 'sweet', 'תפריט מתוק': 'sweet',
     'שבת מפוצל': 'shabbat_split', 'שבת מפוצלת': 'shabbat_split',
 }
 

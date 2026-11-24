@@ -322,7 +322,7 @@
               (onClick)="openEventDetails(event)">
             </p-button>
             <p-button
-              label="הוסף מנות"
+              label="הוסף מנות או כלים"
               icon="pi pi-plus-circle"
               size="small"
               [text]="true"
@@ -440,6 +440,17 @@
               {{ cloth.quantity }} מפות
               <small class="compute-hint">{{ cloth.formula_label }}</small>
               <small *ngIf="calculationSummary?.has_approved_snapshot">חישוב שמור מאישור האירוע</small>
+              <span class="tablecloth-split" *ngIf="calculationSummary?.settings">
+                סה"כ לפי החישוב: {{ getTableclothRequiredTotal() }} —
+                <label>מלבן <input type="number" min="0" class="split-input" [ngModel]="getTableclothSplit().rectangle"
+                  (change)="onTableclothSplitChange('rectangle', $any($event.target).valueAsNumber)"></label>
+                <label>מרובע <input type="number" min="0" class="split-input" [ngModel]="getTableclothSplit().square"
+                  (change)="onTableclothSplitChange('square', $any($event.target).valueAsNumber)"></label>
+                <small class="split-warning"
+                  *ngIf="(getTableclothSplit().rectangle + getTableclothSplit().square) && getTableclothSplit().rectangle + getTableclothSplit().square !== getTableclothRequiredTotal()">
+                  הסימון ({{ getTableclothSplit().rectangle + getTableclothSplit().square }}) שונה מהסה"כ הנדרש
+                </small>
+              </span>
             </span>
             <ng-template #tableclothLoading><span class="value">{{ calculationLoading ? 'מחשב…' : 'החישוב אינו זמין' }}</span></ng-template>
           </div>
@@ -618,24 +629,32 @@
             <div class="dialog-actions">
              
               <p-button
-                label="בחירת מנות לאירוע"
+                label="הוספת מנות או כלים"
                 icon="pi pi-plus-circle"
                 severity="primary"
                 size="small"
                 (onClick)="navigateToAddDishes(selectedEvent)">
               </p-button>
               <p-button
-                label="דף משלוח PDF"
+                label="דף מוביל הלוך"
                 icon="pi pi-truck"
                 severity="success"
                 size="small"
                 (onClick)="generateDeliverySheetPdf(selectedEvent)">
               </p-button>
+              <p-button
+                label="דף מוביל חזור"
+                icon="pi pi-replay"
+                severity="success"
+                size="small"
+                [outlined]="true"
+                (onClick)="generateReturnSheetPdf(selectedEvent)">
+              </p-button>
               <small class="status-hint" *ngIf="!selectedEvent.dishes || selectedEvent.dishes.length === 0">
                 לא ניתן ליצור קובץ הוראות - לא נבחרו מנות לאירוע
               </small>
               <p-button
-                label="יצירת קובץ הוראות למלצר"
+                label="הוראות הגשה ועריכה (מלצר)"
                 icon="pi pi-file-pdf"
                 severity="help"
                 size="small"
@@ -644,8 +663,8 @@
                 (onClick)="generateWaiterPdf(selectedEvent)">
               </p-button>
               <p-button
-                label="סיכום לבעל הקייטרינג"
-                icon="pi pi-file"
+                label="רשימת אריזה"
+                icon="pi pi-box"
                 severity="secondary"
                 size="small"
                 [disabled]="!selectedEvent.dishes || selectedEvent.dishes.length === 0"
@@ -1059,6 +1078,17 @@
           <label>טלפון בעל אולם</label>
           <input pInputText [(ngModel)]="eventForm.hallOwnerPhone" />
 
+          <label>מקומות בכל צד</label>
+          <div class="seating-sides">
+            <div class="seating-side-row" *ngFor="let side of eventForm.seatingSides; let i = index">
+              <input pInputText placeholder="צד (גברים / נשים / מזרח...)" [(ngModel)]="side.side" />
+              <input pInputText type="number" min="0" placeholder="מקומות" [(ngModel)]="side.places" />
+              <input pInputText placeholder="צורת סידור (מזרח / מרובע / ארוכים...)" [(ngModel)]="side.arrangement" />
+              <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger" (click)="removeSeatingSide(i)"></button>
+            </div>
+            <button pButton type="button" icon="pi pi-plus" label="הוספת צד" class="p-button-text" (click)="addSeatingSide()"></button>
+          </div>
+
           <label>סוג כלים</label>
           <p-select
             [options]="dishwareTypeOptions"
@@ -1149,7 +1179,7 @@
           (onClick)="submitEventForm()">
         </p-button>
         <p-button
-          label="שמור והוסף מנות"
+          label="שמור והוסף מנות או כלים"
           icon="pi pi-plus-circle"
           severity="success"
           [loading]="eventFormSubmitting"

@@ -21,7 +21,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { Subject, Observable, EMPTY, of } from 'rxjs';
-import { take, takeUntil, catchError, map, switchMap } from 'rxjs/operators';
+import { take, takeUntil, catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ApiEventService } from '../../services/api-event.service';
 import { ApiProductService } from '../../services/api-product.service';
 import { ApiLookupService } from '../../services/api-lookup.service';
@@ -40,7 +40,8 @@ import {
   LookupValue,
   EventCalculationSummary,
   RollSplit,
-  EventToolSetItem
+  EventToolSetItem,
+  SeatingSide
 } from '../../core/models/api.models';
 import { CalendarDay, HebrewDateParts, EventStatus, Event, EventOwner, EVENT_STATUSES } from '../../core/models';
 import {
@@ -124,6 +125,7 @@ function mapApiEventToEvent(apiEvent: ApiEvent): Event {
     onsiteContactPhone: apiEvent.onsite_contact_phone,
     hallOwnerName: apiEvent.hall_owner_name,
     hallOwnerPhone: apiEvent.hall_owner_phone,
+    seatingSides: apiEvent.seating_sides || [],
     hasNearbyParking: apiEvent.has_nearby_parking,
     hasBackEntrance: apiEvent.has_back_entrance,
     requiresCarts: apiEvent.requires_carts,
@@ -223,6 +225,7 @@ interface EventFormModel {
   onsiteContactPhone?: string;
   hallOwnerName?: string;
   hallOwnerPhone?: string;
+  seatingSides: SeatingSide[];
   hasNearbyParking: boolean;
   hasBackEntrance: boolean;
   requiresCarts: boolean;
@@ -679,6 +682,42 @@ export class EventsComponent implements OnInit, OnDestroy {
     return this.calculationSummary?.tool_requirements.find(row => row.source_type === 'tablecloths');
   }
 
+  /** סה"כ מפות לפי החישוב (מנות ÷ 8 + ספייר) – מהשרת; החלוקה למלבן/מרובע מסומנת ידנית. */
+  getTableclothRequiredTotal(): number {
+    const row = this.getTableclothRequirement();
+    const details = (row?.details || {}) as Record<string, number>;
+    return Number(details['base_quantity'] || 0) + Number(details['spare_quantity'] || 0) || Number(row?.quantity || 0);
+  }
+
+  getTableclothSplit(): { rectangle: number; square: number } {
+    const split = this.calculationSummary?.settings?.tablecloth_split || {};
+    return { rectangle: Number(split.rectangle || 0), square: Number(split.square || 0) };
+  }
+
+  onTableclothSplitChange(shape: 'rectangle' | 'square', value: number | null): void {
+    const settings = this.calculationSummary?.settings;
+    if (!settings) return;
+    const split = this.getTableclothSplit();
+    split[shape] = Math.max(0, Number(value || 0));
+    settings.tablecloth_split = split.rectangle || split.square ? split : null;
+    this.saveCalculationSettings();
+  }
+
+  addSeatingSide(): void {
+    this.eventForm.seatingSides.push({ side: '', places: null, arrangement: '' });
+  }
+
+  removeSeatingSide(index: number): void {
+    this.eventForm.seatingSides.splice(index, 1);
+  }
+
+  /** דף למוביל החוזר: מה אמור לחזור לקייטרינג + הוראות החזרה */
+  generateReturnSheetPdf(event: Event): void {
+    if (!event?.id) return;
+    this.eventService.printReturnSheetPdf(event.id);
+    this.messageService.add({ severity: 'info', summary: 'PDF נוצר', detail: 'דף המוביל החוזר נפתח בחלון חדש' });
+  }
+
   recalculateSelectedEvent(): void {
     if (!this.selectedEvent) return;
     this.calculationLoading = true;
@@ -1036,6 +1075,7 @@ export class EventsComponent implements OnInit, OnDestroy {
       onsiteContactPhone: event.onsiteContactPhone || '',
       hallOwnerName: event.hallOwnerName || '',
       hallOwnerPhone: event.hallOwnerPhone || '',
+      seatingSides: (event.seatingSides || []).map(side => ({ ...side })),
       hasNearbyParking: !!event.hasNearbyParking,
       hasBackEntrance: !!event.hasBackEntrance,
       requiresCarts: !!event.requiresCarts,
@@ -1158,7 +1198,46 @@ export class EventsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Business warnings from the server are shown, never blocking (user decisions 2026-11-23). */
+  private showBusinessWarnings(warnings: string[] | undefined): void {
+    for (const detail of warnings || []) {
+      this.messageService.add({ severity: 'warn', summary: 'שימי לב', detail, life: 8000 });
+    }
+  }
+
+  private sensitiveChangesConfirmed = false;
+
+  /** Returns true when the save may continue now; otherwise asks first and re-runs `retry`. */
+  private confirmSensitiveChanges(retry: () => void): boolean {
+    if (this.sensitiveChangesConfirmed || this.eventFormMode === 'create' || !this.eventForm.id) {
+      this.sensitiveChangesConfirmed = false;
+      return true;
+    }
+    const original = this.events.find(e => e.id === this.eventForm.id);
+    if (!original) return true;
+    const messages: string[] = [];
+    if (original.menuType !== this.eventForm.menuType && (original.dishes?.length || 0) > 0) {
+      messages.push(`החלפת התפריט תמחק את ${original.dishes!.length} המנות שנבחרו מהתפריט הקודם.`);
+    }
+    const coreChanged = original.guestCount !== this.eventForm.guestCount
+      || original.menuType !== this.eventForm.menuType
+      || !!original.isRealDishes !== !!this.eventForm.isRealDishes;
+    if (original.status === 'מאושר' && coreChanged) {
+      messages.push('האירוע מאושר. הכמויות והשריונים יחושבו מחדש, והמחירים יישארו כפי שאושרו.');
+    }
+    if (!messages.length) return true;
+    this.confirmationService.confirm({
+      header: 'אישור שינוי',
+      message: messages.join('<br>'),
+      acceptLabel: 'המשך',
+      rejectLabel: 'ביטול',
+      accept: () => { this.sensitiveChangesConfirmed = true; retry(); },
+    });
+    return false;
+  }
+
   submitEventForm(): void {
+    if (!this.confirmSensitiveChanges(() => this.submitEventForm())) return;
     if (!this.isFormValid()) {
       this.messageService.add({
         severity: 'warn',
@@ -1202,6 +1281,7 @@ export class EventsComponent implements OnInit, OnDestroy {
       this.eventService.createEvent(createPayload)
         .pipe(
           take(1),
+          tap(apiEvent => this.showBusinessWarnings(apiEvent.warnings)),
           map(mapApiEventToEvent),
           switchMap((created: Event) => this.eventForm.status && this.eventForm.status !== created.status
             ? this.eventService.updateEventStatus(created.id, { status: this.eventForm.status as any }).pipe(map(mapApiEventToEvent))
@@ -1256,6 +1336,7 @@ export class EventsComponent implements OnInit, OnDestroy {
         .updateEvent(this.eventForm.id, updatePayload)
         .pipe(
           take(1),
+          tap(apiEvent => this.showBusinessWarnings(apiEvent.warnings)),
           map(mapApiEventToEvent),
           switchMap((updated: Event) => this.eventForm.status && this.eventForm.status !== updated.status
             ? this.eventService.updateEventStatus(updated.id, { status: this.eventForm.status as any }).pipe(map(mapApiEventToEvent))
@@ -1296,6 +1377,7 @@ export class EventsComponent implements OnInit, OnDestroy {
   }
 
   submitAndNavigateToDishes(): void {
+    if (!this.confirmSensitiveChanges(() => this.submitAndNavigateToDishes())) return;
     if (!this.isFormValid()) {
       this.messageService.add({
         severity: 'warn',
@@ -1340,6 +1422,7 @@ export class EventsComponent implements OnInit, OnDestroy {
       this.eventService.createEvent(createPayload)
         .pipe(
           take(1),
+          tap(apiEvent => this.showBusinessWarnings(apiEvent.warnings)),
           map(mapApiEventToEvent),
           switchMap((created: Event) => this.eventForm.status && this.eventForm.status !== created.status
             ? this.eventService.updateEventStatus(created.id, { status: this.eventForm.status as any }).pipe(map(mapApiEventToEvent))
@@ -1355,7 +1438,7 @@ export class EventsComponent implements OnInit, OnDestroy {
             this.messageService.add({
               severity: 'success',
               summary: 'אירוע נוצר',
-              detail: `${this.eventForm.name} נוסף ללוח - עובר להוספת מנות`
+              detail: `${this.eventForm.name} נוסף ללוח - עובר להוספת מנות או כלים`
             });
             this.eventFormSubmitting = false;
             this.closeEventForm();
@@ -1398,6 +1481,7 @@ export class EventsComponent implements OnInit, OnDestroy {
         .updateEvent(this.eventForm.id, updatePayload)
         .pipe(
           take(1),
+          tap(apiEvent => this.showBusinessWarnings(apiEvent.warnings)),
           map(mapApiEventToEvent),
           switchMap((updated: Event) => this.eventForm.status && this.eventForm.status !== updated.status
             ? this.eventService.updateEventStatus(updated.id, { status: this.eventForm.status as any }).pipe(map(mapApiEventToEvent))
@@ -1417,7 +1501,7 @@ export class EventsComponent implements OnInit, OnDestroy {
             this.messageService.add({
               severity: 'success',
               summary: 'אירוע עודכן',
-              detail: `${updated.name} נשמר בהצלחה - עובר להוספת מנות`
+              detail: `${updated.name} נשמר בהצלחה - עובר להוספת מנות או כלים`
             });
             this.eventFormSubmitting = false;
             this.closeEventForm();
@@ -1618,7 +1702,7 @@ export class EventsComponent implements OnInit, OnDestroy {
     this.messageService.add({
       severity: 'info',
       summary: 'PDF נוצר',
-      detail: 'קובץ סיכום לבעל הקייטרינג נפתח בחלון חדש'
+      detail: 'רשימת האריזה נפתחה בחלון חדש'
     });
   }
 
@@ -1653,7 +1737,7 @@ export class EventsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * ניווט לדף בחירת מנות לאירוע
+   * ניווט לדף הוספת מנות או כלים
    */
   navigateToAddDishes(event: Event): void {
     if (!event?.id) {
@@ -2049,6 +2133,7 @@ export class EventsComponent implements OnInit, OnDestroy {
       onsiteContactPhone: '',
       hallOwnerName: '',
       hallOwnerPhone: '',
+      seatingSides: [],
       hasNearbyParking: false,
       hasBackEntrance: false,
       requiresCarts: false,
@@ -2322,6 +2407,9 @@ export class EventsComponent implements OnInit, OnDestroy {
       onsite_contact_phone: this.eventForm.onsiteContactPhone?.trim() || undefined,
       hall_owner_name: this.eventForm.hallOwnerName?.trim() || undefined,
       hall_owner_phone: this.eventForm.hallOwnerPhone?.trim() || undefined,
+      seating_sides: this.eventForm.seatingSides
+        .filter(side => side.side?.trim() || side.places)
+        .map(side => ({ side: side.side?.trim() || '', places: side.places ?? null, arrangement: side.arrangement?.trim() || '' })),
       has_nearby_parking: this.eventForm.hasNearbyParking,
       has_back_entrance: this.eventForm.hasBackEntrance,
       requires_carts: this.eventForm.requiresCarts,

@@ -210,7 +210,7 @@
 
                   <!-- Normal view -->
                   <ng-container *ngIf="!dishEditMap[$any(dish.id)]">
-                    <span class="dish-name">{{ dish.dish_name }}</span>
+                    <span class="dish-name">{{ dish.dish_name }}</span><small *ngIf="dish.default_serving_mode">{{ dish.default_serving_mode === "personal" ? "הגשה אישית" : "הגשה במרכז השולחן" }}</small>
                     <span class="dish-kosher kosher-badge small" [ngClass]="getKosherClass(dish.dish_kosher_type || '')">{{ dish.dish_kosher_type }}</span>
                     <span *ngIf="dish.dish_client_price" class="dish-price">₪{{ dish.dish_client_price }}</span>
                     <p-tag *ngIf="dish.is_upgrade" value="שדרוג" severity="warn" styleClass="upgrade-tag"></p-tag>
@@ -224,6 +224,7 @@
                   <!-- Inline edit view -->
                   <ng-container *ngIf="dishEditMap[$any(dish.id)]">
                     <span class="dish-name edit-mode-name">{{ dish.dish_name }}</span>
+                  <label>הגשה בתפריט <select [(ngModel)]="dishEditMap[$any(dish.id)].default_serving_mode"><option [ngValue]="null">לפי הגדרת המנה</option><option value="personal">אישית</option><option value="central">במרכז השולחן</option></select></label>
                     <p-checkbox [(ngModel)]="dishEditMap[$any(dish.id)].is_upgrade" [binary]="true" label="שדרוג"></p-checkbox>
                     <p-inputNumber
                       [(ngModel)]="dishEditMap[$any(dish.id)].extra_charge"
@@ -270,7 +271,7 @@
 
                 <!-- Normal view -->
                 <ng-container *ngIf="!dishEditMap[$any(dish.id)]">
-                  <span class="dish-name">{{ dish.dish_name }}</span>
+                  <span class="dish-name">{{ dish.dish_name }}</span><small *ngIf="dish.default_serving_mode">{{ dish.default_serving_mode === "personal" ? "הגשה אישית" : "הגשה במרכז השולחן" }}</small>
                   <span class="dish-kosher kosher-badge small" [ngClass]="getKosherClass(dish.dish_kosher_type || '')">{{ dish.dish_kosher_type }}</span>
                   <span *ngIf="dish.dish_client_price" class="dish-price">₪{{ dish.dish_client_price }}</span>
                   <p-tag *ngIf="dish.is_upgrade" value="שדרוג" severity="warn" styleClass="upgrade-tag"></p-tag>
@@ -284,6 +285,7 @@
                 <!-- Inline edit view -->
                 <ng-container *ngIf="dishEditMap[$any(dish.id)]">
                   <span class="dish-name edit-mode-name">{{ dish.dish_name }}</span>
+                  <label>הגשה בתפריט <select [(ngModel)]="dishEditMap[$any(dish.id)].default_serving_mode"><option [ngValue]="null">לפי הגדרת המנה</option><option value="personal">אישית</option><option value="central">במרכז השולחן</option></select></label>
                   <p-checkbox [(ngModel)]="dishEditMap[$any(dish.id)].is_upgrade" [binary]="true" label="שדרוג"></p-checkbox>
                   <p-inputNumber
                     [(ngModel)]="dishEditMap[$any(dish.id)].extra_charge"

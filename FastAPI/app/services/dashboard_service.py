@@ -148,6 +148,13 @@ class DashboardService:
 
     # ─── Profitability Calculations ──────────────────────────────────────
 
+    @staticmethod
+    def _event_revenue(event: Event) -> float:
+        """Same rule as EventCalculationService: the agreed final price wins (after discount)."""
+        if event.final_price is not None:
+            return float(event.final_price)
+        return float(event.calculated_price or event.total_price or 0.0)
+
     def _calculate_event_food_cost(self, event: Event) -> float:
         """Calculate total food cost for an event based on dishes and ingredients."""
         total_cost = 0.0
@@ -158,11 +165,11 @@ class DashboardService:
             if not dish:
                 continue
             
-            quantity = event_dish.quantity or 1
-            
-            # Use dish base_price as cost if available
+            quantity = event_dish.quantity or 1  # dish units (recipe yield units)
+
+            # Dish base_price is cost PER PERSON (user decision Q008).
             if dish.base_price:
-                total_cost += dish.base_price * quantity
+                total_cost += dish.base_price * (event.guest_count or 0)
             else:
                 # Calculate from ingredients
                 for ingredient in dish.ingredients:
@@ -185,10 +192,10 @@ class DashboardService:
 
     def _calculate_event_profitability(self, event: Event) -> dict:
         """Calculate full profitability metrics for a single event."""
-        revenue = event.total_price or 0.0
+        revenue = self._event_revenue(event)
         food_cost = self._calculate_event_food_cost(event)
         
-        # Estimate labor cost (could be configurable - using 15% of revenue as estimate)
+        # Labor = 15% of revenue is NOT from the client — open question O12 (keep until answered).
         labor_cost = revenue * 0.15 if revenue > 0 else 0
         
         # Equipment cost (minimal estimate)
@@ -513,7 +520,7 @@ class DashboardService:
             .all()
         )
 
-        total_revenue = sum((e.total_price or 0) for e in approved_events)
+        total_revenue = sum(self._event_revenue(e) for e in approved_events)
         total_guests = sum((e.guest_count or 0) for e in approved_events)
 
         return {

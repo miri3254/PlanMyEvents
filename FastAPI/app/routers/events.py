@@ -5,7 +5,6 @@ Events router — all event CRUD + sub-resources (dishes, trays, lists).
 from datetime import datetime
 from typing import Optional
 from urllib.parse import quote
-import math
 
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import StreamingResponse
@@ -29,12 +28,27 @@ from app.schemas.event import (
     ShoppingListResponse, EquipmentListResponse,
 )
 from app.schemas.common import SuccessResponse, BulkOperationResponse
-from app.models.event import DeliveryNoteTemplate, Event, EventDish
-from app.models.dish import Dish, ServingDish
-from app.models.tool import Tool
-from app.utils.pdf_generator import generate_delivery_sheet_pdf, generate_waiter_pdf, generate_shopping_pdf
+from app.models.event import DeliveryNoteTemplate, Event
+from app.utils.pdf_generator import generate_shopping_pdf
+from app.services.event_documents_service import EventDocumentsService
 
 router = APIRouter(prefix="/events", tags=["events"])
+
+def _branded_pdf_response(event_id: int, db: Session, render, prefix: str) -> StreamingResponse:
+    """Branded event documents (caterer instructions 2026-11); data comes from the calculation service."""
+    event = db.query(Event).filter(Event.id == event_id, Event.is_deleted == False).first()  # noqa: E712
+    if not event:
+        raise HTTPException(status_code=404, detail="אירוע לא נמצא")
+    try:
+        buffer = render(EventDocumentsService(db), event)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=500, detail=f"שגיאה בהגדרת פונט: {str(e)}")
+    date_part = event.date.strftime("%d-%m-%Y") if event.date else ""
+    filename = f"{prefix}_{event.name.replace(' ', '_').replace('/', '-')}_{date_part}.pdf"
+    return StreamingResponse(buffer, media_type="application/pdf", headers={
+        "Content-Disposition": f"inline; filename=\"document.pdf\"; filename*=UTF-8''{quote(filename, safe='')}",
+        "Content-Type": "application/pdf",
+    })
 
 
 def _event_sequence_label(event: Event, db: Session) -> str | None:
@@ -57,75 +71,7 @@ def _svc(db: Session = Depends(get_db)) -> EventService:
     return EventService(db)
 
 
-def _requirement_value(requirement, key: str, default=None):
-    if isinstance(requirement, dict):
-        return requirement.get(key, default)
-    return getattr(requirement, key, default)
-
-
-def _format_waiter_quantity(value) -> str:
-    try:
-        numeric = float(value or 0)
-    except (TypeError, ValueError):
-        return str(value or "")
-    if numeric.is_integer():
-        return str(int(numeric))
-    return f"{numeric:.1f}".rstrip("0").rstrip(".")
-
-
-def _append_drinks_to_waiter_data(event: Event, dishes_data: list[dict], db: Session) -> None:
-    try:
-        summary = EventCalculationService(db).summarize(event)
-    except Exception:
-        return
-
-    drink_rows = [
-        item for item in (summary.product_requirements or [])
-        if _requirement_value(item, "source_type") == "drink"
-    ]
-    if not drink_rows:
-        return
-
-    for item in drink_rows:
-        name = _requirement_value(item, "name", "")
-        quantity = _format_waiter_quantity(_requirement_value(item, "quantity", ""))
-        unit = _requirement_value(item, "unit", "")
-        label = f"{name} - {quantity} {unit}".strip()
-        dishes_data.append({
-            "name": label,
-            "category": "שתיה",
-            "serving_dishes": [{"name": "בקבוקי שתיה", "quantity": 1}],
-            "serving_description": "לוודא שהשתיה נמצאת באירוע ומסודרת במקום נגיש למלצרים.",
-            "notes": "",
-            "waiter_notes": "",
-        })
-
-
 # ── CRUD ──────────────────────────────────────────────────────────────
-
-def _event_tool_set_items_for_pdf(event: Event, db: Session) -> list[dict]:
-    settings = EventCalculationService(db).get_settings(event.id, create=False)
-    if not settings or settings.event_tool_set_items is None:
-        return []
-
-    guest_count = event.guest_count or 1
-    result: list[dict] = []
-    for row in settings.event_tool_set_items:
-        per_guest = float(row.get("quantity_per_guest") or 0)
-        tool_id = row.get("tool_id")
-        if per_guest <= 0 or not tool_id:
-            continue
-
-        tool = db.query(Tool).filter(Tool.id == tool_id).first()
-        if not tool:
-            continue
-
-        result.append({
-            "name": tool.name,
-            "calculated_quantity": math.ceil(guest_count * per_guest),
-        })
-    return result
-
 
 @router.get("", response_model=EventListResponse)
 def get_events(
@@ -207,8 +153,8 @@ def add_dish(event_id: int, data: EventDishCreate, svc: EventService = Depends(_
 
 
 @router.put("/{event_id}/dishes/{dish_id}", response_model=EventResponse)
-def update_dish(event_id: int, dish_id: int, data: EventDishUpdate, svc: EventService = Depends(_svc)):
-    return svc.update_event_dish(event_id, dish_id, data)
+def update_dish(event_id: int, dish_id: int, data: EventDishUpdate, event_dish_id: int | None = None, svc: EventService = Depends(_svc)):
+    return svc.update_event_dish(event_id, dish_id, data, event_dish_id)
 
 
 @router.delete("/{event_id}/dishes/{dish_id}", response_model=SuccessResponse)
@@ -303,7 +249,7 @@ def get_dish_serving_selections(event_id: int, db: Session = Depends(get_db)):
         selected = service._selection_map(event_id, kind)
         for ed in event.dishes:
             selected_id = selected.get(("dish", ed.id)) or selected.get(("dish_id", ed.dish_id))
-            resolved = service._resolve_serving_set(event, ed.dish_id, selected_id) if kind == "serving" else service._resolve_set(ed.dish_id, kind, selected_id)
+            resolved = service._resolve_serving_set(event, ed.dish_id, selected_id, ed) if kind == "serving" else service._resolve_set(ed.dish_id, kind, selected_id)
             if resolved:
                 result.append({"dish_id": ed.dish_id, "set_type": kind, "set_id": resolved.id})
     return result
@@ -320,6 +266,14 @@ def update_dish_serving_selections(
     calculations.replace_serving_selections(event_id, data.selections)
     db.commit()
     return calculations.summarize(event)
+
+
+@router.get("/{event_id}/calculations/manual-tools")
+def get_manual_tools(event_id: int, db: Session = Depends(get_db)):
+    from app.models.calculation import EventManualToolRow
+    _calculation_event(event_id, db)
+    return [dict(tool_id=r.tool_id, name=r.name, quantity=r.quantity, is_reusable=r.is_reusable, notes=r.notes)
+            for r in db.query(EventManualToolRow).filter_by(event_id=event_id).all()]
 
 
 @router.put("/{event_id}/calculations/manual-tools", response_model=EventCalculationSummary)
@@ -354,313 +308,25 @@ def get_equipment_list(event_id: int, svc: EventService = Depends(_svc)):
 
 
 @router.get("/{event_id}/delivery-sheet/pdf")
-def get_delivery_sheet_pdf(event_id: int, svc: EventService = Depends(_svc), db: Session = Depends(get_db)):
-    event = db.query(Event).filter(Event.id == event_id, Event.is_deleted == False).first()  # noqa: E712
-    if not event:
-        raise HTTPException(status_code=404, detail="אירוע לא נמצא")
-
-    event_data = svc.get_event(event_id)
-    event_date_formatted = event.date.strftime("%d/%m/%Y") if event.date else ""
-    event_sequence_label = _event_sequence_label(event, db)
-    event_sequence_color = event.day_sequence_color if event_sequence_label else None
-
-    try:
-        pdf_buffer = generate_delivery_sheet_pdf(
-            event_data=event_data,
-            event_date=event_date_formatted,
-            event_sequence_label=event_sequence_label,
-            event_sequence_color=event_sequence_color,
-        )
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=500, detail=f"שגיאה בהגדרת פונט: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"שגיאה ביצירת PDF: {str(e)}")
-
-    safe_event_name = event.name.replace(" ", "_").replace("/", "-")
-    filename = f"delivery_sheet_{safe_event_name}_{event_date_formatted.replace('/', '-')}.pdf"
-    encoded_filename = quote(filename, safe="")
-
-    return StreamingResponse(
-        pdf_buffer,
-        media_type="application/pdf",
-        headers={
-            "Content-Disposition": f"inline; filename=\"document.pdf\"; filename*=UTF-8''{encoded_filename}",
-            "Content-Type": "application/pdf",
-        },
-    )
+def get_delivery_sheet_pdf(event_id: int, db: Session = Depends(get_db)):
+    """דף מוביל הלוך: פרטים, בדיקה לפני יציאה ובהגעה, חמשת שלבי ההובלה, אישור מסירה."""
+    return _branded_pdf_response(event_id, db, lambda svc, e: svc.delivery_sheet_pdf(e), "delivery_out")
 
 
-# ── Waiter PDF ────────────────────────────────────────────────────────
+@router.get("/{event_id}/return-sheet/pdf")
+def get_return_sheet_pdf(event_id: int, db: Session = Depends(get_db)):
+    """דף מוביל חזור: מה אמור לחזור לקייטרינג + הוראות החזרה."""
+    return _branded_pdf_response(event_id, db, lambda svc, e: svc.return_sheet_pdf(e), "delivery_return")
 
 @router.get("/{event_id}/waiter-pdf")
 def get_waiter_pdf(event_id: int, db: Session = Depends(get_db)):
-    """
-    יצירת PDF להדפסה עבור מלצרים
-    
-    מחזיר קובץ PDF עם הוראות הגשה לכל המנות באירוע.
-    הקובץ כולל: שם האירוע, תאריך, רשימת מנות עם כלי הגשה והערות מיוחדות.
-    """
-    # שליפת האירוע
-    event = db.query(Event).filter(Event.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="אירוע לא נמצא")
-    
-    # עיצוב תאריך
-    event_date_formatted = event.date.strftime("%d/%m/%Y") if event.date else ""
-    
-    # איסוף נתוני המנות
-    dishes_data = []
-    calculated_serving_tools = EventCalculationService(db).serving_tools_for_document(event)
-    
-    for event_dish in event.dishes:
-        dish = db.query(Dish).filter(Dish.id == event_dish.dish_id).first()
-        if not dish:
-            continue
-        
-        # איסוף כלי הגשה
-        serving_dishes = []
-        for sd in dish.serving_dishes:
-            serving_name = sd.name or ""
-            # אם יש tool_id, ננסה לקבל פרטים נוספים
-            if sd.tool_id:
-                tool = db.query(Tool).filter(Tool.id == sd.tool_id).first()
-                if tool and tool.name:
-                    serving_name = tool.name
-                    # הוספת צבע/גודל אם קיים
-                    if tool.color:
-                        serving_name += f" ({tool.color})"
-            
-            serving_dishes.append({
-                "name": serving_name,
-                "quantity": sd.quantity
-            })
-        
-        if event_dish.id in calculated_serving_tools:
-            serving_dishes = calculated_serving_tools[event_dish.id]
-        # מציאת הקטגוריה מ-menu_mappings
-        category_name = "אחר"
-        if dish.menu_mappings:
-            # קח את הקטגוריה הראשונה
-            first_mapping = dish.menu_mappings[0]
-            if first_mapping.category and first_mapping.category.name_hebrew:
-                category_name = first_mapping.category.name_hebrew
-        
-        # בניית נתוני המנה
-        dish_data = {
-            "name": dish.name,
-            "category": category_name,
-            "serving_dishes": serving_dishes,
-            "serving_description": dish.serving_description,
-            "description": dish.description,
-            "notes": event_dish.notes or dish.waiter_notes,
-            "waiter_notes": dish.waiter_notes
-        }
-        
-        dishes_data.append(dish_data)
-    
-    # בדיקה שיש מנות
-    _append_drinks_to_waiter_data(event, dishes_data, db)
-
-    if not dishes_data:
-        raise HTTPException(status_code=400, detail="אין מנות באירוע זה")
-    
-    # בניית רשימת בעלי האירוע
-    owners = []
-    for owner in event.owners:
-        owners.append({
-            "name": owner.name,
-            "phone": owner.phone or ""
-        })
-    
-    # חישובים אוטומטיים
-    guest_count = event.guest_count or 1
-    waiter_count = math.ceil(guest_count / 50) * 2
-    table_count = math.ceil(guest_count / 8)
-    event_sequence_label = _event_sequence_label(event, db)
-    event_sequence_color = event.day_sequence_color if event_sequence_label else None
-
-    # יצירת ה-PDF
-    try:
-        pdf_buffer = generate_waiter_pdf(
-            event_name=event.name,
-            event_date=event_date_formatted,
-            hebrew_date=event.hebrew_date,
-            guest_count=guest_count,
-            location=event.address,
-            dishes_data=dishes_data,
-            blank_path=None,
-            hall_name=None,
-            city=event.city,
-            owners=owners,
-            event_notes=event.notes,
-            is_disposable=not event.is_real_dishes,
-            simple_mode=True,
-            waiter_count=waiter_count,
-            table_count=table_count,
-            event_sequence_label=event_sequence_label,
-            event_sequence_color=event_sequence_color,
-            event_tool_set_items=_event_tool_set_items_for_pdf(event, db),
-        )
-    except FileNotFoundError as e:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"שגיאה בהגדרת פונט: {str(e)}"
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"שגיאה ביצירת PDF: {str(e)}"
-        )
-    
-    # שם הקובץ
-    safe_event_name = event.name.replace(" ", "_").replace("/", "-")
-    filename = f"waiter_instructions_{safe_event_name}_{event_date_formatted.replace('/', '-')}.pdf"
-    encoded_filename = quote(filename, safe='')
-    
-    # החזרת הקובץ
-    return StreamingResponse(
-        pdf_buffer,
-        media_type="application/pdf",
-        headers={
-            "Content-Disposition": f"inline; filename=\"document.pdf\"; filename*=UTF-8''{encoded_filename}",
-            "Content-Type": "application/pdf"
-        }
-    )
-
-
-# ── Catering Owner PDF ────────────────────────────────────────────────
+    """הוראות הגשה ועריכה למלצר: אולם, צדדים, עריכה, מנות עם כלים/סכו"ם/תוספות, מוצרים נלווים."""
+    return _branded_pdf_response(event_id, db, lambda svc, e: svc.serving_instructions_pdf(e), "serving_instructions")
 
 @router.get("/{event_id}/catering-pdf")
 def get_catering_pdf(event_id: int, db: Session = Depends(get_db)):
-    """
-    יצירת PDF לבעל הקייטרינג - ללא רקע צבעוני
-    
-    מחזיר קובץ PDF נקי לבעלי הקייטרינג עם הוראות הגשה לכל המנות באירוע.
-    """
-    # שליפת האירוע
-    event = db.query(Event).filter(Event.id == event_id).first()
-    if not event:
-        raise HTTPException(status_code=404, detail="אירוע לא נמצא")
-    
-    # עיצוב תאריך
-    event_date_formatted = event.date.strftime("%d/%m/%Y") if event.date else ""
-    
-    # איסוף נתוני המנות
-    dishes_data = []
-    calculated_serving_tools = EventCalculationService(db).serving_tools_for_document(event)
-    
-    for event_dish in event.dishes:
-        dish = db.query(Dish).filter(Dish.id == event_dish.dish_id).first()
-        if not dish:
-            continue
-        
-        # איסוף כלי הגשה
-        serving_dishes = []
-        for sd in dish.serving_dishes:
-            serving_name = sd.name or ""
-            if sd.tool_id:
-                tool = db.query(Tool).filter(Tool.id == sd.tool_id).first()
-                if tool and tool.name:
-                    serving_name = tool.name
-                    if tool.color:
-                        serving_name += f" ({tool.color})"
-            
-            serving_dishes.append({
-                "name": serving_name,
-                "quantity": sd.quantity
-            })
-        
-        if event_dish.id in calculated_serving_tools:
-            serving_dishes = calculated_serving_tools[event_dish.id]
-        # מציאת הקטגוריה מ-menu_mappings
-        category_name = "אחר"
-        if dish.menu_mappings:
-            first_mapping = dish.menu_mappings[0]
-            if first_mapping.category and first_mapping.category.name_hebrew:
-                category_name = first_mapping.category.name_hebrew
-        
-        dish_data = {
-            "name": dish.name,
-            "category": category_name,
-            "serving_dishes": serving_dishes,
-            "serving_description": dish.serving_description,
-            "description": dish.description,
-            "notes": event_dish.notes or dish.waiter_notes,
-            "waiter_notes": dish.waiter_notes
-        }
-        
-        dishes_data.append(dish_data)
-    
-    _append_drinks_to_waiter_data(event, dishes_data, db)
-
-    if not dishes_data:
-        raise HTTPException(status_code=400, detail="אין מנות באירוע זה")
-    
-    # בניית רשימת בעלי האירוע
-    owners = []
-    for owner in event.owners:
-        owners.append({
-            "name": owner.name,
-            "phone": owner.phone or ""
-        })
-    
-    # חישובים אוטומטיים
-    guest_count_val = event.guest_count or 1
-    waiter_count = math.ceil(guest_count_val / 50) * 2
-    table_count = math.ceil(guest_count_val / 8)
-    event_sequence_label = _event_sequence_label(event, db)
-    event_sequence_color = event.day_sequence_color if event_sequence_label else None
-
-    # יצירת ה-PDF - מצב פשוט ללא רקע צבעוני
-    try:
-        pdf_buffer = generate_waiter_pdf(
-            event_name=event.name,
-            event_date=event_date_formatted,
-            hebrew_date=event.hebrew_date,
-            guest_count=guest_count_val,
-            location=event.address,
-            dishes_data=dishes_data,
-            blank_path=None,
-            hall_name=None,
-            city=event.city,
-            owners=owners,
-            event_notes=event.notes,
-            is_disposable=not event.is_real_dishes,
-            simple_mode=True,  # מצב פשוט - ללא רקע צבעוני
-            waiter_count=waiter_count,
-            table_count=table_count,
-            event_sequence_label=event_sequence_label,
-            event_sequence_color=event_sequence_color,
-            event_tool_set_items=_event_tool_set_items_for_pdf(event, db),
-            document_title="סיכום אירוע",
-        )
-    except FileNotFoundError as e:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"שגיאה בהגדרת פונט: {str(e)}"
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"שגיאה ביצירת PDF: {str(e)}"
-        )
-    
-    # שם הקובץ
-    safe_event_name = event.name.replace(" ", "_").replace("/", "-")
-    filename = f"catering_summary_{safe_event_name}_{event_date_formatted.replace('/', '-')}.pdf"
-    encoded_filename = quote(filename, safe='')
-    
-    return StreamingResponse(
-        pdf_buffer,
-        media_type="application/pdf",
-        headers={
-            "Content-Disposition": f"inline; filename=\"document.pdf\"; filename*=UTF-8''{encoded_filename}",
-            "Content-Type": "application/pdf"
-        }
-    )
-
-
-# ── Shopping / Quantities PDF ─────────────────────────────────────────
+    """רשימת אריזה (מחליפה את "סיכום אירוע"): אוכל, נלווים, מפות, כלים, ספייר, כלי מלצר, תוספות."""
+    return _branded_pdf_response(event_id, db, lambda svc, e: svc.packing_list_pdf(e), "packing_list")
 
 @router.get("/{event_id}/shopping-pdf")
 def get_shopping_pdf(event_id: int, svc: EventService = Depends(_svc), db: Session = Depends(get_db)):

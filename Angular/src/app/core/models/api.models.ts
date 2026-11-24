@@ -100,6 +100,7 @@ export interface EventCreate {
   onsite_contact_phone?: string;
   hall_owner_name?: string;
   hall_owner_phone?: string;
+  seating_sides?: SeatingSide[];        // מקומות וצורת סידור בכל צד באולם
   has_nearby_parking?: boolean;
   has_back_entrance?: boolean;
   requires_carts?: boolean;
@@ -168,6 +169,7 @@ export interface ApiEvent extends BaseEntity {
   onsite_contact_phone?: string;
   hall_owner_name?: string;
   hall_owner_phone?: string;
+  seating_sides?: SeatingSide[];        // מקומות וצורת סידור בכל צד באולם
   has_nearby_parking?: boolean;
   has_back_entrance?: boolean;
   requires_carts?: boolean;
@@ -199,6 +201,7 @@ export interface ApiEvent extends BaseEntity {
   tray_selections?: ApiEventTraySelection[];
   calculation_settings?: EventCalculationSettings;
   has_calculation_snapshot?: boolean;
+  warnings?: string[];                  // אזהרות עסקיות (לא חוסמות)
 }
 
 // ============================================
@@ -206,6 +209,7 @@ export interface ApiEvent extends BaseEntity {
 // ============================================
 
 export interface EventDishCreate {
+  serving_mode?: "personal" | "central" | null;
   dish_id: number;
   sub_meal_id?: number;
   category_id?: number;
@@ -217,6 +221,7 @@ export interface EventDishCreate {
 }
 
 export interface ApiEventDish extends BaseEntity {
+  serving_mode?: "personal" | "central" | null;
   event_id: number;
   dish_id: number;
   sub_meal_id?: number;
@@ -630,6 +635,13 @@ export interface EquipmentListResponse {
   items: EquipmentListItem[];
 }
 
+/** צד באולם: שם הצד, מספר מקומות וצורת סידור (מזרח / מרובע / ארוכים...) */
+export interface SeatingSide {
+  side: string;
+  places: number | null;
+  arrangement: string;
+}
+
 export interface EventCalculationSettings {
   drinks_enabled: boolean;
   drink_types?: Record<string, boolean>;
@@ -641,6 +653,7 @@ export interface EventCalculationSettings {
   use_rectangular_for_square: boolean;
   table_overrides?: Array<Record<string, unknown>>;
   event_tool_set_items?: EventToolSetItem[];
+  tablecloth_split?: { rectangle?: number; square?: number } | null; // חלוקת המפות שסומנה לאירוע
   credit_card_enabled: boolean;
   credit_card_amount?: number | null;
   credit_card_installments?: number;
@@ -671,6 +684,7 @@ export interface CalculationRequirement {
   quantity: number;
   unit: string;
   formula_label?: string;
+  details?: Record<string, unknown>;     // פירוט החישוב מהשרת (בסיס, ספייר, מקור)
   raw_quantity?: number;
   product_id?: number;
   tool_id?: number;

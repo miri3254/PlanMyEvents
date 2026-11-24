@@ -6,6 +6,38 @@
     <p>טוען נתוני אירוע ותפריט...</p>
   </div>
 
+
+  <section class="extras-panel" *ngIf="!initialLoading && event">
+    <h2>הוספת מנות או כלים</h2>
+    <p *ngIf="isApproved" class="approved-warning">שימי לב: האירוע מאושר. שינוי מנות יחשב מחדש כמויות ושריוני כלים, והמחירים יישארו כפי שאושרו.</p>
+    <p *ngIf="!editable">האירוע סגור לעריכה (הסתיים או בוטל).</p>
+    <button type="button" (click)="openExtras()">{{ extrasOpen ? 'סגירת התוספות' : '+ הוספה חופשית של מנות או כלים' }}</button>
+    <div *ngIf="extrasOpen">
+      <p *ngIf="extrasLoading">טוען תוספות...</p>
+      <h3>מנות מכל הקטלוג — גם מחוץ לתפריט</h3>
+      <p>מנה נוספת מחויבת לפי המחיר לסועד שבקטלוג. אפשר לסמן אותה כמתנה לאחר ההוספה.</p>
+      <label>חיפוש מנה <input [(ngModel)]="extraSearch" (keyup.enter)="searchExtraDishes()"></label>
+      <button type="button" (click)="searchExtraDishes()">חיפוש</button>
+      <div class="extras-row" *ngFor="let dish of extraResults">
+        <span>{{ dish.name }} · {{ dish.client_price || 0 }} ₪ לסועד</span>
+        <button type="button" (click)="addFreeDish(dish)" [disabled]="!editable || alreadySelected(dish.id) || savingDishIds.has(dish.id)">{{ alreadySelected(dish.id) ? 'כבר באירוע' : 'הוסף מנה' }}</button>
+      </div>
+      <h3>מנות שנוספו מחוץ לתפריט</h3>
+      <div class="extras-row" *ngFor="let dish of freeDishes">
+        <strong>{{ dish.dish_name }}</strong>
+        <label><input type="checkbox" [ngModel]="dish.is_gift" (ngModelChange)="setFreeGift(dish, $event)" [disabled]="!editable || savingDishIds.has(dish.dish_id)"> מתנה</label>
+        <label>הגשה <select [ngModel]="dish.serving_mode || null" (ngModelChange)="setServingMode(dish.dish_id, $event, dish.id)" [disabled]="!editable || savingDishIds.has(dish.dish_id)"><option [ngValue]="null">לפי הגדרת המנה</option><option value="personal">אישית</option><option value="central">במרכז השולחן</option></select></label>
+        <button type="button" (click)="removeFreeDish(dish.dish_id)" [disabled]="!editable || savingDishIds.has(dish.dish_id)">הסר מהאירוע</button>
+      </div>
+      <h3>כלים נוספים מהמלאי</h3>
+      <p>הכמות כאן היא תוספת לכל האירוע, מעבר לכלים המחושבים אוטומטית.</p>
+      <label>כלי <select [(ngModel)]="newToolId"><option [ngValue]="null">בחרו כלי</option><option *ngFor="let tool of extraTools" [ngValue]="tool.id">{{ tool.name }} · {{ tool.sub_category }}</option></select></label>
+      <label>כמות <input type="number" min="1" step="1" [(ngModel)]="newToolQuantity"></label>
+      <button type="button" (click)="addFreeTool()" [disabled]="!editable || !extrasLoaded || manualSaving || !newToolId">הוסף כלי</button>
+      <div class="extras-row" *ngFor="let tool of manualTools; let i = index"><span>{{ tool.name }} × {{ tool.quantity }}</span><button type="button" (click)="removeFreeTool(i)" [disabled]="!editable || manualSaving">הסר תוספת</button></div>
+    </div>
+  </section>
+
   <!-- No Steps (template has no categories) -->
   <div class="empty-container" *ngIf="!initialLoading && steps.length === 0">
     <i class="pi pi-inbox" style="font-size: 3rem; color: var(--muted-foreground)"></i>
@@ -148,12 +180,11 @@
                 <div class="dish-info">
                   <span class="dish-name">{{ dish.dish_name }}</span>
                   <span class="dish-description" *ngIf="dish.dish_description">{{ dish.dish_description }}</span>
-                  <label class="serving-set-select" *ngIf="isDishSelected(currentStep, dish.dish_id) && getServingSets(dish.dish_id, 'serving').length" (click)="$event.stopPropagation()">
-                    הכלים הנדרשים להגשת המנה
-                    <select [ngModel]="selectedServingSets[dish.dish_id + ':serving']"
-                      (ngModelChange)="saveServingSetSelection(dish.dish_id, 'serving', $event)">
-                      <option [ngValue]="undefined" disabled>בחרו אפשרות הגשה</option>
-                      <option *ngFor="let set of getServingSets(dish.dish_id, 'serving')" [ngValue]="set.id">{{ set.serving_mode ? (set.serving_mode === 'personal' ? 'אישית' : 'במרכז השולחן') + ' · ' + (set.dishware_type === 'real' ? 'אמיתי' : 'חד פעמי') + ' · ' : '' }}{{ set.name }}</option>
+                  <label class="serving-set-select" *ngIf="isDishSelected(currentStep, dish.dish_id)" (click)="$event.stopPropagation()">
+                    צורת הגשה באירוע
+                    <select [ngModel]="servingMode(dish.dish_id)" (ngModelChange)="setServingMode(dish.dish_id, $event)" [disabled]="!editable || savingDishIds.has(dish.dish_id)">
+                      <option [ngValue]="null">לפי התפריט{{ dish.default_serving_mode ? (dish.default_serving_mode === 'personal' ? ' — אישית' : ' — במרכז השולחן') : '' }}</option>
+                      <option value="personal">אישית</option><option value="central">במרכז השולחן</option>
                     </select>
                   </label>
                   <label class="serving-set-select" *ngIf="isDishSelected(currentStep, dish.dish_id) && getServingSets(dish.dish_id, 'packaging').length" (click)="$event.stopPropagation()">
@@ -214,12 +245,11 @@
                     </span>
                   </div>
                   <span class="dish-description" *ngIf="dish.dish_description">{{ dish.dish_description }}</span>
-                  <label class="serving-set-select" *ngIf="isDishSelected(currentStep, dish.dish_id) && getServingSets(dish.dish_id, 'serving').length" (click)="$event.stopPropagation()">
-                    הכלים הנדרשים להגשת המנה
-                    <select [ngModel]="selectedServingSets[dish.dish_id + ':serving']"
-                      (ngModelChange)="saveServingSetSelection(dish.dish_id, 'serving', $event)">
-                      <option [ngValue]="undefined" disabled>בחרו אפשרות הגשה</option>
-                      <option *ngFor="let set of getServingSets(dish.dish_id, 'serving')" [ngValue]="set.id">{{ set.serving_mode ? (set.serving_mode === 'personal' ? 'אישית' : 'במרכז השולחן') + ' · ' + (set.dishware_type === 'real' ? 'אמיתי' : 'חד פעמי') + ' · ' : '' }}{{ set.name }}</option>
+                  <label class="serving-set-select" *ngIf="isDishSelected(currentStep, dish.dish_id)" (click)="$event.stopPropagation()">
+                    צורת הגשה באירוע
+                    <select [ngModel]="servingMode(dish.dish_id)" (ngModelChange)="setServingMode(dish.dish_id, $event)" [disabled]="!editable || savingDishIds.has(dish.dish_id)">
+                      <option [ngValue]="null">לפי התפריט{{ dish.default_serving_mode ? (dish.default_serving_mode === 'personal' ? ' — אישית' : ' — במרכז השולחן') : '' }}</option>
+                      <option value="personal">אישית</option><option value="central">במרכז השולחן</option>
                     </select>
                   </label>
                 </div>

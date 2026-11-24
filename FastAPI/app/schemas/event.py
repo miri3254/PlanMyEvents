@@ -3,7 +3,7 @@ Event schemas.
 """
 
 from pydantic import BaseModel, Field
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Literal
 from datetime import datetime
 
 
@@ -65,6 +65,7 @@ class EventDeliveryNoteResponse(BaseModel):
 # ─── Event Dish ───────────────────────────────────────────────────────
 
 class EventDishCreate(BaseModel):
+    serving_mode: Optional[Literal["personal", "central"]] = None
     dish_id: int
     sub_meal_id: Optional[int] = None
     category_id: Optional[int] = None
@@ -76,6 +77,7 @@ class EventDishCreate(BaseModel):
 
 
 class EventDishUpdate(BaseModel):
+    serving_mode: Optional[Literal["personal", "central"]] = None
     sub_meal_id: Optional[int] = None
     category_id: Optional[int] = None
     quantity: Optional[int] = Field(None, ge=1)
@@ -92,6 +94,7 @@ class EventDishBulkRequest(BaseModel):
 
 
 class EventDishResponse(BaseModel):
+    serving_mode: Optional[Literal["personal", "central"]] = None
     id: int
     event_id: int
     dish_id: int
@@ -178,6 +181,7 @@ class EventCreate(BaseModel):
     has_back_entrance: bool = False
     requires_carts: bool = False
     access_notes: Optional[str] = None
+    seating_sides: Optional[list[dict[str, Any]]] = None  # [{side, places, arrangement}]
     dishware_type: Optional[str] = Field(None, max_length=50)
     delivery_contents_notes: Optional[str] = None
     last_minute_items: Optional[str] = None
@@ -225,6 +229,7 @@ class EventUpdate(BaseModel):
     has_back_entrance: Optional[bool] = None
     requires_carts: Optional[bool] = None
     access_notes: Optional[str] = None
+    seating_sides: Optional[list[dict[str, Any]]] = None  # [{side, places, arrangement}]
     dishware_type: Optional[str] = None
     delivery_contents_notes: Optional[str] = None
     last_minute_items: Optional[str] = None
@@ -297,6 +302,7 @@ class EventResponse(BaseModel):
     has_back_entrance: bool = False
     requires_carts: bool = False
     access_notes: Optional[str] = None
+    seating_sides: Optional[list[dict[str, Any]]] = None  # [{side, places, arrangement}]
     dishware_type: Optional[str] = None
     delivery_contents_notes: Optional[str] = None
     last_minute_items: Optional[str] = None
@@ -328,6 +334,7 @@ class EventResponse(BaseModel):
     tray_selections: List[EventTrayResponse] = []
     calculation_settings: Optional[Any] = None
     has_calculation_snapshot: bool = False
+    warnings: list[str] = []  # rule breaches shown to the user (not blocks)
 
     model_config = {"from_attributes": True}
 

@@ -93,7 +93,7 @@ def test_stock_normalization_and_unknown_unit(data):
     row = next(r for r in svc.summarize(event, use_snapshot=False).product_requirements if r.source_type == 'workbook')
     assert row.quantity == pytest.approx(.6075) and row.unit == 'ק"ג'
     assert row.need_to_buy_quantity == 0
-    rule.params = {'formula_key': 'fresh_iceberg'}; db.commit()
+    rule.params = {'formula_key': 'fresh_iceberg', 'unit': ''}; db.commit()
     summary = svc.summarize(event, use_snapshot=False)
     assert not any(r.source_type == 'workbook' for r in summary.product_requirements)
     assert any('חסרה יחידת מידה' in w for w in summary.warnings)

@@ -47,6 +47,9 @@ def prepare_workbook_tools(db):
         db.add(result); db.flush(); stats['tools_created'] += 1
         return result
 
+    # User clarified 2026-11-23: a product name, NOT a quantity multiplier.
+    tool('קערה שקופה כפולה', 'disposable')
+
     dishes = db.query(Dish).filter(Dish.is_deleted == False, Dish.is_active == True).all()
     def add(names, kind, mode, row, items):
         for dish in [d for d in dishes if d.name in names]:

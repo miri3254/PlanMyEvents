@@ -658,7 +658,7 @@
             </div>
 
             <h3>חישובי תוספות וסלטים מהאקסל</h3>
-            <p>בחרו רק את התוספות והחישובים ששייכים למנה. בסלטים חיים יש להשלים יחידת מידה; בסלט לשליחה בחרו למנה המתאימה בלבד. חצי במתוק מחושב אוטומטית.</p>
+            <p>בחרו רק את התוספות והחישובים ששייכים למנה. בסלטים חיים היחידות הוגדרו לפי ההנחיות וניתנות לשינוי; בסלט לשליחה בחרו למנה המתאימה בלבד. חצי במתוק מחושב אוטומטית.</p>
             <select [(ngModel)]="workbookPresetKey" aria-label="נוסחה מהאקסל"><option value="">בחרו נוסחה</option><option *ngFor="let preset of workbookPresets" [value]="preset.key">{{ preset.group }} — {{ preset.name }} ({{ preset.cell }})</option></select>
             <button type="button" (click)="addWorkbookRule()" [disabled]="!workbookPresetKey">הוסף חישוב מהאקסל</button>
             <div class="calculation-admin-card" *ngFor="let rule of dishCalculationRules">

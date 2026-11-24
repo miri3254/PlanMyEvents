@@ -14,6 +14,7 @@ export * from './api.models';
 // ============================================
 
 import { EventStatus, MenuType, KosherType } from './enums';
+import type { SeatingSide } from './api.models';
 
 export interface DishIngredient {
   id?: number;
@@ -183,6 +184,7 @@ export interface Event {
   onsiteContactPhone?: string;
   hallOwnerName?: string;
   hallOwnerPhone?: string;
+  seatingSides?: SeatingSide[];
   hasNearbyParking?: boolean;
   hasBackEntrance?: boolean;
   requiresCarts?: boolean;

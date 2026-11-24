@@ -37,8 +37,9 @@ from app.schemas.calculation import (
 )
 
 
-TABLE_CAPACITY = {"square": 12, "round": 8, "rectangle": 8}
 TABLE_SHAPE_LABELS = {"square": "מרובע", "round": "עגול", "rectangle": "מלבן"}
+BASIS_LABELS = {"table": "לפי שולחנות", "event": "לאירוע", "guest": "לפי סועדים", "dish_unit": "לפי יחידות מנה",
+                "place_setting": "לפי מקומות ערוכים", "serving_group": "כלי לכל 8 ערוכים"}
 
 
 class EventCalculationService:
@@ -70,9 +71,21 @@ class EventCalculationService:
         return settings
 
     def replace_manual_tools(self, event_id: int, rows: list[Any]) -> None:
-        self.db.query(EventManualToolRow).filter(EventManualToolRow.event_id == event_id).delete()
+        from app.utils.errors import AppException
+        payloads = []
         for row in rows:
             payload = row.model_dump() if hasattr(row, "model_dump") else dict(row)
+            if payload.get('tool_id'):
+                tool = self.db.get(Tool, payload['tool_id'])
+                if not tool or tool.is_deleted:
+                    raise AppException(422, 'הכלי אינו קיים במלאי')
+                payload['is_reusable'] = self._tool_is_reusable(tool)
+                payload['name'] = tool.name
+            elif not (payload.get('name') or '').strip():
+                raise AppException(422, 'יש לבחור כלי או להזין שם')
+            payloads.append(payload)
+        self.db.query(EventManualToolRow).filter(EventManualToolRow.event_id == event_id).delete()
+        for payload in payloads:
             self.db.add(EventManualToolRow(event_id=event_id, **payload))
         self.db.flush()
 
@@ -145,13 +158,12 @@ class EventCalculationService:
         )
 
     def _operational_summary(self, event: Event, settings: EventCalculationSettings | None) -> dict[str, Any]:
-        waiter_count = max(1, math.ceil((event.guest_count or 1) / 50) * 2)
-        table_count = self._table_count(event, settings)
+        waiter_count = self.waiter_count(event)
+        table_count = self.table_count(event)
         production_cost = self._calculate_production_cost(event)
         revenue = event.final_price if event.final_price is not None else (event.calculated_price or event.total_price or 0)
         estimated_profit = round(revenue - production_cost, 2) if production_cost is not None and revenue else None
-        shape = (settings.table_shape if settings else None) or "rectangle"
-        capacity = TABLE_CAPACITY.get(shape, 8)
+        is_sweet = self._menu_calculation_profile(event)[0] == "sweet"
         return {
             "waiter_count": waiter_count,
             "table_count": table_count,
@@ -159,23 +171,24 @@ class EventCalculationService:
             "estimated_profit": estimated_profit,
             "revenue": revenue,
             "waiter_formula_label": "ceil(אורחים / 50) * 2 מלצרים",
-            "table_formula_label": f"ceil(אורחים אפקטיביים / {capacity} לשולחן)",
+            "table_formula_label": "ceil(אורחים / 16) — שולחן מתוק, חצי" if is_sweet else "ceil(אורחים / 8)",
         }
 
     def _calculate_production_cost(self, event: Event) -> float | None:
         total = 0.0
         has_cost = False
 
+        # Dish cost is PER PERSON (user decision Q008) → cost × guests. Gifts are not
+        # charged to the client but are still produced, so they count as cost (Q009).
+        guests = event.guest_count or 0
         for event_dish in event.dishes:
-            if event_dish.is_gift:
-                continue
             dish = event_dish.dish
             base_price = event_dish.snapshot_base_price
             if base_price is None and dish:
                 base_price = dish.base_price
             if base_price is None:
                 continue
-            total += float(base_price) * (event_dish.quantity or 1)
+            total += float(base_price) * guests
             has_cost = True
 
         for tray in event.tray_selections:
@@ -243,27 +256,19 @@ class EventCalculationService:
             EventStatus.CANCELLED.value,
         }
 
-    def _is_sweet(self, event: Event) -> bool:
-        text = f"{event.event_category or ''} {event.menu_type or ''}"
-        return "מתוק" in text
-
-    def _is_shabbat(self, event: Event) -> bool:
-        text = f"{event.event_category or ''} {event.menu_type or ''}"
-        return "שבת" in text
-
     def _guest_count(self, event: Event, settings: EventCalculationSettings | None = None) -> int:
         return event.guest_count or 1
 
-    def _effective_guests_for_tables(self, event: Event) -> int:
-        guests = event.guest_count or 1
-        if self._is_sweet(event):
-            return math.ceil(guests * 0.6)
-        return guests
+    # Single source for operational counts (event response, PDFs, calc engine).
+    @staticmethod
+    def waiter_count(event: Event) -> int:
+        # Unconfirmed code rule (not from client): 2 waiters per 50 guests.
+        return math.ceil(max(1, event.guest_count or 0) / 50) * 2
 
-    def _table_count(self, event: Event, settings: EventCalculationSettings | None = None) -> int:
-        shape = (settings.table_shape if settings else None) or "rectangle"
-        capacity = TABLE_CAPACITY.get(shape, 8)
-        return max(1, math.ceil(self._effective_guests_for_tables(event) / capacity))
+    def table_count(self, event: Event) -> int:
+        # User decision 2026-11-23, per workbook: ceil(guests / 8); sweet menu = half
+        # (ceil(ceil(guests/2) / 8) == ceil(guests / 16)). Table shape does not change it.
+        return max(1, math.ceil(self._place_setting_count(event) / 8))
 
     def _calculate_drinks(self, event, settings, trace, warnings) -> list[CalculationRequirement]:
         if settings and not settings.drinks_enabled:
@@ -277,7 +282,8 @@ class EventCalculationService:
 
         guests = max(0, event.guest_count or 0)
         requirements: list[CalculationRequirement] = []
-        profile = ("shabbat_split" if event.is_morning_split else "shabbat") if self._is_shabbat(event) else ("sweet" if self._is_sweet(event) else "regular")
+        # Menu profile from MenuTemplate (not name text), same as rolls/tablecloths.
+        profile = self._menu_calculation_profile(event)[0]
         products = self.db.query(Product).filter(Product.is_deleted == False).all()  # noqa: E712
 
         for key in active_keys:
@@ -367,6 +373,22 @@ class EventCalculationService:
                    'source_sheet': 'חישוב מפות', 'source_cell': cell, 'reserve_cell': 'A8',
                    'rule_version': 'workbook-2026-11-17', 'menu_template_id': template.id if template else None}
         trace.append({"type": "tablecloths", "shape": shape, "formula": formula, **details})
+        split = settings.tablecloth_split or {}
+        rect, square = int(split.get("rectangle") or 0), int(split.get("square") or 0)
+        if rect or square:
+            # Caterer: total = portions/8 (+spare); the user marks how many rectangle vs square.
+            if rect + square != quantity:
+                warnings.append(f"מפות: סומנו {rect} מלבן + {square} מרובע = {rect + square}, אבל לפי החישוב צריך {quantity}")
+            base_name = tool.name if tool else "מפות"
+            return [
+                CalculationRequirement(
+                    source_type="tablecloths", item_type="tool", tool_id=tool.id if tool else None,
+                    name=f"{base_name} {TABLE_SHAPE_LABELS.get(key, key)}", quantity=count, raw_quantity=float(count),
+                    unit="יחידות", formula_label=f"{formula}; חלוקה שסומנה: {count}", details={**details, "split_shape": key},
+                    category="מפות", is_reusable=True,
+                )
+                for key, count in (("rectangle", rect), ("square", square)) if count
+            ]
         return [
             CalculationRequirement(
                 source_type="tablecloths",
@@ -510,7 +532,7 @@ class EventCalculationService:
                     qty = math.ceil(base * factor) if params.get("round") == "up" else base * factor
                     formula = params.get("formula_label") or f"{basis} * {factor}"
                     result.append(self._product_req("custom_product", rule.name or "חישוב מנה", qty, params.get("unit") or "יחידות", formula, qty, rule.product_id))
-        if self._is_sweet(event):
+        if self._menu_calculation_profile(event)[0] == "sweet":
             result.extend(self._calculate_sweet_hot_groups(event, trace))
         return result
 
@@ -545,23 +567,31 @@ class EventCalculationService:
             ("אורז", "hot", 2 / 6, "מנות / 6 * 2"),
             ("קוגל איטר", "hot", 3 / 6, "מנות / 6 * 3"),
             ("קוגל תפו", "hot", 3 / 6, "מנות / 6 * 3"),
-            ("סיגר", "hot", 2.5 / 6, "מנות / 6 * 2.5"),
             ("פשטיד", "hot", 2.5 / 6, "מנות / 6 * 2.5"),
             ("צולנט", "hot", 2 / 6, "מנות / 6 * 2"),
         ]
         selected: list[tuple[Dish, EventDish, str, float, str]] = []
+        result: list[CalculationRequirement] = []
+        guests = event.guest_count or 1
         for ed in event.dishes:
             dish = self.db.query(Dish).filter(Dish.id == ed.dish_id).first()
             if not dish:
                 continue
             normalized_name = dish.name.replace("׳", "").replace("'", "")
+            if "סיגר" in normalized_name:
+                # Workbook sheet 5 D13 = portions / 2; not part of the hot-group shares (C13 = 0).
+                raw = guests / 2
+                result.append(CalculationRequirement(
+                    source_type="sweet_hot_hot", item_type="product", name=dish.name,
+                    quantity=math.ceil(raw), raw_quantity=raw, unit="יחידות",
+                    formula_label="מנות / 2", details={"source_cell": "D13"},
+                ))
+                continue
             for token, group, weight, formula in definitions:
                 if token in normalized_name:
                     selected.append((dish, ed, group, weight, formula))
                     break
 
-        result: list[CalculationRequirement] = []
-        guests = event.guest_count or 1
         first_total = 0
         for group in ("first", "hot"):
             group_rows = [row for row in selected if row[2] == group]
@@ -571,13 +601,11 @@ class EventCalculationService:
             selected_weight = sum(row[3] for row in group_rows)
             redistribution = all_weight / selected_weight
             for dish, ed, _, weight, formula in group_rows:
-                raw = guests * weight * redistribution * ed.quantity
+                # Guest-based formula; ed.quantity is dish units, not a per-guest multiplier.
+                raw = guests * weight * redistribution
                 equivalent_quantity = math.ceil(raw)
                 quantity = equivalent_quantity
                 details = {"equivalent_quantity": equivalent_quantity, "redistribution_factor": redistribution}
-                if "סיגר" in dish.name:
-                    quantity = math.ceil(equivalent_quantity / 1.5)
-                    details["order_formula"] = "סיגרים להזמנה / 1.5"
                 result.append(CalculationRequirement(
                     source_type=f"sweet_hot_{group}", item_type="product", name=dish.name,
                     quantity=quantity, raw_quantity=raw, unit="יחידות",
@@ -600,9 +628,9 @@ class EventCalculationService:
         selections = self._selection_map(event.id, "serving")
         for ed in event.dishes:
             selected_set_id = selections.get(("dish", ed.id)) or selections.get(("dish_id", ed.dish_id))
-            serving_set = self._resolve_serving_set(event, ed.dish_id, selected_set_id)
+            serving_set = self._resolve_serving_set(event, ed.dish_id, selected_set_id, ed)
             if not serving_set:
-                if self.db.query(DishServingSet).filter(DishServingSet.dish_id == ed.dish_id, DishServingSet.set_type == "serving", DishServingSet.serving_mode.isnot(None)).first():
+                if ed.serving_mode or self._menu_serving_mode(event, ed) or self.db.query(DishServingSet).filter(DishServingSet.dish_id == ed.dish_id, DishServingSet.set_type == "serving", DishServingSet.serving_mode.isnot(None)).first():
                     dish = self.db.get(Dish, ed.dish_id)
                     warnings.append(f"{dish.name if dish else ed.dish_id}: חסרים כלים לסוג הכלים או לצורת ההגשה שנבחרו")
                     continue
@@ -616,7 +644,7 @@ class EventCalculationService:
             for item in serving_set.items:
                 qty = self._quantity_by_basis(item.quantity, item.quantity_basis, event, ed.quantity, settings)
                 tool = item.tool or (self.db.query(Tool).filter(Tool.id == item.tool_id).first() if item.tool_id else None)
-                requirement = self._tool_req("serving", (tool.name if tool else item.name) or "כלי הגשה", qty, "יחידות", f"{item.quantity_basis} * {item.quantity}", item.tool_id, self._tool_is_reusable(tool, item.is_reusable if not serving_set.serving_mode else None))
+                requirement = self._tool_req("serving", (tool.name if tool else item.name) or "כלי הגשה", qty, "יחידות", f"{BASIS_LABELS.get(item.quantity_basis, item.quantity_basis)} × {item.quantity:g}", item.tool_id, self._tool_is_reusable(tool, item.is_reusable if not serving_set.serving_mode else None))
                 requirement.details = {"event_dish_id": ed.id, "dish_id": ed.dish_id, "set_id": serving_set.id, "serving_mode": serving_set.serving_mode}
                 result.append(requirement)
         return result
@@ -626,7 +654,7 @@ class EventCalculationService:
         result = defaultdict(list)
         if not (self._is_approved_or_later(event) and self._snapshots(event.id)):
             for ed in event.dishes:
-                if self.db.query(DishServingSet).filter(DishServingSet.dish_id == ed.dish_id, DishServingSet.set_type == "serving", DishServingSet.serving_mode.isnot(None)).first():
+                if ed.serving_mode or self._menu_serving_mode(event, ed) or self.db.query(DishServingSet).filter(DishServingSet.dish_id == ed.dish_id, DishServingSet.set_type == "serving", DishServingSet.serving_mode.isnot(None)).first():
                     result[ed.id] = []
         for row in summary.tool_requirements:
             for part in (row.details or {}).get("contributions", []):
@@ -634,19 +662,43 @@ class EventCalculationService:
                     result[part["event_dish_id"]].append({"name": row.name, "quantity": part["quantity"]})
         return result
 
-    def _resolve_serving_set(self, event, dish_id, selected_id=None):
+    def _menu_serving_mode(self, event, ed):
+        from app.models.menu import DishMenuMapping, MenuCategory, MenuSubMeal
+        from sqlalchemy import or_
+        if not ed or not ed.category_id:
+            return None
+        template = MenuRepository(self.db).get_template_by_type(event.menu_type)
+        if not template:
+            return None
+        mapping = self.db.query(DishMenuMapping).join(MenuCategory).outerjoin(
+            MenuSubMeal, MenuCategory.sub_meal_id == MenuSubMeal.id).filter(
+            DishMenuMapping.dish_id == ed.dish_id, DishMenuMapping.category_id == ed.category_id,
+            DishMenuMapping.is_deleted == False, MenuCategory.is_deleted == False,
+            or_(MenuCategory.template_id == template.id, MenuSubMeal.template_id == template.id)).first()
+        return mapping.default_serving_mode if mapping else None
+
+    def _resolve_serving_set(self, event, dish_id, selected_id=None, event_dish=None):
         sets = self.db.query(DishServingSet).filter(
             DishServingSet.dish_id == dish_id, DishServingSet.set_type == "serving"
         ).order_by(DishServingSet.id).all()
+        ed = event_dish or next((d for d in event.dishes if d.dish_id == dish_id), None)
+        mode = ed.serving_mode if ed else None
+        menu_mode = self._menu_serving_mode(event, ed)
         variants = [row for row in sets if row.serving_mode]
         if not variants:
+            if mode or menu_mode:
+                return None
             return self._resolve_set(dish_id, "serving", selected_id)
         kind = "real" if event.is_real_dishes else "disposable"
         available = [row for row in variants if row.dishware_type == kind]
+        if mode:
+            return next((row for row in available if row.serving_mode == mode), None)
         selected = next((row for row in sets if row.id == selected_id), None)
         if selected and selected.serving_mode:
             # Preserve the chosen serving mode when the event's dishware changes.
             return next((row for row in available if row.serving_mode == selected.serving_mode), None)
+        if menu_mode:
+            return next((row for row in available if row.serving_mode == menu_mode), None)
         return next((row for row in available if row.is_default), None) or (available[0] if len(available) == 1 else None)
 
     def _place_setting_count(self, event):
@@ -712,7 +764,7 @@ class EventCalculationService:
         if basis == "event":
             return quantity
         if basis == "table":
-            return quantity * self._table_count(event, settings)
+            return quantity * self.table_count(event)
         if basis == "guest":
             return quantity * (event.guest_count or 1)
         return quantity * unit_count
@@ -751,9 +803,11 @@ class EventCalculationService:
 
     def _enrich_product_requirements(self, rows: list[CalculationRequirement]) -> list[CalculationRequirement]:
         grouped: dict[tuple[Any, str, str], CalculationRequirement] = {}
-        product_by_name = {p.name: p for p in self.db.query(Product).all()}
+        all_products = self.db.query(Product).all()
+        product_by_name = {p.name: p for p in all_products}
+        product_by_id = {p.id: p for p in all_products}
         for row in rows:
-            product = self.db.query(Product).filter(Product.id == row.product_id).first() if row.product_id else (None if row.source_type == "drink" or row.source_type.startswith("workbook") else product_by_name.get(row.name))
+            product = product_by_id.get(row.product_id) if row.product_id else (None if row.source_type == "drink" or row.source_type.startswith("workbook") else product_by_name.get(row.name))
             if product and row.source_type in ("workbook", "salad_garnish"):
                 target_unit = product.unit.value if hasattr(product.unit, 'value') else str(product.unit)
                 converted = convert_quantity(row.quantity, row.unit, target_unit)
@@ -800,11 +854,13 @@ class EventCalculationService:
 
     def _enrich_tool_requirements(self, event: Event, rows: list[CalculationRequirement]) -> list[CalculationRequirement]:
         grouped: dict[tuple[Any, str], CalculationRequirement] = {}
-        tool_by_name = {t.name: t for t in self.db.query(Tool).all()}
+        all_tools = self.db.query(Tool).all()
+        tool_by_name = {t.name: t for t in all_tools}
+        tool_by_id = {t.id: t for t in all_tools}
         reserved = self._reserved_by_tool(event)
         for row in rows:
             row.details = {**(row.details or {}), "contributions": [{"source_type": row.source_type, "quantity": row.quantity, "formula_label": row.formula_label, **(row.details or {})}]}
-            tool = self.db.query(Tool).filter(Tool.id == row.tool_id).first() if row.tool_id else (None if row.source_type in ("table_setting", "serving") else tool_by_name.get(row.name))
+            tool = tool_by_id.get(row.tool_id) if row.tool_id else (None if row.source_type in ("table_setting", "serving") else tool_by_name.get(row.name))
             if tool:
                 row.tool_id = tool.id
                 if row.source_type != "tablecloths":

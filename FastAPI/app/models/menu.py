@@ -108,6 +108,7 @@ class DishMenuMapping(BaseModel):
 
     __tablename__ = "dish_menu_mappings"
 
+    default_serving_mode = Column(String(20), nullable=True)
     dish_id = Column(Integer, ForeignKey("dishes.id", ondelete="CASCADE"), nullable=False)
     category_id = Column(Integer, ForeignKey("menu_categories.id", ondelete="CASCADE"), nullable=False)
     is_upgrade = Column(Boolean, default=False, nullable=False)

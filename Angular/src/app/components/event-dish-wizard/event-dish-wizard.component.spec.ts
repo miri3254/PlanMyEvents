@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 import { EventDishWizardComponent, WizardStep } from './event-dish-wizard.component';
 import { ApiEventService } from '../../services/api-event.service';
 import { ApiMenuService } from '../../services/api-menu.service';
+import { ApiToolService } from '../../services/api-tool.service';
 import { ApiDishService } from '../../services/api-dish.service';
 import { MessageService } from 'primeng/api';
 
@@ -44,7 +45,7 @@ describe('EventDishWizardComponent', () => {
       'getDishServingSelections',
       'addEventDish',
       'removeEventDish',
-      'getEventDishes'
+      'getEventDishes', 'addDishToEvent', 'removeDishFromEvent', 'updateEventDish', 'getManualTools', 'updateManualTools'
     ]);
     mockMenuService = jasmine.createSpyObj('ApiMenuService', [
       'getMenuByType',
@@ -84,6 +85,7 @@ describe('EventDishWizardComponent', () => {
         { provide: ApiEventService, useValue: mockEventService },
         { provide: ApiMenuService, useValue: mockMenuService },
         { provide: ApiDishService, useValue: mockDishService },
+        { provide: ApiToolService, useValue: {getAllTools: () => of([])} },
         MessageService
       ]
     }).compileComponents();
@@ -184,5 +186,42 @@ describe('EventDishWizardComponent', () => {
     expect(groups.length).toBe(2);
     expect(groups[0].steps.length).toBe(2);
     expect(groups[1].steps.length).toBe(1);
+  });
+
+  it('adds a catalogue dish outside categories and prevents adding it twice', () => {
+    component.event = {id: 1, status: 'טיוטה', dishes: []} as any;
+    const updated = {...component.event!, dishes: [{dish_id: 99, category_id: null}]} as any;
+    mockEventService.addDishToEvent.and.returnValue(of(updated));
+    component.addFreeDish({id: 99, name: 'תוספת', client_price: 12} as any);
+    expect(mockEventService.addDishToEvent).toHaveBeenCalledWith(1, {dish_id: 99, quantity: 1, is_upgrade: true, extra_charge: 12});
+    component.addFreeDish({id: 99} as any);
+    expect(mockEventService.addDishToEvent.calls.count()).toBe(1);
+    expect(component.freeDishes.length).toBe(1);
+  });
+
+  it('preserves existing manual tools when adding another catalogue tool', () => {
+    component.event = {status: 'טיוטה'} as any;
+    component.extrasLoaded = true;
+    component.manualTools = [{tool_id: 1, quantity: 5, is_reusable: true}];
+    component.extraTools = [{id: 2, name: 'כף', sub_category: 'חד פעמי'} as any];
+    component.newToolId = 2; component.newToolQuantity = 7;
+    mockEventService.updateManualTools.and.returnValue(of({} as any));
+    component.addFreeTool();
+    expect(mockEventService.updateManualTools.calls.mostRecent().args[1]).toEqual([
+      {tool_id: 1, quantity: 5, is_reusable: true},
+      {tool_id: 2, name: 'כף', quantity: 7, is_reusable: false}
+    ]);
+  });
+
+  it('saves an event serving override and supports returning to menu default', () => {
+    component.event = {status: 'טיוטה', dishes: [{dish_id: 5}]} as any;
+    mockEventService.updateEventDish.and.returnValue(of(component.event!));
+    component.setServingMode(5, 'personal');
+    expect(mockEventService.updateEventDish).toHaveBeenCalledWith(1, 5, {serving_mode: 'personal'}, undefined);
+    component.setServingMode(5, null);
+    expect(mockEventService.updateEventDish).toHaveBeenCalledWith(1, 5, {serving_mode: null}, undefined);
+    component.event = {status: 'הסתיים'} as any;
+    component.setServingMode(5, 'central');
+    expect(mockEventService.updateEventDish.calls.count()).toBe(2);
   });
 });

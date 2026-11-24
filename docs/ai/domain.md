@@ -14,9 +14,9 @@ Client requirements (targets): `Angular/.ai/catering_requirements.md` (R-numbers
 | תפריט | MenuTemplate | name = menu type (free text, e.g. בשרי, שבת, שולחן מתוק); `min_guests`; internal `tablecloth_profile` (auto, not user-editable); `table_setting_items` (עריכה) |
 | סעודה | MenuSubMeal | Shabbat meals etc. |
 | קטגוריה בתפריט | MenuCategory | `quota` = how many dishes can be chosen (NULL = unlimited); tray fields |
-| שיוך מנה לתפריט | DishMenuMapping | one dish ↔ many menus |
+| שיוך מנה לתפריט | DishMenuMapping | one dish ↔ many menus; default_serving_mode personal/central, event dish override wins |
 | אירוע | Event | menu, guest_count, details, delivery/hall fields, `is_morning_split` (Shabbat split), status |
-| מנה באירוע | EventDish | `quantity` multiplier, `is_gift` (bonus — not charged but still costs), snapshot prices |
+| מנה באירוע | EventDish | `quantity` = dish units (ceil(guests/serving_size)); recipe & base_price are per unit, nullable `serving_mode` override, `is_gift` (bonus — not charged but still costs), snapshot prices |
 | מגשים / קרטונים / תעודות משלוח | EventTraySelection / EventBox / EventDeliveryNote | |
 | הגדרות חישוב | EventCalculationSettings | installments, rate, VAT, drink choices… |
 | שורת כלים ידנית | EventManualToolRow | |
@@ -26,7 +26,7 @@ Client requirements (targets): `Angular/.ai/catering_requirements.md` (R-numbers
 ## Event lifecycle (event_service.change_status; transitions in core/constants.py)
 טיוטה → מאושר | בוטל · מאושר → הסתיים | בוטל | טיוטה · בוטל → טיוטה · הסתיים → (none)
 - → מאושר: `_snapshot_prices` + `calculations.snapshot_event` (freezes summary, creates ToolReservations).
-- מאושר → הסתיים: `_deduct_inventory` (recipe ingredients × EventDish.quantity × guest_count, unit-converted, PLUS calc product_requirements; floor at 0) + release reservations.
+- מאושר → הסתיים: `_deduct_inventory` (recipe ingredients × EventDish.quantity (units; replaced ingredients skipped), unit-converted, PLUS calc product_requirements; floor at 0) + release reservations.
 - Auto-complete: `complete_past_approved_events` runs inside get_events/get_event/get_events_in_range for approved events dated before today.
 - → בוטל: releases reservations only (no food returned). `restore_stock` exists only as POST /events/{id}/restore-stock; known bugs (double restore, over-restore) — see implementation_status "תוספת בדיקת מלאי".
 
@@ -47,7 +47,8 @@ Base N = guest count (or ordered portions per rule). Menu profile (`_menu_calcul
 - Workbook presets (sides, sauces, live salads, salads to send): workbook_rules.py; mass/volume normalized before stock.
 - Crackers (מציות) in sweet: ceil(N/16) packages.
 - Credit fee: installments 1–6 per workbook rates × VAT (settings-editable).
-- Legacy still present: `_effective_guests_for_tables` 60% in sweet, `_calculate_sweet_hot_groups`, legacy `serving_dishes` in waiter/catering PDF fallback.
+- Tables: `table_count` = ceil(N/8), sweet ceil(N/16) (one function for UI, PDFs, calc). Waiters: `waiter_count` (unconfirmed 2/50).
+- Legacy still present: `_calculate_sweet_hot_groups`, legacy `serving_dishes` in waiter/catering PDF fallback.
 All formulas: Python `Fraction`, round only at the end, as the source workbook does.
 
 ## Sources of truth for business values

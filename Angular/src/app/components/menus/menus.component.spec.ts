@@ -34,7 +34,7 @@ describe('MenusComponent', () => {
       'getMenuTemplates',
       'createMenuTemplate',
       'updateMenuTemplate',
-      'deleteMenuTemplate'
+      'deleteMenuTemplate', 'updateDishMapping'
     ]);
     mockDishService = jasmine.createSpyObj('ApiDishService', ['getDishes', 'getAllDishes']);
 
@@ -157,5 +157,15 @@ describe('MenusComponent', () => {
     mockMenuService.getMenuTemplates.and.returnValue(throwError(() => new Error('שגיאת שרת')));
     component.loadMenus();
     expect(component.loading).toBeFalse();
+  });
+
+  it('round trips a per-menu serving default without changing the dish globally', () => {
+    const dish = {id: 10, is_upgrade: false, default_serving_mode: 'personal'};
+    component.openDishEdit(dish);
+    component.dishEditMap[10].default_serving_mode = 'central';
+    mockMenuService.updateDishMapping.and.returnValue(of({} as any));
+    component.saveDishEdit(dish);
+    expect(mockMenuService.updateDishMapping).toHaveBeenCalledWith(10, jasmine.objectContaining({default_serving_mode: 'central'}));
+    expect(dish.default_serving_mode).toBe('central');
   });
 });

@@ -52,6 +52,7 @@ export interface MenuCategory {
 }
 
 export interface DishMenuMapping {
+  default_serving_mode?: "personal" | "central" | null;
   id?: number;
   dish_id: number;
   category_id: number;
@@ -96,6 +97,7 @@ export interface MenuCategoryCreate {
 export interface MenuCategoryUpdate extends Partial<MenuCategoryCreate> {}
 
 export interface DishMenuMappingCreate {
+  default_serving_mode?: "personal" | "central" | null;
   dish_id: number;
   category_id: number;
   is_upgrade?: boolean;

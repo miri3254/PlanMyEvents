@@ -792,7 +792,7 @@ def generate_waiter_pdf(
         waiter_text = _bidi(f"מספר מלצרים: {waiter_count}  (2 מלצרים לכל 50 סועדים)")
         elements.append(Paragraph(waiter_text, styles['event_detail']))
     if table_count is not None:
-        table_text = _bidi(f"מספר שולחנות: {table_count}  (שולחן לכל 8 סועדים)")
+        table_text = _bidi(f"מספר שולחנות: {table_count}  (שולחן לכל 8 סועדים; שולחן מתוק - חצי)")
         elements.append(Paragraph(table_text, styles['event_detail']))
 
     # סוג הכלים
@@ -909,20 +909,11 @@ def generate_shopping_pdf(
     event_sequence_label: Optional[str] = None,
     event_sequence_color: Optional[str] = None,
 ) -> BytesIO:
-    """Create a clean RTL shopping-list PDF with minimal color."""
-    buffer = BytesIO()
+    """Create a clean RTL shopping-list PDF on the branded letterhead."""
+    from app.utils import branded_pdf  # local import: branded_pdf imports this module
     _register_hebrew_fonts()
 
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        rightMargin=1.35 * cm,
-        leftMargin=1.35 * cm,
-        topMargin=1.55 * cm,
-        bottomMargin=1.55 * cm,
-    )
-
-    page_width = A4[0] - 2.7 * cm
+    page_width = branded_pdf.CONTENT_W
     line_color = HexColor("#d5dbe8")
     header_bg = HexColor("#eef1f5")
     alt_bg = HexColor("#fbfcfe")
@@ -1011,7 +1002,7 @@ def generate_shopping_pdf(
 
     def name_cell(item: Any, name_key: str = "name") -> list:
         cell = [p(value(item, name_key, ""), cell_style)]
-        details = [part for part in [value(item, "source_type"), value(item, "formula_label")] if part]
+        details = [part for part in [value(item, "formula_label")] if part]  # internal source keys are not shown
         if details:
             cell.append(p(" | ".join(str(part) for part in details), hint_style))
         return cell
@@ -1171,7 +1162,11 @@ def generate_shopping_pdf(
             key=lambda item: (str(value(item, "category") or ""), str(value(item, "name") or "")),
         )
         for item in sorted_equipment:
-            need_to_buy = int(value(item, "need_to_buy", 0) or value(item, "shortage", 0) or 0)
+            required = float(value(item, "quantity", 0) or 0)
+            available = float(value(item, "available_after_reservations", None) if value(item, "available_after_reservations", None) is not None
+                              else value(item, "available_in_stock", 0) or 0)
+            need_to_buy = int(value(item, "need_to_buy", 0) or value(item, "need_to_buy_quantity", 0)
+                              or value(item, "shortage", 0) or max(0, math.ceil(required - available)))
             rows_eq.append([
                 p(str(need_to_buy) if need_to_buy > 0 else "אין חוסר", cell_bold_center_style),
                 p(fmt_num(value(item, "available_in_stock", 0)), cell_center_style),
@@ -1193,19 +1188,7 @@ def generate_shopping_pdf(
     else:
         elements.append(p("אין כלים וציוד לרשימה זו", cell_style))
 
-    def on_page(canvas, doc):
-        canvas.saveState()
-        canvas.setStrokeColor(line_color)
-        canvas.setLineWidth(0.7)
-        canvas.line(1.35 * cm, A4[1] - 0.8 * cm, A4[0] - 1.35 * cm, A4[1] - 0.8 * cm)
-        canvas.setFont("HebrewRegular", 9)
-        canvas.setFillColor(grey)
-        canvas.drawCentredString(A4[0] / 2, 1.0 * cm, f"- {canvas.getPageNumber()} -")
-        canvas.restoreState()
-
-    doc.build(elements, onFirstPage=on_page, onLaterPages=on_page)
-    buffer.seek(0)
-    return buffer
+    return branded_pdf.build(elements, footer_text="רשימת קניות")
 
 
 def generate_delivery_sheet_pdf(
