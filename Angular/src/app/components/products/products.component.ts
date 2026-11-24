@@ -27,7 +27,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TabsModule } from 'primeng/tabs';
 
 const FALLBACK_INVENTORY_STATUSES = ['במלאי', 'מלאי נמוך', 'אין במלאי'];
-const FALLBACK_PRODUCT_CATEGORIES = ['מוצרי חלב', 'מוצרי בשר', 'קטניות', 'שתיה', 'נוזלים', 'מוצרים יבשים', 'קפואים'];
+const FALLBACK_PRODUCT_CATEGORIES = ['ירקות', 'בצק', 'ירקות עלים ועשבי תיבול', 'פירות', 'קטניות', 'דגנים', 'פסטה וקמחים', 'מוצרים יבשים', 'ביצים', 'מוצרי בשר ועוף', 'דגים', 'מוצרי חלב', 'שמנים ושומנים', 'תבלינים ואבקות מרק', 'רטבים ממרחים', 'שימורים', 'אגוזים זרעים ופירות יבשים', 'אפייה קינוחים וממתיקים', 'נוזלים', 'שתיה', 'קפואים'];
 
 @Component({
   selector: 'app-products',

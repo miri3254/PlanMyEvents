@@ -139,6 +139,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
   eventCategories: string[] = [];
   newEventCategory = '';
   loadingEventCategories = false;
+  // Dish yield containers (גסטרונום / מגש...) — backend lookup "dish_yield_units"
+  dishYieldUnits: string[] = [];
+  newDishYieldUnit = '';
 
   viewOptions = [
     { label: 'טבלה', value: 'table' },
@@ -327,11 +330,46 @@ export class SettingsComponent implements OnInit, OnDestroy {
     this.loadEventCategories();
   }
 
+  private reloadDishYieldUnits(): void {
+    this.apiLookupService.getAllLookupData().pipe(take(1)).subscribe({
+      next: data => {
+        this.dishYieldUnits = [...(data.dish_yield_units || [])];
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  addDishYieldUnit(): void {
+    const value = this.newDishYieldUnit.trim();
+    if (!value || this.dishYieldUnits.includes(value)) return;
+    this.apiLookupService.addLookupValue('dish_yield_units', value).pipe(take(1)).subscribe({
+      next: () => { this.newDishYieldUnit = ''; this.reloadDishYieldUnits(); },
+      error: () => this.notify('error', 'שגיאה', 'לא ניתן להוסיף את יחידת התפוקה.')
+    });
+  }
+
+  updateDishYieldUnit(index: number): void {
+    const value = (this.dishYieldUnits[index] || '').trim();
+    if (!value) { this.reloadDishYieldUnits(); return; }
+    this.apiLookupService.updateLookupValue('dish_yield_units', index, value).pipe(take(1)).subscribe({
+      next: () => { this.notify('success', 'עודכן בהצלחה', 'יחידת התפוקה עודכנה.'); this.reloadDishYieldUnits(); },
+      error: () => { this.notify('error', 'שגיאה', 'לא ניתן לעדכן.'); this.reloadDishYieldUnits(); }
+    });
+  }
+
+  deleteDishYieldUnit(index: number): void {
+    this.apiLookupService.deleteLookupValue('dish_yield_units', index).pipe(take(1)).subscribe({
+      next: () => this.reloadDishYieldUnits(),
+      error: () => this.notify('error', 'שגיאה', 'לא ניתן להסיר.')
+    });
+  }
+
   loadEventCategories(): void {
     this.loadingEventCategories = true;
     this.apiLookupService.getAllLookupData().pipe(take(1)).subscribe({
       next: data => {
         this.eventCategories = [...(data.event_categories || [])];
+        this.dishYieldUnits = [...(data.dish_yield_units || [])];
         this.loadingEventCategories = false;
         this.cdr.markForCheck();
       },

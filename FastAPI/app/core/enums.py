@@ -55,6 +55,15 @@ class UnitType(str, Enum):
     TEASPOON = "כפית"
     PINCH = "קורט"
     BUNDLE = "חבילה"
+    # Count units used verbatim in the caterer's recipes (2026-11-24); no weight conversion implied.
+    CLOVE = "שן"
+    CAN = "קופסה"
+    BAG = "שקית"
+    BOTTLE = "בקבוק"
+    BUNCH = "צרור"
+    STALK = "גבעול"
+    BASKET = "סלסלה"
+    SLEEVE = "שרוול"
 
 
 # Mapping of units to their category - used for conversion validation
@@ -72,18 +81,42 @@ UNIT_CATEGORY_MAP = {
     UnitType.TEASPOON: UnitCategory.WEIGHT,    # Can be converted to grams
     UnitType.PINCH: UnitCategory.WEIGHT,       # Can be converted to grams
     UnitType.BUNDLE: UnitCategory.COUNT,
+    UnitType.CLOVE: UnitCategory.COUNT,
+    UnitType.CAN: UnitCategory.COUNT,
+    UnitType.BAG: UnitCategory.COUNT,
+    UnitType.BOTTLE: UnitCategory.COUNT,
+    UnitType.BUNCH: UnitCategory.COUNT,
+    UnitType.STALK: UnitCategory.COUNT,
+    UnitType.BASKET: UnitCategory.COUNT,
+    UnitType.SLEEVE: UnitCategory.COUNT,
 }
 
 
 # ─── Product categories ──────────────────────────────────────────────
 
 class ProductCategory(str, Enum):
-    DAIRY = "מוצרי חלב"
-    MEAT = "מוצרי בשר"
+    # Caterer-approved list (2026-11-24). Enum NAMES are what SQLite stores.
+    VEGETABLES = "ירקות"
+    DOUGH = "בצק"
+    LEAFY_HERBS = "ירקות עלים ועשבי תיבול"
+    FRUITS = "פירות"
     LEGUMES = "קטניות"
-    LIQUIDS = "נוזלים"
-    DRINKS = "שתיה"
+    GRAINS = "דגנים"
+    PASTA_FLOURS = "פסטה וקמחים"
     DRY = "מוצרים יבשים"
+    EGGS = "ביצים"
+    MEAT = "מוצרי בשר ועוף"
+    FISH = "דגים"
+    DAIRY = "מוצרי חלב"
+    OILS_FATS = "שמנים ושומנים"
+    SPICES = "תבלינים ואבקות מרק"
+    SAUCES_SPREADS = "רטבים ממרחים"
+    CANNED = "שימורים"
+    NUTS_SEEDS = "אגוזים זרעים ופירות יבשים"
+    BAKING_SWEETS = "אפייה קינוחים וממתיקים"
+    LIQUIDS = "נוזלים"
+    DRINKS = "שתיה"  # kept: drink products (drink_type) drive the drinks calculation
+    # Legacy category retained so existing products can still be read and edited.
     FROZEN = "קפואים"
 
 

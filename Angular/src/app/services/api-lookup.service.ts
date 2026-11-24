@@ -23,6 +23,7 @@ export interface ServerLookupData {
   event_statuses: string[];
   tool_categories: string[];
   tool_sub_categories: string[];
+  dish_yield_units?: string[];
 }
 
 interface LookupSnapshot {
@@ -34,6 +35,7 @@ interface LookupSnapshot {
   eventStatuses: string[];
   toolCategories: string[];
   toolSubCategories: string[];
+  dishYieldUnits: string[];
 }
 
 @Injectable({
@@ -49,7 +51,8 @@ export class ApiLookupService extends BaseApiService {
     inventoryStatuses: [...INVENTORY_STATUSES],
     eventStatuses: [...EVENT_STATUSES],
     toolCategories: [...TOOL_CATEGORIES],
-    toolSubCategories: [...TOOL_SUB_CATEGORIES]
+    toolSubCategories: [...TOOL_SUB_CATEGORIES],
+    dishYieldUnits: []
   });
 
   lookup$ = this._lookupSubject.asObservable();
@@ -66,7 +69,8 @@ export class ApiLookupService extends BaseApiService {
           inventoryStatuses: data.inventory_statuses || this._lookupSubject.value.inventoryStatuses,
           eventStatuses: data.event_statuses || this._lookupSubject.value.eventStatuses,
           toolCategories: data.tool_categories || this._lookupSubject.value.toolCategories,
-          toolSubCategories: data.tool_sub_categories || this._lookupSubject.value.toolSubCategories
+          toolSubCategories: data.tool_sub_categories || this._lookupSubject.value.toolSubCategories,
+          dishYieldUnits: data.dish_yield_units || this._lookupSubject.value.dishYieldUnits
         };
         this._lookupSubject.next(snapshot);
       })
@@ -92,7 +96,8 @@ export class ApiLookupService extends BaseApiService {
       'inventory_statuses': 'inventoryStatuses',
       'event_statuses': 'eventStatuses',
       'tool_categories': 'toolCategories',
-      'tool_sub_categories': 'toolSubCategories'
+      'tool_sub_categories': 'toolSubCategories',
+      'dish_yield_units': 'dishYieldUnits'
     };
 
     const snapshotKey = categoryMap[category];

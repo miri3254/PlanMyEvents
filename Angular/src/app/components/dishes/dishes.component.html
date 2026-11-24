@@ -348,8 +348,17 @@
                 </div>
 
                 <div class="form-field">
-                  <label for="servingSize" class="field-label">גודל מנה (מספר סועדים)</label>
-                  <p-inputNumber id="servingSize" [(ngModel)]="editingDish.servingSize" [min]="1" [showButtons]="true" styleClass="field-input w-full"></p-inputNumber>
+                  <label for="servingSize" class="field-label">מספיק ל- (מספר סועדים)</label>
+                  <p-inputNumber id="servingSize" [(ngModel)]="editingDish.servingSize" [min]="0" [maxFractionDigits]="2" placeholder="לא הוגדר" styleClass="field-input w-full"></p-inputNumber>
+                </div>
+
+                <div class="form-field">
+                  <label for="yieldQuantity" class="field-label">תפוקה</label>
+                  <div class="flex gap-2">
+                    <p-inputNumber id="yieldQuantity" [(ngModel)]="editingDish.yieldQuantity" [min]="0" [maxFractionDigits]="2" placeholder="כמות" styleClass="field-input" [style]="{'width': '40%'}"></p-inputNumber>
+                    <p-select [options]="yieldUnits" [(ngModel)]="editingDish.yieldUnit" [editable]="true" [showClear]="true"
+                      placeholder="גסטרונום / מגש..." appendTo="body" [style]="{'width': '60%'}"></p-select>
+                  </div>
                 </div>
 
                 <div class="form-field">
@@ -393,6 +402,12 @@
                     <label for="waiterNotes" class="field-label">הערות למלצר</label>
                     <textarea pTextarea id="waiterNotes" [(ngModel)]="editingDish.waiterNotes"
                       rows="2" class="field-textarea w-full" placeholder="הערות מיוחדות למלצר..."></textarea>
+                  </div>
+
+                  <div class="form-field full-width">
+                    <label for="dishNotes" class="field-label">הערות למנה (פנימי)</label>
+                    <textarea pTextarea id="dishNotes" [(ngModel)]="editingDish.notes"
+                      rows="3" class="field-textarea w-full" placeholder="למשל: חסר מידע על כמויות..."></textarea>
                   </div>
 
                   <div class="form-field full-width">
@@ -446,6 +461,7 @@
                 <p-inputNumber
                   [ngModel]="ingredient.quantity"
                   (ngModelChange)="handleUpdateIngredient(i, 'quantity', $event)"
+                  placeholder="חסר"
                   [min]="0"
                   [maxFractionDigits]="3"
                   mode="decimal"
@@ -460,8 +476,15 @@
                   [options]="units"
                   [ngModel]="ingredient.unit"
                   (ngModelChange)="handleUpdateIngredient(i, 'unit', $event)"
+                  placeholder="חסר"
+                  [showClear]="true"
                   [style]="{'width': '100%'}">
                 </p-select>
+              </div>
+
+              <div class="ing-field" *ngIf="ingredient.note">
+                <label>הערה</label>
+                <small>{{ ingredient.note }}</small>
               </div>
 
               <!-- Is Serving Component -->

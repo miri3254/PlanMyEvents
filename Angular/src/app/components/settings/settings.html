@@ -79,6 +79,27 @@
       </div>
     </p-card>
 
+    <p-card styleClass="mb-4">
+      <ng-template pTemplate="header">
+        <div class="flex align-items-center p-3">
+          <i class="pi pi-box mr-2 text-primary"></i>
+          <span class="font-bold text-lg">יחידות תפוקה למנות (גסטרונום / מגש / כלי)</span>
+        </div>
+      </ng-template>
+      <p class="text-600 mb-3">רשימת הבחירה בשדה "תפוקה" במסך המנות. הרשימה הראשונית נלקחה מהמתכונים — לעדכן לפי הגדלים שבעל הקייטרינג יאשר.</p>
+      <div class="lookup-items">
+        <div class="lookup-row" *ngFor="let unit of dishYieldUnits; let i = index; trackBy: trackByIndex">
+          <input pInputText [(ngModel)]="dishYieldUnits[i]" (keyup.enter)="updateDishYieldUnit(i); $event.preventDefault()" />
+          <p-button icon="pi pi-save" severity="success" [text]="true" (onClick)="updateDishYieldUnit(i)"></p-button>
+          <p-button icon="pi pi-trash" severity="danger" [text]="true" (onClick)="deleteDishYieldUnit(i)"></p-button>
+        </div>
+        <div class="lookup-add">
+          <input pInputText placeholder="הוספת יחידת תפוקה" [(ngModel)]="newDishYieldUnit" (keyup.enter)="addDishYieldUnit()" />
+          <p-button label="הוספה" icon="pi pi-plus" (onClick)="addDishYieldUnit()" [disabled]="!newDishYieldUnit.trim()"></p-button>
+        </div>
+      </div>
+    </p-card>
+
     <!-- General Settings Section (Theme Only) -->
     <p-card styleClass="mb-4" *ngIf="false">
       <ng-template pTemplate="header">

@@ -144,6 +144,7 @@ export class DishesComponent implements OnInit, OnDestroy {
   kosherOptions = [{ label: 'כל סוגי הכשרות', value: 'הכל' }];
   kosherTypes: string[] = [...KOSHER_TYPES];
   units: string[] = [...UNIT_TYPES];
+  yieldUnits: string[] = [];  // lookup dish_yield_units (settings)
   
   // Unit conversion cache
   unitConversions: UnitConversion[] = [];
@@ -294,6 +295,7 @@ export class DishesComponent implements OnInit, OnDestroy {
       .subscribe(data => {
         if (data.units?.length) this.units = data.units;
         if (data.kosherTypes?.length) this.kosherTypes = data.kosherTypes;
+        this.yieldUnits = data.dishYieldUnits || [];
 
         this.kosherOptions = [
           { label: 'כל סוגי הכשרות', value: 'הכל' },
@@ -389,9 +391,10 @@ export class DishesComponent implements OnInit, OnDestroy {
       id: ing.id,
       productId: ing.product_id || ing.product?.id,
       productName: ing.name || ing.product?.name || '',
-      quantity: ing.quantity,
-      unit: ing.unit,
-      isServingComponent: ing.is_serving_component || false
+      quantity: ing.quantity ?? null,
+      unit: ing.unit ?? null,
+      isServingComponent: ing.is_serving_component || false,
+      note: ing.note ?? null
     })) || [];
 
     return {
@@ -401,7 +404,10 @@ export class DishesComponent implements OnInit, OnDestroy {
       kosherType: apiDish.kosher_type,
       basePrice: apiDish.base_price,
       clientPrice: apiDish.client_price,
-      servingSize: apiDish.serving_size ?? 1,
+      servingSize: apiDish.serving_size ?? null,
+      yieldQuantity: apiDish.yield_quantity ?? null,
+      yieldUnit: apiDish.yield_unit ?? null,
+      notes: apiDish.notes ?? null,
       servingDescription: apiDish.serving_description || '',
       waiterNotes: apiDish.waiter_notes || '',
       isActive: apiDish.is_active,
@@ -471,7 +477,10 @@ export class DishesComponent implements OnInit, OnDestroy {
       kosher_type: dish.kosherType as KosherType,
       base_price: dish.basePrice || undefined,
       client_price: dish.clientPrice || undefined,
-      serving_size: dish.servingSize,
+      serving_size: dish.servingSize ?? null,
+      yield_quantity: dish.yieldQuantity ?? null,
+      yield_unit: dish.yieldUnit || null,
+      notes: dish.notes?.trim() || null,
       serving_description: dish.servingDescription?.trim() || undefined,
       waiter_notes: dish.waiterNotes?.trim() || undefined,
       is_active: dish.isActive
@@ -828,6 +837,7 @@ export class DishesComponent implements OnInit, OnDestroy {
     if (!this.editingDish?.ingredients?.length) return 0;
     let total = 0;
     for (const ingredient of this.editingDish.ingredients) {
+      if (ingredient.quantity == null || !ingredient.unit) continue;  // amount missing in recipe
       const product = this.products.find(p => p.id === ingredient.productId);
       if (product?.estimatedPrice) {
         const packageQty = product.packageQuantity || 1;
@@ -859,6 +869,7 @@ export class DishesComponent implements OnInit, OnDestroy {
   }
 
   getIngredientPriceInfo(ingredient: DishIngredient): { pricePerUnit: number; totalPrice: number; converted: boolean } | null {
+    if (ingredient.quantity == null || !ingredient.unit) return null;
     const product = this.products.find(p => p.id === ingredient.productId);
     if (!product?.estimatedPrice) return null;
     const packageQty = product.packageQuantity || 1;
@@ -953,7 +964,8 @@ export class DishesComponent implements OnInit, OnDestroy {
             name: ingredientName || undefined,
             quantity: ing.quantity,
             unit: ing.unit,
-            is_serving_component: ing.isServingComponent || false
+            is_serving_component: ing.isServingComponent || false,
+            note: ing.note ?? null
           })));
         } else if (this.isIngredientChanged(original, ing)) {
           ops.push(this.wrapOp(this.dishService.updateIngredient(dishId, ing.id, {
@@ -961,7 +973,8 @@ export class DishesComponent implements OnInit, OnDestroy {
             name: ingredientName || undefined,
             quantity: ing.quantity,
             unit: ing.unit,
-            is_serving_component: ing.isServingComponent || false
+            is_serving_component: ing.isServingComponent || false,
+            note: ing.note ?? null
           })));
         }
       } else {
@@ -970,7 +983,8 @@ export class DishesComponent implements OnInit, OnDestroy {
           name: ingredientName || undefined,
           quantity: ing.quantity,
           unit: ing.unit,
-          is_serving_component: ing.isServingComponent || false
+          is_serving_component: ing.isServingComponent || false,
+          note: ing.note ?? null
         })));
       }
     });

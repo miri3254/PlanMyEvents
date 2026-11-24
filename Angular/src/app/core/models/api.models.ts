@@ -264,7 +264,10 @@ export interface DishCreate {
   kosher_type?: KosherType;
   base_price?: number;
   client_price?: number;
-  serving_size?: number;
+  serving_size?: number | null;   // guests; null = unknown
+  yield_quantity?: number | null; // e.g. 2
+  yield_unit?: string | null;     // e.g. "גסטרונום" (lookup dish_yield_units)
+  notes?: string | null;          // internal recipe notes
   serving_description?: string;
   waiter_notes?: string;
   is_active?: boolean;
@@ -290,7 +293,10 @@ export interface ApiDish extends BaseEntity {
   kosher_type: KosherType;
   base_price?: number;
   client_price?: number;
-  serving_size: number;
+  serving_size: number | null;
+  yield_quantity?: number | null;
+  yield_unit?: string | null;
+  notes?: string | null;
   serving_description?: string;
   waiter_notes?: string;
   is_active: boolean;
@@ -303,10 +309,11 @@ export interface ApiDish extends BaseEntity {
 export interface DishIngredient extends BaseEntity {
   dish_id?: number;
   product_id?: number;
-  quantity: number;
-  unit: string;
+  quantity: number | null;  // null = missing in the source recipe
+  unit: string | null;
   name?: string;
   is_serving_component: boolean;
+  note?: string | null;
   product?: ApiProduct;
 }
 

@@ -1,6 +1,7 @@
 # Code map — where things are (verified 2026-11-23)
 Line counts tell you whether to Read whole (<300) or grep + offset/limit (≥300). Paths workspace-relative.
 Update this file when you add/move/delete a file or a key function. Do not add history here.
+Recipe staging artifacts (2026-11-24, local/ignored): `מתכונים/recipe-json-2026-11-24/` — `extract_sources.py` (four supplied DOCX), `recipe_manifest.py` + `product_vocabulary.py` + `build_recipe_json.py` (reviewed mappings), `export_bundle.py` (products/dishes JSON + source audit + Hebrew README), `validate_bundle.py` (34 checks, isolated schema validation; no DB import).
 
 ## Task → files (open these first, nothing else)
 | Task | Backend | Frontend | Test |

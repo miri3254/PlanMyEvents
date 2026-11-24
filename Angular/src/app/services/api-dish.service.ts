@@ -54,10 +54,11 @@ export class ApiDishService extends BaseApiService {
 
   addIngredient(dishId: number, ingredient: {
     product_id?: number;
-    quantity: number;
-    unit: string;
+    quantity: number | null;
+    unit: string | null;
     name?: string;
     is_serving_component?: boolean;
+    note?: string | null;
   }): Observable<DishIngredient> {
     return this.post<DishIngredient>(`/dishes/${dishId}/ingredients`, ingredient);
   }
@@ -66,11 +67,12 @@ export class ApiDishService extends BaseApiService {
     dishId: number,
     ingredientId: number,
     ingredient: {
-      quantity?: number;
-      unit?: string;
+      quantity?: number | null;
+      unit?: string | null;
       product_id?: number;
       name?: string;
       is_serving_component?: boolean;
+      note?: string | null;
     }
   ): Observable<DishIngredient> {
     return this.put<DishIngredient>(`/dishes/${dishId}/ingredients/${ingredientId}`, ingredient);

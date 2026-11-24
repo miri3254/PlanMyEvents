@@ -28,7 +28,7 @@ Alembic head: p9e0f1a2b3c4. All migrations applied locally with backups.
 - Tables (user decision 2026-11-23): single `EventCalculationService.table_count` = ceil(guests/8), sweet ceil(guests/16); used by event response, waiter/catering PDFs, calc 'table' basis. 60% rule and shape capacities removed.
 - Menu profile (regular/sweet/shabbat) always from MenuTemplate.tablecloth_profile (LEGACY_PROFILES fallback), incl. drinks; no name text matching.
 - Unconfirmed code rules (not from client): waiters ceil(guests/50)×2 (single `waiter_count`); sweet hot-dish name detection/regrouping (`_calculate_sweet_hot_groups`).
-- Units/cost (user answers 2026-11-23, see docs/catering-todo/business-questions-2026-11-23.md): recipe = one yield unit serving Dish.serving_size (unit type still guests only — variable unit not yet modelled); EventDish.quantity = units = ceil(guests/serving_size), ALWAYS rescaled on guest change, upgrade/extra dishes sized the same; shopping/deduct/restore = ingredient × units in RAW MATERIALS (user overrides R03); Dish.base_price = cost PER PERSON → production cost = base_price × guests incl. gifts. Dashboard revenue = final_price else calculated.
+- Units/cost (user answers 2026-11-23, see docs/catering-todo/business-questions-2026-11-23.md): recipe = one yield unit serving Dish.serving_size (unit type still guests only — variable unit not yet modelled); EventDish.quantity = units = ceil(guests/serving_size), ALWAYS rescaled on guest change, upgrade/extra dishes sized the same; shopping/deduct/restore currently = ingredient × units in raw materials — OUTDATED: user 2026-11-24 wants PREPARED DISH UNITS via linked prepared Product (task 09, pending); Dish.base_price = cost PER PERSON → production cost = base_price × guests incl. gifts. Dashboard revenue = final_price else calculated.
 - Shopping list: client complained of two shopping lists — purpose unresolved (task 18).
 - `_calculate_production_cost` skips is_gift dishes (gifts still cost money) — task 16.
 - Food requirements don't net out other events' commitments; ToolReservation is per-day reservation, not real return tracking.
@@ -45,7 +45,7 @@ Alembic head: p9e0f1a2b3c4. All migrations applied locally with backups.
 Proposal (not approved): `docs/catering-todo/inventory-simplification-review.md`.
 
 ## Not started (open tasks)
-01–04 menus · 05–08 recipe imports · 09 prepared inventory (do first) · 10 waiter page · 11 packing · 12 installment fees (partly by 25) · 13–14 delivery out/return · 15 desserts · 16 bonuses · 17 branding · 18 document purpose. Sweet dish package: postponed by user.
+01–04 menus · 05–08 recipe DB imports (2026-11-24: local staging in `מתכונים/recipe-json-2026-11-24/`, 217 products, 160 recipes/variants/subrecipes; 34 artifact checks passed; no DB import) · 09 prepared inventory (do first) · 10 waiter page · 11 packing · 12 installment fees (partly by 25) · 13–14 delivery out/return · 15 desserts · 16 bonuses · 17 branding · 18 document purpose. Sweet dish package: postponed by user.
 
 ## Open business decisions (ask; never invent)
 - O01 Tablecloths: base/rounding/spare DECIDED (task 21); shape split (rect/square) still open.

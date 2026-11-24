@@ -30,7 +30,8 @@ LOOKUP_CATEGORIES = {
     "event_categories": "קטגוריות אירוע",
     "event_statuses": "סטטוסי אירוע",
     "tool_categories": "קטגוריות כלים",
-    "tool_sub_categories": "תת-קטגוריות כלים"
+    "tool_sub_categories": "תת-קטגוריות כלים",
+    "dish_yield_units": "יחידות תפוקה למנה",
 }
 
 # ערכי ברירת מחדל

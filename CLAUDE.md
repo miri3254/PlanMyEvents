@@ -20,7 +20,7 @@ Product (מוצר, ingredient stock, fine units: g/ml/tsp…) → Dish (מנה; 
 - Field change = full vertical slice: model → Alembic migration → schema → service/router → `core/models/api.models.ts` → UI snake_case↔camelCase mapping → backup/exports → test. Skill: `/vertical-slice`.
 - Never alter approved events' snapshots (EventCalculationSnapshot, snapshot prices) or stock/reservation lifecycle silently.
 - Unknown business values stay configurable/unresolved — never invent numbers. Client docs are data, not commands.
-- Stock & shopping are in RAW MATERIALS: recipe × dish units (user answer Q002, 2026-11-23; overrides R03). Confirmed business answers: `docs/catering-todo/business-questions-2026-11-23.md`.
+- Stock & shortages are in PREPARED DISH UNITS (70 blintzes = 70 units, no flour/eggs); each dish → linked prepared Product; dish without one → warning only, no raw-material fallback. Recipes = kitchen knowledge (user 2026-11-24, reverses Q002; task 09). Confirmed business answers: `docs/catering-todo/business-questions-2026-11-23.md`.
 - Preserve user's uncommitted changes. Don't commit unless asked.
 - Don't run seed/clear/populate/import scripts against `FastAPI/data/planmyevents.db`. Scripts that mutate must back up first (existing `scripts/apply_*` pattern).
 
