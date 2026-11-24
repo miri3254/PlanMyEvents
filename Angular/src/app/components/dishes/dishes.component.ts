@@ -837,7 +837,8 @@ export class DishesComponent implements OnInit, OnDestroy {
     if (!this.editingDish?.ingredients?.length) return 0;
     let total = 0;
     for (const ingredient of this.editingDish.ingredients) {
-      if (ingredient.quantity == null || !ingredient.unit) continue;  // amount missing in recipe
+      const quantity = ingredient.quantity;
+      if (quantity == null || !ingredient.unit) continue;  // amount missing in recipe
       const product = this.products.find(p => p.id === ingredient.productId);
       if (product?.estimatedPrice) {
         const packageQty = product.packageQuantity || 1;
@@ -846,7 +847,7 @@ export class DishesComponent implements OnInit, OnDestroy {
         
         // המרת כמות מרכיב ליחידת מוצר
         const convertedQuantity = this.convertUnits(
-          ingredient.quantity,
+          quantity,
           ingredient.unit,
           product.unit || 'גרם'
         );
@@ -855,7 +856,7 @@ export class DishesComponent implements OnInit, OnDestroy {
           total += pricePerProductUnit * convertedQuantity;
         } else {
           // אם אין המרה, משתמש בכמות ישירה (התנהגות קודמת)
-          total += pricePerProductUnit * ingredient.quantity;
+          total += pricePerProductUnit * quantity;
         }
       }
     }
@@ -869,7 +870,8 @@ export class DishesComponent implements OnInit, OnDestroy {
   }
 
   getIngredientPriceInfo(ingredient: DishIngredient): { pricePerUnit: number; totalPrice: number; converted: boolean } | null {
-    if (ingredient.quantity == null || !ingredient.unit) return null;
+    const quantity = ingredient.quantity;
+    if (quantity == null || !ingredient.unit) return null;
     const product = this.products.find(p => p.id === ingredient.productId);
     if (!product?.estimatedPrice) return null;
     const packageQty = product.packageQuantity || 1;
@@ -877,13 +879,13 @@ export class DishesComponent implements OnInit, OnDestroy {
     
     // המרת כמות מרכיב ליחידת מוצר
     const convertedQuantity = this.convertUnits(
-      ingredient.quantity,
+      quantity,
       ingredient.unit,
       product.unit || 'גרם'
     );
     
     const wasConverted = convertedQuantity !== null && ingredient.unit !== product.unit;
-    const quantityToUse = convertedQuantity !== null ? convertedQuantity : ingredient.quantity;
+    const quantityToUse = convertedQuantity !== null ? convertedQuantity : quantity;
     const totalPrice = pricePerProductUnit * quantityToUse;
     
     return {
