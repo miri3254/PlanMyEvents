@@ -642,6 +642,14 @@ export interface SeatingSide {
   arrangement: string;
 }
 
+/** שתייה אחרת: כמות ידנית והערות (בקשת בעל הקייטרינג) */
+export interface OtherDrink {
+  name: string;
+  quantity: number | null;
+  notes?: string;
+  unit?: string;
+}
+
 export interface EventCalculationSettings {
   drinks_enabled: boolean;
   drink_types?: Record<string, boolean>;
@@ -653,7 +661,9 @@ export interface EventCalculationSettings {
   use_rectangular_for_square: boolean;
   table_overrides?: Array<Record<string, unknown>>;
   event_tool_set_items?: EventToolSetItem[];
-  tablecloth_split?: { rectangle?: number; square?: number } | null; // חלוקת המפות שסומנה לאירוע
+  tablecloth_split?: { rectangle?: number; square?: number; extra?: { name: string; quantity: number | null }[] } | null; // חלוקת המפות + מפות נוספות
+  desserts_enabled?: boolean;           // קינוחים 1.5 לסועד בין 4 סוגים
+  other_drinks?: OtherDrink[] | null;   // שתייה אחרת
   credit_card_enabled: boolean;
   credit_card_amount?: number | null;
   credit_card_installments?: number;

@@ -7,6 +7,35 @@
   </div>
 
 
+  <section class="extras-panel drinks-desserts-panel" *ngIf="!initialLoading && event">
+    <h2>שתייה וקינוחים</h2>
+    <button type="button" (click)="toggleDrinksDesserts()">{{ drinksDessertsOpen ? 'סגירה' : 'שתייה וקינוחים לאירוע' }}</button>
+    <div *ngIf="drinksDessertsOpen">
+      <p *ngIf="!calcSummary">טוען...</p>
+      <ng-container *ngIf="calcSummary">
+        <h3>שתייה (מחושבת אוטומטית לפי התפריט)</h3>
+        <div class="extras-row">
+          <label *ngFor="let drink of drinkTypeLabels">
+            <input type="checkbox" [ngModel]="isDrinkEnabled(drink.key)" (ngModelChange)="setDrinkEnabled(drink.key, $event)" [disabled]="!editable || calcSaving">
+            {{ drink.label }}
+          </label>
+        </div>
+        <div class="extras-row" *ngFor="let row of calcRows('drink')"><span>{{ row.name }}: {{ row.quantity }} {{ row.unit }}</span></div>
+        <h3>שתייה אחרת (כמות ידנית + הערות)</h3>
+        <div class="extras-row" *ngFor="let drink of otherDrinks; let i = index">
+          <input placeholder="שם השתייה" [(ngModel)]="drink.name" (change)="saveCalcSettings()" [disabled]="!editable">
+          <input type="number" min="0" placeholder="כמות" [(ngModel)]="drink.quantity" (change)="saveCalcSettings()" [disabled]="!editable">
+          <input placeholder="הערות" [(ngModel)]="drink.notes" (change)="saveCalcSettings()" [disabled]="!editable">
+          <button type="button" (click)="removeOtherDrink(i)" [disabled]="!editable">הסר</button>
+        </div>
+        <button type="button" (click)="addOtherDrink()" [disabled]="!editable">+ שתייה אחרת</button>
+        <h3>קינוחים (1.5 לסועד, מחולק בין 4 סוגים)</h3>
+        <label><input type="checkbox" [ngModel]="calcSummary.settings?.desserts_enabled ?? true" (ngModelChange)="setDessertsEnabled($event)" [disabled]="!editable || calcSaving"> לכלול קינוחים באירוע</label>
+        <div class="extras-row" *ngFor="let row of calcRows('dessert')"><span>{{ row.name }}: {{ row.quantity }} {{ row.unit }}</span></div>
+      </ng-container>
+    </div>
+  </section>
+
   <section class="extras-panel" *ngIf="!initialLoading && event">
     <h2>הוספת מנות או כלים</h2>
     <p *ngIf="isApproved" class="approved-warning">שימי לב: האירוע מאושר. שינוי מנות יחשב מחדש כמויות ושריוני כלים, והמחירים יישארו כפי שאושרו.</p>
@@ -166,10 +195,13 @@
           </div>
 
           <!-- Standard Dishes -->
+          <label class="dish-filter" *ngIf="currentStep.loaded && (currentStep.standardDishes.length + currentStep.upgradeDishes.length) > 6">
+            חיפוש מנה בקטגוריה <input [(ngModel)]="dishFilter" placeholder="הקלידו חלק משם המנה">
+          </label>
           <div class="dishes-section" *ngIf="currentStep.loaded && currentStep.standardDishes.length > 0">
             <div class="dishes-grid">
               <div class="dish-card"
-                   *ngFor="let dish of currentStep.standardDishes"
+                   *ngFor="let dish of filterDishes(currentStep.standardDishes)"
                    [class.selected]="isDishSelected(currentStep, dish.dish_id)"
                    [class.disabled]="isDishDisabled(currentStep, dish.dish_id)"
                    (click)="toggleDish(currentStep, dish, false)">
@@ -225,7 +257,7 @@
             </div>
             <div class="dishes-grid">
               <div class="dish-card upgrade"
-                   *ngFor="let dish of currentStep.upgradeDishes"
+                   *ngFor="let dish of filterDishes(currentStep.upgradeDishes)"
                    [class.selected]="isDishSelected(currentStep, dish.dish_id)"
                    [class.disabled]="isDishDisabled(currentStep, dish.dish_id)"
                    (click)="toggleDish(currentStep, dish, true)">

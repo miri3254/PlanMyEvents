@@ -18,7 +18,7 @@ import { ApiEventService } from '../../services/api-event.service';
 import { ApiDishService } from '../../services/api-dish.service';
 import { ApiToolService } from '../../services/api-tool.service';
 import { ApiMenuService } from '../../services/api-menu.service';
-import { ApiEvent, EventDishCreate, ApiEventDish, DishServingSet, ApiDish, ApiTool } from '../../core/models/api.models';
+import { ApiEvent, EventDishCreate, ApiEventDish, DishServingSet, ApiDish, ApiTool, EventCalculationSummary, OtherDrink } from '../../core/models/api.models';
 import { MenuTemplate, MenuSubMeal, MenuCategory, DishMenuMapping, CategoryDishesResponse } from '../../models/menu.model';
 
 // ============================================
@@ -86,6 +86,16 @@ export class EventDishWizardComponent implements OnInit, OnDestroy {
   selectedServingSets: Record<string, number> = {};
 
   extrasOpen = false;
+  // Caterer list: drinks and desserts are chosen separately from the menu dishes.
+  drinksDessertsOpen = false;
+  calcSummary: EventCalculationSummary | null = null;
+  calcSaving = false;
+  readonly drinkTypeLabels: { key: string; label: string }[] = [
+    { key: 'pepsi', label: 'פפסי' }, { key: 'pepsi_max', label: 'פפסי מקס' },
+    { key: 'orange_flavored', label: 'מיץ' }, { key: 'water', label: 'מים' }, { key: 'soda', label: 'סודה' },
+  ];
+  /** Filter for the dishes of the current category (search when adding a dish). */
+  dishFilter = '';
   private extraSearchRequest = 0;
   extraSearch = '';
   extraResults: ApiDish[] = [];
@@ -105,6 +115,69 @@ export class EventDishWizardComponent implements OnInit, OnDestroy {
   showSummary = false;
 
   // Group labels for sub-meal transitions
+  filterDishes<T extends { dish_name?: string }>(dishes: T[]): T[] {
+    const term = this.dishFilter.trim();
+    return term ? dishes.filter(d => (d.dish_name || '').includes(term)) : dishes;
+  }
+
+  toggleDrinksDesserts(): void {
+    this.drinksDessertsOpen = !this.drinksDessertsOpen;
+    if (this.drinksDessertsOpen && !this.calcSummary) {
+      this.eventService.getCalculationSummary(this.eventId).pipe(takeUntil(this.destroy$)).subscribe({
+        next: summary => this.calcSummary = summary,
+        error: () => this.messageService.add({ severity: 'error', summary: 'טעינת השתייה והקינוחים נכשלה' }),
+      });
+    }
+  }
+
+  /** Calculated rows from the server (drinks / desserts / other drinks); the UI never recomputes them. */
+  calcRows(source: string) {
+    return (this.calcSummary?.product_requirements || []).filter(row => row.source_type === source);
+  }
+
+  isDrinkEnabled(key: string): boolean {
+    return this.calcSummary?.settings?.drink_types?.[key] ?? true;
+  }
+
+  setDrinkEnabled(key: string, enabled: boolean): void {
+    const settings = this.calcSummary?.settings;
+    if (!settings) return;
+    settings.drink_types = { ...(settings.drink_types || {}), [key]: enabled };
+    this.saveCalcSettings();
+  }
+
+  setDessertsEnabled(enabled: boolean): void {
+    if (!this.calcSummary?.settings) return;
+    this.calcSummary.settings.desserts_enabled = enabled;
+    this.saveCalcSettings();
+  }
+
+  get otherDrinks(): OtherDrink[] {
+    const settings = this.calcSummary?.settings;
+    if (!settings) return [];
+    settings.other_drinks ??= [];
+    return settings.other_drinks;
+  }
+
+  addOtherDrink(): void {
+    this.otherDrinks.push({ name: '', quantity: null, notes: '' });
+  }
+
+  removeOtherDrink(index: number): void {
+    this.otherDrinks.splice(index, 1);
+    this.saveCalcSettings();
+  }
+
+  saveCalcSettings(): void {
+    const settings = this.calcSummary?.settings;
+    if (!settings || !this.editable || this.calcSaving) return;
+    this.calcSaving = true;
+    this.eventService.updateCalculationSettings(this.eventId, settings).pipe(takeUntil(this.destroy$)).subscribe({
+      next: summary => { this.calcSummary = summary; this.calcSaving = false; },
+      error: () => { this.calcSaving = false; this.messageService.add({ severity: 'error', summary: 'שמירת השתייה והקינוחים נכשלה' }); },
+    });
+  }
+
   get currentStep(): WizardStep | null {
     return this.steps[this.activeStepIndex] ?? null;
   }

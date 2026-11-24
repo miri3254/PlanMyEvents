@@ -362,6 +362,8 @@ class EventService:
                 "table_overrides": calc_settings.table_overrides,
                 "event_tool_set_items": calc_settings.event_tool_set_items,
                 "tablecloth_split": calc_settings.tablecloth_split,
+                "desserts_enabled": calc_settings.desserts_enabled,
+                "other_drinks": calc_settings.other_drinks,
                 "credit_card_enabled": calc_settings.credit_card_enabled,
                 "credit_card_amount": calc_settings.credit_card_amount,
                 "credit_card_installments": calc_settings.credit_card_installments,

@@ -297,7 +297,7 @@
                 {{ getEventSequenceLabel(event) }}
               </span>
               <i class="event-row-status-icon" [ngClass]="[getStatusIcon(event.status), getStatusClass(event.status)]" [attr.title]="getStatusLabel(event.status)"></i>
-              <span>{{ event.name }}</span>
+              <span>{{ eventDisplayName(event.name, event.menuType) }}</span>
               <small>{{ event.eventCategory || event.menuType }}</small>
             </div>
           </td>
@@ -390,7 +390,7 @@
           <h3>מידע כללי</h3>
           <div class="info-row">
             <span class="label">שם האירוע</span>
-            <span class="value">{{ selectedEvent.name }}</span>
+            <span class="value">{{ eventDisplayName(selectedEvent.name, selectedEvent.menuType) }}</span>
           </div>
           <div class="info-row">
             <span class="label">תאריך לועזי</span>
@@ -446,6 +446,12 @@
                   (change)="onTableclothSplitChange('rectangle', $any($event.target).valueAsNumber)"></label>
                 <label>מרובע <input type="number" min="0" class="split-input" [ngModel]="getTableclothSplit().square"
                   (change)="onTableclothSplitChange('square', $any($event.target).valueAsNumber)"></label>
+                <span class="tablecloth-extra" *ngFor="let extra of getTableclothExtras(); let i = index">
+                  <input class="split-name" [(ngModel)]="extra.name" placeholder="מפה נוספת (למשל מזרח)" (change)="saveTableclothExtras()">
+                  <input type="number" min="0" class="split-input" [(ngModel)]="extra.quantity" (change)="saveTableclothExtras()">
+                  <button type="button" (click)="removeTableclothExtra(i)">הסר</button>
+                </span>
+                <button type="button" (click)="addTableclothExtra()">+ מפות נוספות</button>
                 <small class="split-warning"
                   *ngIf="(getTableclothSplit().rectangle + getTableclothSplit().square) && getTableclothSplit().rectangle + getTableclothSplit().square !== getTableclothRequiredTotal()">
                   הסימון ({{ getTableclothSplit().rectangle + getTableclothSplit().square }}) שונה מהסה"כ הנדרש
@@ -792,8 +798,9 @@
             <button type="button" (click)="saveManualTools()">שמור כלים ידניים</button>
           </div>
           <div class="calculation-warning" *ngFor="let warning of summary.warnings">{{ warning }}</div>
+          <h5 *ngIf="summary.product_requirements.length">שתייה, לחמניות ונלווים – חישוב אוטומטי (רשימת הקניות המלאה: כפתור "רשימת קניות PDF")</h5>
           <table class="calculation-table" *ngIf="summary.product_requirements.length">
-            <thead><tr><th>מוצר</th><th>כמות</th><th>במלאי</th><th>לקנייה</th><th>נוסחה</th></tr></thead>
+            <thead><tr><th>מוצר</th><th>כמות</th><th>במלאי</th><th>חסר</th><th>נוסחה</th></tr></thead>
             <tbody><tr *ngFor="let row of summary.product_requirements"><td>{{ row.name }}</td>
               <td>{{ row.quantity | number:'1.0-2' }} {{ row.unit }}</td><td>{{ row.available_in_stock | number:'1.0-2' }}</td>
               <td>{{ row.need_to_buy_quantity | number:'1.0-2' }}</td><td>{{ row.formula_label || '—' }}</td></tr></tbody>
@@ -853,8 +860,9 @@
         <h4><i class="pi pi-calendar-plus"></i> פרטי האירוע</h4>
         <div class="form-grid form-grid-balanced">
           <div class="field field-wide">
-            <label>שם האירוע</label>
-            <input pInputText [(ngModel)]="eventForm.name" />
+            <label>שם משפחה (שם האירוע)</label>
+            <input pInputText [(ngModel)]="eventForm.name" placeholder="לדוגמה: כהן" />
+            <small class="compute-hint" *ngIf="eventForm.name">שם ייחודי: {{ eventDisplayName(eventForm.name, eventForm.menuType) }}</small>
           </div>
 
           <div class="field">
@@ -1067,6 +1075,10 @@
           <input pInputText [(ngModel)]="eventForm.accessCode" placeholder="קוד, מיקום המפתח או ממי לקבל אותו" />
 
           <label>איש קשר במקום</label>
+          <select class="contact-from-owners" *ngIf="eventForm.owners.length" (change)="pickContactFromOwner($any($event.target).value)">
+            <option value="">בחירה מבעלי האירוע…</option>
+            <option *ngFor="let owner of eventForm.owners; let i = index" [value]="i">{{ owner.name }} {{ owner.phone }}</option>
+          </select>
           <input pInputText [(ngModel)]="eventForm.onsiteContactName" />
 
           <label>טלפון איש קשר</label>

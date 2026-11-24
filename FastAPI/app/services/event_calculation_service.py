@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from fractions import Fraction
 from collections import defaultdict
 from datetime import datetime, time, timedelta
 from typing import Any
@@ -38,6 +39,7 @@ from app.schemas.calculation import (
 
 
 TABLE_SHAPE_LABELS = {"square": "מרובע", "round": "עגול", "rectangle": "מלבן"}
+DESSERT_TYPES = ["מוס", "פחזנייה", "טארטלטים", "מקרונים"]  # caterer list; products matched by name
 BASIS_LABELS = {"table": "לפי שולחנות", "event": "לאירוע", "guest": "לפי סועדים", "dish_unit": "לפי יחידות מנה",
                 "place_setting": "לפי מקומות ערוכים", "serving_group": "כלי לכל 8 ערוכים"}
 
@@ -130,6 +132,8 @@ class EventCalculationService:
 
         product_requirements.extend(self._calculate_drinks(event, settings, trace, warnings))
         product_requirements.extend(self._calculate_crackers(event, warnings))
+        product_requirements.extend(self._calculate_desserts(event, settings, trace))
+        product_requirements.extend(self._calculate_other_drinks(settings))
         product_requirements.extend(self._calculate_rolls(event, settings, trace, warnings))
         product_requirements.extend(self._calculate_dish_rules(event, settings, trace, warnings))
         tool_requirements.extend(self._calculate_table_settings(event, warnings))
@@ -375,6 +379,16 @@ class EventCalculationService:
         trace.append({"type": "tablecloths", "shape": shape, "formula": formula, **details})
         split = settings.tablecloth_split or {}
         rect, square = int(split.get("rectangle") or 0), int(split.get("square") or 0)
+        # Caterer: sometimes additional different tablecloths (e.g. for the מזרח table) – entered by hand,
+        # on top of the portions/8 total, so they are not part of the split check.
+        extras = [
+            CalculationRequirement(
+                source_type="tablecloths", item_type="tool", tool_id=None, name=str(row.get("name") or "מפה נוספת").strip(),
+                quantity=int(row.get("quantity") or 0), raw_quantity=float(row.get("quantity") or 0), unit="יחידות",
+                formula_label="מפות נוספות – הוזן ידנית", details={"extra": True}, category="מפות", is_reusable=True,
+            )
+            for row in (split.get("extra") or []) if int(row.get("quantity") or 0) > 0
+        ]
         if rect or square:
             # Caterer: total = portions/8 (+spare); the user marks how many rectangle vs square.
             if rect + square != quantity:
@@ -388,8 +402,8 @@ class EventCalculationService:
                     category="מפות", is_reusable=True,
                 )
                 for key, count in (("rectangle", rect), ("square", square)) if count
-            ]
-        return [
+            ] + extras
+        return extras + [
             CalculationRequirement(
                 source_type="tablecloths",
                 item_type="tool",
@@ -460,6 +474,38 @@ class EventCalculationService:
 
         trace.append({"type": "event_tool_set", "guests": guests, "items": settings.event_tool_set_items})
         return result
+
+    def _calculate_desserts(self, event, settings, trace) -> list[CalculationRequirement]:
+        """Caterer list (user decision 2026-11-24, all menus): ceil(guests × 1.5) desserts split as equally
+        as possible between the 4 types, remainder to the first ones (70 → 105 = 27/26/26/26).
+        Stock may shift the split by hand; shortages show as need-to-buy, never block."""
+        if settings and not settings.desserts_enabled:
+            return []
+        guests = max(0, event.guest_count or 0)
+        total = math.ceil(Fraction(guests) * Fraction(3, 2))
+        if not total:
+            return []
+        base, extra = divmod(total, len(DESSERT_TYPES))
+        rows = []
+        for index, name in enumerate(DESSERT_TYPES):
+            qty = base + (1 if index < extra else 0)
+            formula = f"עיגול למעלה(סועדים × 1.5) = {total}; חלוקה שווה בין {len(DESSERT_TYPES)} סוגים"
+            rows.append(self._product_req("dessert", name, qty, "יחידות", formula, qty))
+        trace.append({"type": "desserts", "guests": guests, "total": total, "types": DESSERT_TYPES})
+        return rows
+
+    def _calculate_other_drinks(self, settings) -> list[CalculationRequirement]:
+        """Free 'other' drinks (caterer: flavored water etc.) – quantity entered by hand, notes kept."""
+        rows = []
+        for row in (settings.other_drinks if settings else None) or []:
+            name = str(row.get("name") or "").strip()
+            qty = float(row.get("quantity") or 0)
+            if not name or qty <= 0:
+                continue
+            item = self._product_req("drink_other", name, qty, row.get("unit") or "יחידות", row.get("notes") or "שתייה אחרת – כמות ידנית", qty)
+            item.details = {"notes": row.get("notes") or ""}
+            rows.append(item)
+        return rows
 
     def _calculate_crackers(self, event, warnings):
         if self._menu_calculation_profile(event)[0] != 'sweet':
