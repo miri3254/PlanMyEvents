@@ -17,6 +17,7 @@ class EventCalculationSettingsBase(BaseModel):
     use_rectangular_for_square: bool = False
     table_overrides: Optional[list[dict[str, Any]]] = None
     event_tool_set_items: Optional[list[dict[str, Any]]] = None
+    tablecloth_split: Optional[dict[str, int]] = None  # {"rectangle": n, "square": m}
     credit_card_enabled: bool = False
     credit_card_amount: Optional[float] = Field(None, ge=0)
     credit_card_installments: int = Field(1, ge=1, le=6)

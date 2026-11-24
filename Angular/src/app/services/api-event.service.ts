@@ -188,6 +188,10 @@ export class ApiEventService extends BaseApiService {
     return this.put<EventCalculationSummary>(`/events/${eventId}/calculations/manual-tools`, { rows });
   }
 
+  printReturnSheetPdf(eventId: number): void {
+    window.open(`${environment.apiUrl}/events/${eventId}/return-sheet/pdf`, '_blank');
+  }
+
   printDeliverySheetPdf(eventId: number): void {
     const url = `${environment.apiUrl}/events/${eventId}/delivery-sheet/pdf`;
     window.open(url, '_blank');

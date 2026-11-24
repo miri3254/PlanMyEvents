@@ -2,7 +2,7 @@
 Event models — the aggregate root of the system.
 """
 
-from sqlalchemy import Column, String, Integer, Float, Boolean, Text, DateTime, ForeignKey
+from sqlalchemy import Column, String, Integer, Float, Boolean, Text, DateTime, ForeignKey, JSON
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
 
@@ -67,6 +67,8 @@ class Event(BaseModel):
     has_back_entrance = Column(Boolean, default=False, nullable=False)
     requires_carts = Column(Boolean, default=False, nullable=False)
     access_notes = Column(Text, nullable=True)
+    # Caterer request: places + arrangement per hall side, e.g. [{"side": "גברים", "places": 120, "arrangement": "ארוכים"}]
+    seating_sides = Column(JSON, nullable=True)
     dishware_type = Column(String(50), nullable=True)
     delivery_contents_notes = Column(Text, nullable=True)
     last_minute_items = Column(Text, nullable=True)

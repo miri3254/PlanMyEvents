@@ -18,6 +18,11 @@ Note: local DB data is dummy data; the user allows overwriting it when needed (s
 | Menus | `שולחן מתוק` (id 7) and `תפריט שבת` (id 4) exist locally; split-Shabbat as event option was removed by user | — |
 Alembic head: p9e0f1a2b3c4. All migrations applied locally with backups.
 
+## Printed documents (2026-11-24, branch docs/printed-documents; source docs/catering-todo/sources/caterer-document-instructions-2026-11.md)
+- All docs on Ginsberger letterhead (assets/blank*.png downscaled). waiter-pdf = serving instructions (hall, phone, floor, seating sides, setting text from workbook, per-dish quantity/serving mode/vessel/cutlery/add-ons, accompanying products). catering-pdf = packing list (replaces unclear "event summary"): food, drinks/rolls, tablecloths, setting, central tools, spare, waiter tools per event/per waiter, extras, boxes. delivery-sheet = driver out (before-leaving + on-arrival checks, 5 stages). NEW return-sheet/pdf = driver return.
+- New fields: events.seating_sides JSON, event_calculation_settings.tablecloth_split JSON (migration q0f1a2b3c4d5, NOT yet applied locally). Tests: test_event_documents.py.
+- Open: extras (gloves, garbage bags, salt…) have no quantities; chulent/soup waiter tools detected by dish name; spare "1 חבילה מזלג+סכין+כף" read as one package each.
+
 ## Legacy / partial (don't assume correct)
 - Waiter/catering PDFs: use aggregated tool contributions; old events without contribution metadata fall back to legacy `dish.serving_dishes`.
 - Tables (user decision 2026-11-23): single `EventCalculationService.table_count` = ceil(guests/8), sweet ceil(guests/16); used by event response, waiter/catering PDFs, calc 'table' basis. 60% rule and shape capacities removed.
