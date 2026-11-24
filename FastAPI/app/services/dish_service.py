@@ -45,7 +45,7 @@ class DishService:
             dish.kosher_type = "בשרי"
         elif "חלבי" in ingredient_types and "בשרי" not in ingredient_types:
             dish.kosher_type = "חלבי"
-        elif not ingredient_types or ingredient_types == {"פרווה"}:
+        elif ingredient_types == {"פרווה"}:
             dish.kosher_type = "פרווה"
 
     # ── LIST / GET ────────────────────────────────────────────────────
