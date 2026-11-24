@@ -96,7 +96,9 @@ export class EventDishWizardComponent implements OnInit, OnDestroy {
   manualSaving = false;
   newToolId: number | null = null;
   newToolQuantity = 1;
-  get editable(): boolean { return this.event?.status === 'טיוטה'; }
+  // Q045 (2026-11-23): approved events stay editable with a warning; completed/cancelled are closed.
+  get editable(): boolean { return this.event?.status === 'טיוטה' || this.event?.status === 'מאושר'; }
+  get isApproved(): boolean { return this.event?.status === 'מאושר'; }
   get freeDishes(): ApiEventDish[] { return (this.event?.dishes || []).filter(d => !d.category_id); }
 
   // Summary mode
@@ -382,7 +384,9 @@ export class EventDishWizardComponent implements OnInit, OnDestroy {
   addFreeDish(dish: ApiDish): void {
     if (!this.editable || this.alreadySelected(dish.id) || this.savingDishIds.has(dish.id)) return;
     this.savingDishIds.add(dish.id);
-    this.eventService.addDishToEvent(this.eventId, {dish_id: dish.id, quantity: 1, is_upgrade: true,
+    // Q007: an extra/upgrade dish is sized like a regular dish (guests ÷ serving size).
+    const quantity = Math.ceil((this.event?.guest_count || 1) / (dish.serving_size || 1));
+    this.eventService.addDishToEvent(this.eventId, {dish_id: dish.id, quantity, is_upgrade: true,
       extra_charge: dish.client_price || 0}).pipe(takeUntil(this.destroy$)).subscribe({next: event => {
         this.event = event; this.savingDishIds.delete(dish.id);
       }, error: () => {this.savingDishIds.delete(dish.id); this.messageService.add({severity: 'error', summary: 'המנה לא נוספה'});}});

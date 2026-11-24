@@ -199,6 +199,7 @@ export interface ApiEvent extends BaseEntity {
   tray_selections?: ApiEventTraySelection[];
   calculation_settings?: EventCalculationSettings;
   has_calculation_snapshot?: boolean;
+  warnings?: string[];                  // אזהרות עסקיות (לא חוסמות)
 }
 
 // ============================================

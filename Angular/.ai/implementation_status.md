@@ -23,7 +23,7 @@ Alembic head: p9e0f1a2b3c4. All migrations applied locally with backups.
 - Tables (user decision 2026-11-23): single `EventCalculationService.table_count` = ceil(guests/8), sweet ceil(guests/16); used by event response, waiter/catering PDFs, calc 'table' basis. 60% rule and shape capacities removed.
 - Menu profile (regular/sweet/shabbat) always from MenuTemplate.tablecloth_profile (LEGACY_PROFILES fallback), incl. drinks; no name text matching.
 - Unconfirmed code rules (not from client): waiters ceil(guests/50)×2 (single `waiter_count`); sweet hot-dish name detection/regrouping (`_calculate_sweet_hot_groups`).
-- Units (user decision 2026-11-23): recipe + Dish.base_price = ONE dish unit serving Dish.serving_size guests; EventDish.quantity = units (wizard ceil(guests/serving_size)); shopping/deduct/restore = ingredient × units (no ×guests); production cost = base_price × units incl. gifts; guest change rescales units still at the auto value. Dashboard revenue = final_price else calculated.
+- Units/cost (user answers 2026-11-23, see docs/catering-todo/business-questions-2026-11-23.md): recipe = one yield unit serving Dish.serving_size (unit type still guests only — variable unit not yet modelled); EventDish.quantity = units = ceil(guests/serving_size), ALWAYS rescaled on guest change, upgrade/extra dishes sized the same; shopping/deduct/restore = ingredient × units in RAW MATERIALS (user overrides R03); Dish.base_price = cost PER PERSON → production cost = base_price × guests incl. gifts. Dashboard revenue = final_price else calculated.
 - Shopping list: client complained of two shopping lists — purpose unresolved (task 18).
 - `_calculate_production_cost` skips is_gift dishes (gifts still cost money) — task 16.
 - Food requirements don't net out other events' commitments; ToolReservation is per-day reservation, not real return tracking.
@@ -31,11 +31,11 @@ Alembic head: p9e0f1a2b3c4. All migrations applied locally with backups.
 ## Known bugs (reproduced in service tests, NOT fixed)
 - `restore_stock` (only via POST /events/{id}/restore-stock, not called from UI): double restore adds twice; restores full amount even if deduction was floored at 0; with ingredient replaced by prepared product both were deducted.
 - `_deduct_inventory` deducts recipe ingredients AND calc product_requirements — verify double counting before stock work. Replaced ingredients (`replaced_product_ids`) are skipped since 2026-11-23.
-- Min guests (2026-11-23): MenuTemplate.min_guests wins; constants.MIN_GUESTS only when no template.
+- Min guests: MenuTemplate.min_guests wins (constants only without template); below minimum = WARNING (EventResponse.warnings), never a block. Category quota over = warning only (UI already).
 
 ## Lifecycle rules (2026-11-23, test_event_lifecycle_rules.py)
 - Approve → all EventDish.is_draft=False (UI never calls /dishes/finalize). מאושר→טיוטה → delete calc snapshot, clear dish snapshot prices, release reservations, dishes back to draft.
-- Approved/completed events: `_ensure_editable` blocks real changes to guest_count/is_real_dishes/is_morning_split/menu_type and all dish/tray mutations (400, "return to draft"). final_price, notes, delivery fields, calc settings still editable.
+- Approved events are editable WITH A WARNING (UI confirm + EventResponse.warnings); after the change the calc snapshot + reservations are rebuilt, existing dish snapshot prices stay, new dishes get current price. Completed events: 400. Menu change deletes previous menu's dishes (UI confirms first). Stock may go negative on completion (logged). Sweet sigars = ceil(guests/2) (workbook D13).
 - Menu change (draft) re-resolves base_price_per_guest + real_dishes_extra from MenuTemplate and reprices.
 Proposal (not approved): `docs/catering-todo/inventory-simplification-review.md`.
 

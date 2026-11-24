@@ -58,6 +58,10 @@ class EventService:
         self.menu_repo = MenuRepository(db)
         self.audit = AuditRepository(db)
         self.calculations = EventCalculationService(db)
+        # User decisions 2026-11-23: rule breaches are warnings, not blocks.
+        self._op_warnings: dict[int, list[str]] = {}
+        self._approved_changed: set[int] = set()
+        self._template_cache: dict[str, object] = {}
 
     # ── helpers ───────────────────────────────────────────────────────
 
@@ -176,6 +180,15 @@ class EventService:
         if not unique_ids:
             return {}
         return {row.id: row for row in self.db.query(model).filter(model.id.in_(unique_ids)).all()}
+
+    def _response_warnings(self, event: Event) -> list[str]:
+        warnings = list(self._op_warnings.pop(event.id, []))
+        if self._is_status(event, EventStatus.DRAFT) or self._is_status(event, EventStatus.APPROVED):
+            menu_type = str(event.menu_type)
+            message = self._min_guests_warning(event.guest_count, menu_type, self._template_for(menu_type))
+            if message:
+                warnings.append(message)
+        return warnings
 
     def _build_response(self, event: Event) -> dict:
         from app.models.menu import MenuCategory, MenuSubMeal
@@ -354,6 +367,7 @@ class EventService:
                 "credit_card_vat_multiplier": calc_settings.credit_card_vat_multiplier,
             } if calc_settings else None,
             "has_calculation_snapshot": has_calc_snapshot,
+            "warnings": self._response_warnings(event),
         }
 
     # ── CRUD ──────────────────────────────────────────────────────────
@@ -377,8 +391,6 @@ class EventService:
         # Validate min guests
         menu_type_val = data.menu_type
         template = self.menu_repo.get_template_by_type(menu_type_val)
-        self._validate_min_guests(data.guest_count, menu_type_val, template)
-
         # Resolve base price from template
         base_price = template.base_price_per_guest if template else None
         real_dishes_extra = getattr(template, 'real_dishes_extra_per_guest', 0.0) if template else 0.0
@@ -427,12 +439,6 @@ class EventService:
         logger.info(f"🔧 Update event {event_id}: {update_data}")
         logger.info(f"📋 Owners in request: {data.owners}")
 
-        # Validate guest count against menu min
-        if "guest_count" in update_data or "menu_type" in update_data:
-            mt = update_data.get("menu_type") or str(event.menu_type)
-            guests = update_data.get("guest_count", event.guest_count)
-            self._validate_min_guests(guests, mt, self.menu_repo.get_template_by_type(mt))
-
         # The UI sends the whole form, so only real changes count.
         frozen_fields = ("guest_count", "is_real_dishes", "is_morning_split", "menu_type")
         changed_frozen = [
@@ -450,6 +456,9 @@ class EventService:
             self._rescale_dish_units(event, old_guests)
 
         if menu_changed:
+            self._replace_dishes_after_menu_change(event)
+        if menu_changed and not self._is_status(event, EventStatus.APPROVED):
+            # Approved events keep their approved prices (user decision Q046).
             template = self.menu_repo.get_template_by_type(str(event.menu_type))
             event.base_price_per_guest = template.base_price_per_guest if template else None
             event.real_dishes_extra_per_guest = (getattr(template, "real_dishes_extra_per_guest", 0.0) or 0.0) if template else 0.0
@@ -538,23 +547,43 @@ class EventService:
     def _dish_units(ed: EventDish) -> float:
         return ed.quantity or 0
 
+    @staticmethod
+    def _units_for_guests(dish: Dish | None, guests: int | None) -> int:
+        serving = (dish.serving_size if dish else None) or 1
+        return math.ceil(max(1, guests or 0) / serving)
+
     def _rescale_dish_units(self, event: Event, old_guests: int | None) -> None:
-        """Guest count changed: update dishes whose quantity is still the automatic one."""
+        """Guest count changed: every dish quantity follows it (user decision Q011)."""
         for ed in event.dishes:
-            dish = ed.dish
-            serving = (dish.serving_size if dish else None) or 1
-            if old_guests and ed.quantity == math.ceil(old_guests / serving):
-                ed.quantity = math.ceil((event.guest_count or 1) / serving)
+            ed.quantity = self._units_for_guests(ed.dish, event.guest_count)
 
     @staticmethod
-    def _validate_min_guests(guest_count: int, menu_type: str, template) -> None:
-        # User decision 2026-11-23: the menu's own min_guests wins; the constants list
-        # is only a fallback for a menu type with no MenuTemplate row.
+    def _min_guests_warning(guest_count: int, menu_type: str, template) -> str | None:
+        # User decisions 2026-11-23: the menu's own min_guests wins (constants list only
+        # when no MenuTemplate row); below the minimum is a warning, not a block (Q015).
         min_g = template.min_guests if template and template.min_guests else MIN_GUESTS.get(menu_type, 1)
         if (guest_count or 0) < min_g:
-            msg = f"מינימום {min_g} סועדים נדרש לתפריט '{menu_type}'. הוזנו {guest_count} סועדים."
-            logger.warning(f"❌ {msg}")
-            raise AppException(400, msg)
+            return f"מתחת למינימום: לתפריט '{menu_type}' נדרשים {min_g} סועדים, הוזנו {guest_count}."
+        return None
+
+    def _template_for(self, menu_type: str):
+        if menu_type not in self._template_cache:
+            self._template_cache[menu_type] = self.menu_repo.get_template_by_type(menu_type)
+        return self._template_cache[menu_type]
+
+    @staticmethod
+    def _is_status(event: Event, status: EventStatus) -> bool:
+        value = event.status.value if hasattr(event.status, "value") else str(event.status)
+        return value == status.value
+
+    def _replace_dishes_after_menu_change(self, event: Event) -> None:
+        """Q029: changing the menu removes dishes chosen from the previous menu (UI warns first)."""
+        removed = len(event.dishes)
+        if removed:
+            self.db.query(EventDish).filter(EventDish.event_id == event.id).delete()
+            self.db.flush()
+            self.db.expire(event, ["dishes"])
+            self._op_warnings.setdefault(event.id, []).append(f"התפריט הוחלף: הוסרו {removed} מנות מהתפריט הקודם.")
 
     def _clear_approval_snapshot(self, event: Event) -> None:
         self.db.query(EventCalculationSnapshot).filter(EventCalculationSnapshot.event_id == event.id).delete()
@@ -566,14 +595,25 @@ class EventService:
         self.calculations.release_reservations(event.id)
 
     def _ensure_editable(self, event: Event) -> None:
-        """Approved/completed events are frozen (price + calculation snapshot)."""
-        status = event.status.value if hasattr(event.status, "value") else str(event.status)
-        if status in (EventStatus.APPROVED.value, EventStatus.COMPLETED.value):
-            raise AppException(
-                400,
-                f"לא ניתן לשנות מנות, מגשים, תפריט או מספר סועדים באירוע בסטטוס '{status}'. "
-                "יש להחזיר את האירוע לטיוטה ולאשר מחדש.",
+        """Q045: approved events may be edited with a warning; quantities and reservations
+        are recalculated, approved prices stay. Completed events are closed (stock deducted)."""
+        if self._is_status(event, EventStatus.COMPLETED):
+            raise AppException(400, "לא ניתן לשנות אירוע שהסתיים (המלאי כבר הורד).")
+        if self._is_status(event, EventStatus.APPROVED) and event.id not in self._approved_changed:
+            self._approved_changed.add(event.id)
+            self._op_warnings.setdefault(event.id, []).append(
+                "האירוע מאושר: הכמויות והשריונים עודכנו, המחירים נשארו כפי שאושרו."
             )
+
+    def _refresh_approved_snapshot(self, event: Event) -> None:
+        """Re-freeze quantities/reservations after an approved event changed; keep prices."""
+        self.db.flush()
+        self.db.expire(event, ["dishes", "tray_selections"])
+        for ed in event.dishes:
+            if ed.snapshot_base_price is None and ed.dish:  # dish added after approval
+                ed.snapshot_base_price = ed.dish.base_price
+                ed.snapshot_client_price = ed.dish.client_price
+        self.calculations.snapshot_event(event)
 
     def _snapshot_prices(self, event: Event):
         """Freeze dish/tray prices at finalization time."""
@@ -650,7 +690,10 @@ class EventService:
             product = self.db.query(Product).filter(Product.id == product_id).first()
             if product:
                 old_stock = product.quantity_in_stock
-                product.quantity_in_stock = max(0, product.quantity_in_stock - amount)
+                # Q055: stock may go negative (shows what is missing); warn, don't floor at 0.
+                product.quantity_in_stock = (product.quantity_in_stock or 0) - amount
+                if product.quantity_in_stock < 0:
+                    logger.warning(f"Negative stock after event {event.id}: {product.name} = {product.quantity_in_stock}")
                 logger.info(
                     f"Inventory deduction for event {event.id}: "
                     f"Product {product_id} ({product.name}): {old_stock} → {product.quantity_in_stock} "
@@ -955,6 +998,9 @@ class EventService:
         else:
             event.discount_amount = 0.0
             event.discount_percent = 0.0
+
+        if event.id in self._approved_changed:
+            self._refresh_approved_snapshot(event)
 
     # ── shopping list ─────────────────────────────────────────────────
 

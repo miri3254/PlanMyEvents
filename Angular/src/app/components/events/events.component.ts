@@ -21,7 +21,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { LoadingOverlayComponent } from '../../shared/loading-overlay/loading-overlay.component';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { Subject, Observable, EMPTY, of } from 'rxjs';
-import { take, takeUntil, catchError, map, switchMap } from 'rxjs/operators';
+import { take, takeUntil, catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ApiEventService } from '../../services/api-event.service';
 import { ApiProductService } from '../../services/api-product.service';
 import { ApiLookupService } from '../../services/api-lookup.service';
@@ -1158,7 +1158,46 @@ export class EventsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Business warnings from the server are shown, never blocking (user decisions 2026-11-23). */
+  private showBusinessWarnings(warnings: string[] | undefined): void {
+    for (const detail of warnings || []) {
+      this.messageService.add({ severity: 'warn', summary: 'שימי לב', detail, life: 8000 });
+    }
+  }
+
+  private sensitiveChangesConfirmed = false;
+
+  /** Returns true when the save may continue now; otherwise asks first and re-runs `retry`. */
+  private confirmSensitiveChanges(retry: () => void): boolean {
+    if (this.sensitiveChangesConfirmed || this.eventFormMode === 'create' || !this.eventForm.id) {
+      this.sensitiveChangesConfirmed = false;
+      return true;
+    }
+    const original = this.events.find(e => e.id === this.eventForm.id);
+    if (!original) return true;
+    const messages: string[] = [];
+    if (original.menuType !== this.eventForm.menuType && (original.dishes?.length || 0) > 0) {
+      messages.push(`החלפת התפריט תמחק את ${original.dishes!.length} המנות שנבחרו מהתפריט הקודם.`);
+    }
+    const coreChanged = original.guestCount !== this.eventForm.guestCount
+      || original.menuType !== this.eventForm.menuType
+      || !!original.isRealDishes !== !!this.eventForm.isRealDishes;
+    if (original.status === 'מאושר' && coreChanged) {
+      messages.push('האירוע מאושר. הכמויות והשריונים יחושבו מחדש, והמחירים יישארו כפי שאושרו.');
+    }
+    if (!messages.length) return true;
+    this.confirmationService.confirm({
+      header: 'אישור שינוי',
+      message: messages.join('<br>'),
+      acceptLabel: 'המשך',
+      rejectLabel: 'ביטול',
+      accept: () => { this.sensitiveChangesConfirmed = true; retry(); },
+    });
+    return false;
+  }
+
   submitEventForm(): void {
+    if (!this.confirmSensitiveChanges(() => this.submitEventForm())) return;
     if (!this.isFormValid()) {
       this.messageService.add({
         severity: 'warn',
@@ -1202,6 +1241,7 @@ export class EventsComponent implements OnInit, OnDestroy {
       this.eventService.createEvent(createPayload)
         .pipe(
           take(1),
+          tap(apiEvent => this.showBusinessWarnings(apiEvent.warnings)),
           map(mapApiEventToEvent),
           switchMap((created: Event) => this.eventForm.status && this.eventForm.status !== created.status
             ? this.eventService.updateEventStatus(created.id, { status: this.eventForm.status as any }).pipe(map(mapApiEventToEvent))
@@ -1256,6 +1296,7 @@ export class EventsComponent implements OnInit, OnDestroy {
         .updateEvent(this.eventForm.id, updatePayload)
         .pipe(
           take(1),
+          tap(apiEvent => this.showBusinessWarnings(apiEvent.warnings)),
           map(mapApiEventToEvent),
           switchMap((updated: Event) => this.eventForm.status && this.eventForm.status !== updated.status
             ? this.eventService.updateEventStatus(updated.id, { status: this.eventForm.status as any }).pipe(map(mapApiEventToEvent))
@@ -1296,6 +1337,7 @@ export class EventsComponent implements OnInit, OnDestroy {
   }
 
   submitAndNavigateToDishes(): void {
+    if (!this.confirmSensitiveChanges(() => this.submitAndNavigateToDishes())) return;
     if (!this.isFormValid()) {
       this.messageService.add({
         severity: 'warn',
@@ -1340,6 +1382,7 @@ export class EventsComponent implements OnInit, OnDestroy {
       this.eventService.createEvent(createPayload)
         .pipe(
           take(1),
+          tap(apiEvent => this.showBusinessWarnings(apiEvent.warnings)),
           map(mapApiEventToEvent),
           switchMap((created: Event) => this.eventForm.status && this.eventForm.status !== created.status
             ? this.eventService.updateEventStatus(created.id, { status: this.eventForm.status as any }).pipe(map(mapApiEventToEvent))
@@ -1398,6 +1441,7 @@ export class EventsComponent implements OnInit, OnDestroy {
         .updateEvent(this.eventForm.id, updatePayload)
         .pipe(
           take(1),
+          tap(apiEvent => this.showBusinessWarnings(apiEvent.warnings)),
           map(mapApiEventToEvent),
           switchMap((updated: Event) => this.eventForm.status && this.eventForm.status !== updated.status
             ? this.eventService.updateEventStatus(updated.id, { status: this.eventForm.status as any }).pipe(map(mapApiEventToEvent))

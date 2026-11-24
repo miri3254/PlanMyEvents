@@ -26,7 +26,7 @@ Last inspected: 2026-11-15. This is a source-code map, not a certification of ru
 - Keep snake_case API fields, camelCase UI mappings, persistence, exports and backup/restore consistent.
 - Protect saved events, price/calculation snapshots and stock/reservation lifecycle when changing formulas.
 - User-provided requirements are targets, not evidence that functionality is implemented. Unspecified business values must remain configurable/unresolved, not invented.
-- Separate recipe ingredients from prepared-product inventory. Never import recipe ingredients into winning-menu shortages by default.
+- Stock and shopping are counted in raw materials (recipe × dish units) — user answer Q002 2026-11-23 overrides R03. Read docs/catering-todo/business-questions-2026-11-23.md before changing business rules.
 - Use original source attribution and repeatable imports that do not duplicate records. Do not merge different recipe versions merely because names match.
 - Do not scan node_modules, .venv, .git, dist, caches, logs, backup code, or databases for routine source discovery. Do not expose .env secrets.
 - Do not run database clearing, seed or bulk-import scripts against real data just to inspect the project.

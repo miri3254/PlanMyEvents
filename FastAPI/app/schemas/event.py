@@ -331,6 +331,7 @@ class EventResponse(BaseModel):
     tray_selections: List[EventTrayResponse] = []
     calculation_settings: Optional[Any] = None
     has_calculation_snapshot: bool = False
+    warnings: list[str] = []  # rule breaches shown to the user (not blocks)
 
     model_config = {"from_attributes": True}
 

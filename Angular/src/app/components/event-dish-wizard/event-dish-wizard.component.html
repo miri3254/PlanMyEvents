@@ -9,7 +9,8 @@
 
   <section class="extras-panel" *ngIf="!initialLoading && event">
     <h2>הוספת מנות או כלים</h2>
-    <p *ngIf="!editable">לאירוע זה נשמר חישוב מאושר. לשינוי התכולה החזירו אותו לטיוטה במסך האירוע, ערכו ואשרו מחדש.</p>
+    <p *ngIf="isApproved" class="approved-warning">שימי לב: האירוע מאושר. שינוי מנות יחשב מחדש כמויות ושריוני כלים, והמחירים יישארו כפי שאושרו.</p>
+    <p *ngIf="!editable">האירוע סגור לעריכה (הסתיים או בוטל).</p>
     <button type="button" (click)="openExtras()">{{ extrasOpen ? 'סגירת התוספות' : '+ הוספה חופשית של מנות או כלים' }}</button>
     <div *ngIf="extrasOpen">
       <p *ngIf="extrasLoading">טוען תוספות...</p>

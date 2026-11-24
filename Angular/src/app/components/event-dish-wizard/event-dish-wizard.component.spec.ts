@@ -220,7 +220,7 @@ describe('EventDishWizardComponent', () => {
     expect(mockEventService.updateEventDish).toHaveBeenCalledWith(1, 5, {serving_mode: 'personal'}, undefined);
     component.setServingMode(5, null);
     expect(mockEventService.updateEventDish).toHaveBeenCalledWith(1, 5, {serving_mode: null}, undefined);
-    component.event = {status: 'מאושר'} as any;
+    component.event = {status: 'הסתיים'} as any;
     component.setServingMode(5, 'central');
     expect(mockEventService.updateEventDish.calls.count()).toBe(2);
   });

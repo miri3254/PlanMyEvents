@@ -176,8 +176,9 @@ class EventCalculationService:
         total = 0.0
         has_cost = False
 
-        # Cost per dish unit × units (user decision 2026-11-23). Gifts are not charged
-        # to the client but are still produced, so they count as cost.
+        # Dish cost is PER PERSON (user decision Q008) → cost × guests. Gifts are not
+        # charged to the client but are still produced, so they count as cost (Q009).
+        guests = event.guest_count or 0
         for event_dish in event.dishes:
             dish = event_dish.dish
             base_price = event_dish.snapshot_base_price
@@ -185,7 +186,7 @@ class EventCalculationService:
                 base_price = dish.base_price
             if base_price is None:
                 continue
-            total += float(base_price) * (event_dish.quantity or 1)
+            total += float(base_price) * guests
             has_cost = True
 
         for tray in event.tray_selections:
@@ -548,23 +549,31 @@ class EventCalculationService:
             ("אורז", "hot", 2 / 6, "מנות / 6 * 2"),
             ("קוגל איטר", "hot", 3 / 6, "מנות / 6 * 3"),
             ("קוגל תפו", "hot", 3 / 6, "מנות / 6 * 3"),
-            ("סיגר", "hot", 2.5 / 6, "מנות / 6 * 2.5"),
             ("פשטיד", "hot", 2.5 / 6, "מנות / 6 * 2.5"),
             ("צולנט", "hot", 2 / 6, "מנות / 6 * 2"),
         ]
         selected: list[tuple[Dish, EventDish, str, float, str]] = []
+        result: list[CalculationRequirement] = []
+        guests = event.guest_count or 1
         for ed in event.dishes:
             dish = self.db.query(Dish).filter(Dish.id == ed.dish_id).first()
             if not dish:
                 continue
             normalized_name = dish.name.replace("׳", "").replace("'", "")
+            if "סיגר" in normalized_name:
+                # Workbook sheet 5 D13 = portions / 2; not part of the hot-group shares (C13 = 0).
+                raw = guests / 2
+                result.append(CalculationRequirement(
+                    source_type="sweet_hot_hot", item_type="product", name=dish.name,
+                    quantity=math.ceil(raw), raw_quantity=raw, unit="יחידות",
+                    formula_label="מנות / 2", details={"source_cell": "D13"},
+                ))
+                continue
             for token, group, weight, formula in definitions:
                 if token in normalized_name:
                     selected.append((dish, ed, group, weight, formula))
                     break
 
-        result: list[CalculationRequirement] = []
-        guests = event.guest_count or 1
         first_total = 0
         for group in ("first", "hot"):
             group_rows = [row for row in selected if row[2] == group]
@@ -579,9 +588,6 @@ class EventCalculationService:
                 equivalent_quantity = math.ceil(raw)
                 quantity = equivalent_quantity
                 details = {"equivalent_quantity": equivalent_quantity, "redistribution_factor": redistribution}
-                if "סיגר" in dish.name:
-                    quantity = math.ceil(equivalent_quantity / 1.5)
-                    details["order_formula"] = "סיגרים להזמנה / 1.5"
                 result.append(CalculationRequirement(
                     source_type=f"sweet_hot_{group}", item_type="product", name=dish.name,
                     quantity=quantity, raw_quantity=raw, unit="יחידות",

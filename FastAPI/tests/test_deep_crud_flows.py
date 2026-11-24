@@ -499,11 +499,12 @@ def test_event_full_crud_with_dishes_trays_calculations_lists_and_pdfs(client):
     assert all(row["is_draft"] is False for row in event["dishes"])
     event = assert_ok(client.patch(f"/api/events/{event_id}/price", json={"final_price": 9999}), 200)
     assert event["final_price"] == 9999
-    # Approved events are frozen: same values pass, real changes need draft first.
+    # Approved events are editable with a warning (Q045); prices stay as approved.
     assert_ok(client.put(f"/api/events/{event_id}", json={"guest_count": 90, "notes": "same guests ok"}), 200)
-    assert client.put(f"/api/events/{event_id}", json={"guest_count": 95}).status_code == 400
-    assert client.post(f"/api/events/{event_id}/dishes", json={"dish_id": dish["id"], "quantity": 1}).status_code == 400
-    assert client.put(f"/api/events/{event_id}/trays/{tray['id']}", json={"tray_count": 4}).status_code == 400
+    edited = assert_ok(client.put(f"/api/events/{event_id}", json={"guest_count": 95}), 200)
+    assert any("מאושר" in w for w in edited["warnings"])
+    assert edited["has_calculation_snapshot"] is True
+    assert_ok(client.put(f"/api/events/{event_id}/trays/{tray['id']}", json={"tray_count": 4}), 200)
 
     summary = assert_ok(
         client.put(
@@ -549,7 +550,6 @@ def test_event_full_crud_with_dishes_trays_calculations_lists_and_pdfs(client):
         assert "application/pdf" in pdf_response.headers.get("content-type", "")
         assert len(pdf_response.content) > 100
 
-    assert client.delete(f"/api/events/{event_id}/trays/{tray['id']}").status_code == 400
     event = assert_ok(client.patch(f"/api/events/{event_id}/status", json={"status": EventStatus.DRAFT.value}), 200)
     assert event["has_calculation_snapshot"] is False
     assert all(row["is_draft"] is True and row["snapshot_base_price"] is None for row in event["dishes"])

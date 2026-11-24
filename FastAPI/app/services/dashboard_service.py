@@ -165,11 +165,11 @@ class DashboardService:
             if not dish:
                 continue
             
-            quantity = event_dish.quantity or 1
-            
-            # Use dish base_price as cost if available
+            quantity = event_dish.quantity or 1  # dish units (recipe yield units)
+
+            # Dish base_price is cost PER PERSON (user decision Q008).
             if dish.base_price:
-                total_cost += dish.base_price * quantity
+                total_cost += dish.base_price * (event.guest_count or 0)
             else:
                 # Calculate from ingredients
                 for ingredient in dish.ingredients:
