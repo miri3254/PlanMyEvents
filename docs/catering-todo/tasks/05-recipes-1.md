@@ -1,6 +1,7 @@
 # 05 — קליטה ובדיקת קובץ מתכונים 1
 
-מצב: לביצוע / בדיקת פערים. לא מומש במסגרת הכנת הרשימה.
+מצב: בוצע חלקית / נדרשת השלמת נתוני מקור.
+Outcome 2026-11-25: Read the supplied `(1).docx` in full; 17 source-1 recipe/variant/subrecipe records staged in local ignored `מתכונים/recipe-json-2026-11-24/dishes.json`. The first 100 approved records from the shared bundle were imported into the local catalogue with linked products, preserving unknown quantities, alternatives and yields. Editable cup/spoon conversion defaults are now available for costing; a per-person dish cost remains unset whenever the source does not state a guest-serving yield or a complete ingredient amount. Existing-catalogue reconciliation remains open.
 
 מקור לצירוף: [© מתכונים 1  קיטרינג גינסברגר  ©.docx](<C:/Users/User/Desktop/Downloads/© מתכונים 1  קיטרינג גינסברגר  ©.docx>)
 

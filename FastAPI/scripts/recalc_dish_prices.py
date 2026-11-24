@@ -1,138 +1,168 @@
-import logging
-import pathlib
+"""Safely calculate missing dish costs from linked product prices.
+
+The stored ``Dish.base_price`` is a cost per guest. A dish is priced only
+when every linked recipe ingredient has a quantity, product, price and an
+explicit conversion path to the product's stock unit. The recipe total is
+then divided by its serving size. Existing manual dish prices are protected
+unless ``--overwrite`` is supplied.
+
+Run without arguments for a read-only preview. ``--apply`` first creates a
+SQLite backup, seeds the editable kitchen-measurement defaults, and persists
+only prices that can be calculated completely.
+"""
+from __future__ import annotations
+
+import argparse
+import sqlite3
 import sys
-from typing import Dict, Optional
-
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))
-
-from app.core.database import SessionLocal
-from app.models.dish import Dish, DishIngredient, ServingDish
-from app.models.product import Product
-from app.models.tool import Tool
-from app.models.unit_conversion import UnitConversion
-from app.core.enums import UnitType
-
-logging.basicConfig(level=logging.INFO, format="%(message)s")
+from collections import Counter
+from datetime import datetime
+from pathlib import Path
 
 
-def get_conversion_factor(from_unit: str, to_unit: str, conversions: Dict[tuple, float]) -> Optional[float]:
-    """Get conversion factor between units using cached conversions."""
-    if from_unit == to_unit:
-        return 1.0
-    
-    # Direct conversion
-    if (from_unit, to_unit) in conversions:
-        return conversions[(from_unit, to_unit)]
-    
-    # Through base unit (gram)
-    if (from_unit, 'גרם') in conversions and ('גרם', to_unit) in conversions:
-        return conversions[(from_unit, 'גרם')] * conversions[('גרם', to_unit)]
-    
-    # Through kg
-    if (from_unit, 'ק"ג') in conversions and ('ק"ג', to_unit) in conversions:
-        return conversions[(from_unit, 'ק"ג')] * conversions[('ק"ג', to_unit)]
-    
-    # Complex: from_unit -> gram -> kg -> to_unit
-    if (from_unit, 'גרם') in conversions and ('גרם', 'ק"ג') in conversions:
-        if to_unit == 'ק"ג':
-            return conversions[(from_unit, 'גרם')] * conversions[('גרם', 'ק"ג')]
-    
-    return None
+BASE = Path(__file__).resolve().parents[1]
+if str(BASE) not in sys.path:
+    sys.path.insert(0, str(BASE))
 
 
-def calculate_dish_price(
-    ingredients, 
-    serving_dishes, 
-    product_data: Dict[int, tuple],  # {product_id: (price_per_unit, estimated_price, package_qty, unit)}
-    tool_prices: Dict[int, float],
-    conversions: Dict[tuple, float]
-) -> float:
-    """Calculate dish price with unit conversion."""
-    total = 0.0
-    for ing in ingredients:
-        product_info = product_data.get(ing.product_id)
-        if not product_info:
-            continue
-        
-        price_per_unit, estimated_price, package_qty, product_unit = product_info
-        
-        # Use estimated_price / package_qty as base
-        effective_price = estimated_price or price_per_unit or 0
-        if effective_price == 0:
-            continue
-            
-        package_qty = package_qty or 1
-        price_per_product_unit = effective_price / package_qty
-        
-        # Get ingredient unit
-        ing_unit = ing.unit.value if hasattr(ing.unit, 'value') else ing.unit
-        prod_unit = product_unit.value if hasattr(product_unit, 'value') else product_unit
-        
-        # Convert ingredient quantity to product unit
-        conversion_factor = get_conversion_factor(ing_unit, prod_unit, conversions)
-        
-        if conversion_factor is not None:
-            converted_qty = (ing.quantity or 0) * conversion_factor
-            total += price_per_product_unit * converted_qty
-        else:
-            # Fallback: no conversion, use direct multiplication
-            total += price_per_product_unit * (ing.quantity or 0)
-    
-    for sd in serving_dishes:
-        price = tool_prices.get(sd.tool_id, 0) or 0
-        total += price * (sd.quantity or 0)
-    
-    return round(total, 2)
-
-
-def main():
-    session = SessionLocal()
+def backup_database(engine) -> Path:
+    """Create a recoverable copy before changing the local SQLite database."""
+    source = Path(engine.url.database).resolve()
+    backups = source.parent / "backups"
+    backups.mkdir(exist_ok=True)
+    backup = backups / f"before_calculating_dish_prices_{datetime.now():%Y%m%d_%H%M%S_%f}.db"
+    raw_connection = engine.raw_connection()
     try:
-        # Load unit conversions as dict {(from_unit, to_unit): factor}
-        conversions_raw = session.query(UnitConversion).filter(UnitConversion.is_deleted == False).all()
-        conversions = {}
-        for c in conversions_raw:
-            from_u = c.from_unit.value if hasattr(c.from_unit, 'value') else c.from_unit
-            to_u = c.to_unit.value if hasattr(c.to_unit, 'value') else c.to_unit
-            conversions[(from_u, to_u)] = float(c.factor)
-        
-        # Load products with full info
-        products_raw = session.query(
-            Product.id, 
-            Product.price_per_unit, 
-            Product.estimated_price, 
-            Product.package_quantity,
-            Product.unit
-        ).all()
-        product_data = {
-            p.id: (p.price_per_unit, p.estimated_price, p.package_quantity, p.unit) 
-            for p in products_raw
-        }
-        
-        tools = dict(session.query(Tool.id, Tool.price_per_unit).all())
-
-        updated = 0
-        unchanged = 0
-
-        dishes = session.query(Dish).all()
-        for dish in dishes:
-            ingredients = session.query(DishIngredient).filter(DishIngredient.dish_id == dish.id).all()
-            serving_dishes = session.query(ServingDish).filter(ServingDish.dish_id == dish.id).all()
-
-            new_price = calculate_dish_price(ingredients, serving_dishes, product_data, tools, conversions)
-            if abs((dish.base_price or 0) - new_price) > 0.01:
-                dish.base_price = new_price
-                updated += 1
-                logging.info(f"Updated dish '{dish.name}': {dish.base_price} -> {new_price}")
-            else:
-                unchanged += 1
-
-        session.commit()
-        logging.info(f"Updated {updated} dishes; {unchanged} unchanged.")
+        with sqlite3.connect(backup) as target:
+            raw_connection.driver_connection.backup(target)
     finally:
-        session.close()
+        raw_connection.close()
+    return backup
+
+
+def product_unit_price(product) -> float | None:
+    """Return the price for one of the product's stored units."""
+    if product.price_per_unit is not None:
+        return float(product.price_per_unit)
+    if product.estimated_price is None:
+        return None
+    package_quantity = float(product.package_quantity or 1)
+    if package_quantity <= 0:
+        return None
+    return float(product.estimated_price) / package_quantity
+
+
+def calculate_dish_price(dish, conversion_service) -> tuple[float | None, str | None]:
+    """Calculate one full recipe cost per guest, otherwise give one reason."""
+    if not dish.ingredients:
+        return None, "ללא רכיבים"
+    if dish.serving_size is None or dish.serving_size <= 0:
+        return None, "תפוקה לסועדים חסרה"
+
+    total_recipe_cost = 0.0
+    for ingredient in dish.ingredients:
+        if ingredient.quantity is None or ingredient.unit is None:
+            return None, "כמות או יחידה חסרה"
+        if ingredient.product is None:
+            return None, "מוצר מקושר חסר"
+        unit_price = product_unit_price(ingredient.product)
+        if unit_price is None:
+            return None, "מחיר מוצר חסר"
+        try:
+            converted_quantity, _ = conversion_service.convert(
+                float(ingredient.quantity), ingredient.unit, ingredient.product.unit
+            )
+        except Exception:
+            return None, "המרת יחידות חסרה"
+        total_recipe_cost += unit_price * converted_quantity
+
+    return round(total_recipe_cost / float(dish.serving_size), 2), None
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--apply", action="store_true", help="שומר מחירים חדשים לאחר גיבוי")
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="מחשב מחדש גם מחיר עלות קיים (ברירת המחדל שומרת על מחיר ידני)",
+    )
+    args = parser.parse_args()
+
+    from app.core.enums import AuditAction
+    from app.db.engine import engine
+    from app.db.session import SessionLocal
+    from app.models.audit import AuditLog
+    from app.models.dish import Dish
+    from app.services.unit_conversion_service import UnitConversionService
+
+    if engine.dialect.name != "sqlite":
+        raise RuntimeError("הסקריפט מיועד למסד SQLite המקומי בלבד")
+    database = Path(engine.url.database).resolve()
+    if not database.is_relative_to(BASE) or not database.is_file():
+        raise RuntimeError("מסד הנתונים חייב להיות קובץ קיים תחת FastAPI")
+
+    db = SessionLocal()
+    try:
+        backup = None
+        conversion_service = UnitConversionService(db)
+        if args.apply:
+            backup = backup_database(engine)
+            added_conversions = conversion_service.seed_system_conversions()
+        else:
+            added_conversions = 0
+
+        dishes = (
+            db.query(Dish)
+            .filter(Dish.is_deleted.is_(False))
+            .order_by(Dish.id)
+            .all()
+        )
+        calculated: list[tuple[Dish, float]] = []
+        skipped = Counter()
+        for dish in dishes:
+            if dish.base_price is not None and not args.overwrite:
+                skipped["מחיר קיים נשמר"] += 1
+                continue
+            price, reason = calculate_dish_price(dish, conversion_service)
+            if price is None:
+                skipped[reason or "לא חושב"] += 1
+                continue
+            calculated.append((dish, price))
+
+        if not args.apply:
+            print(f"תצוגה בלבד: ניתן לחשב {len(calculated)} מחירי עלות מתוך {len(dishes)} מנות.")
+            if skipped:
+                print("לא חושבו: " + ", ".join(f"{reason} ({count})" for reason, count in sorted(skipped.items())))
+            print("להחלה לאחר גיבוי: python scripts/recalc_dish_prices.py --apply")
+            return
+
+        for dish, price in calculated:
+            previous_price = dish.base_price
+            dish.base_price = price
+            db.add(AuditLog(
+                entity_type="dish",
+                entity_id=dish.id,
+                action=AuditAction.UPDATED.value,
+                details={"source": "recipe_cost_calculation", "previous_base_price": previous_price, "base_price": price},
+            ))
+        db.commit()
+        with engine.connect() as connection:
+            integrity = connection.exec_driver_sql("PRAGMA quick_check").scalar_one()
+        if integrity != "ok":
+            raise RuntimeError(f"בדיקת שלמות המסד נכשלה: {integrity}")
+
+        print(
+            f"עודכנו {len(calculated)} מחירי עלות; נוספו {added_conversions} המרות ניתנות לעריכה. "
+            f"גיבוי: {backup}"
+        )
+        if skipped:
+            print("לא חושבו: " + ", ".join(f"{reason} ({count})" for reason, count in sorted(skipped.items())))
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":

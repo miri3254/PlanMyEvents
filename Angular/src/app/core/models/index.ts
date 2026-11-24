@@ -20,9 +20,10 @@ export interface DishIngredient {
   id?: number;
   productId?: number;
   productName?: string;
-  quantity: number;
-  unit: string;
+  quantity: number | null;
+  unit: string | null;
   isServingComponent: boolean;
+  note?: string | null;
 }
 
 export interface ServingDish {
@@ -51,7 +52,10 @@ export interface Dish {
   kosherType: KosherType;
   basePrice?: number;
   clientPrice?: number;
-  servingSize: number;
+  servingSize: number | null;
+  yieldQuantity?: number | null;
+  yieldUnit?: string | null;
+  notes?: string | null;
   servingDescription?: string;
   waiterNotes?: string;
   isActive: boolean;

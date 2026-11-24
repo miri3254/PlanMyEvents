@@ -15,11 +15,11 @@ export const KOSHER_TYPES = ['פרווה', 'בשרי', 'חלבי'] as const;
 export type KosherType = typeof KOSHER_TYPES[number];
 
 // קטגוריות מוצרים (ProductCategory) - תואם app/core/enums.py
-export const PRODUCT_CATEGORIES = ['מוצרי חלב', 'מוצרי בשר', 'קטניות', 'שתיה', 'נוזלים', 'מוצרים יבשים', 'קפואים'] as const;
+export const PRODUCT_CATEGORIES = ['ירקות', 'בצק', 'ירקות עלים ועשבי תיבול', 'פירות', 'קטניות', 'דגנים', 'פסטה וקמחים', 'מוצרים יבשים', 'ביצים', 'מוצרי בשר ועוף', 'דגים', 'מוצרי חלב', 'שמנים ושומנים', 'תבלינים ואבקות מרק', 'רטבים ממרחים', 'שימורים', 'אגוזים זרעים ופירות יבשים', 'אפייה קינוחים וממתיקים', 'נוזלים', 'שתיה', 'קפואים'] as const;
 export type ProductCategory = typeof PRODUCT_CATEGORIES[number];
 
 // יחידות מידה (UnitType) - תואם app/core/enums.py
-export const UNIT_TYPES = ['ק"ג', 'גרם', 'מ"ג', 'ליטר', 'מ"ל', 'יחידות', 'אריזה', 'מגש', 'כוס', 'כף', 'כפית', 'קורט', 'חבילה'] as const;
+export const UNIT_TYPES = ['ק"ג', 'גרם', 'מ"ג', 'ליטר', 'מ"ל', 'יחידות', 'אריזה', 'מגש', 'כוס', 'כף', 'כפית', 'קורט', 'חבילה', 'שן', 'קופסה', 'שקית', 'בקבוק', 'צרור', 'גבעול', 'סלסלה', 'שרוול'] as const;
 export type UnitType = typeof UNIT_TYPES[number];
 
 // קטגוריות כלים (ToolCategory) - תואם app/core/enums.py

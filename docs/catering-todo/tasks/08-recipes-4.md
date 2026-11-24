@@ -1,6 +1,7 @@
 # 08 — קליטה ובדיקת קובץ מתכונים 4
 
 מצב: לביצוע / בדיקת פערים. לא מומש במסגרת הכנת הרשימה.
+Outcome 2026-11-24: Read the supplied `(1).docx` in full; 66 source-4 recipe/variant/subrecipe records staged in local ignored `מתכונים/recipe-json-2026-11-24/dishes.json`. Shared bundle: 217 products, 160 recipe records, 34 artifact checks passed (`validation.json`). Unknown quantities, alternatives and yields retained; no DB import, existing-catalogue reconciliation or runtime changes; import task remains open.
 
 מקור לצירוף: [© מתכונים 4 קיטרינג גינסברגר  ©.docx](<C:/Users/User/Desktop/Downloads/© מתכונים 4 קיטרינג גינסברגר  ©.docx>)
 

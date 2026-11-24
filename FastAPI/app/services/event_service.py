@@ -653,6 +653,8 @@ class EventService:
             for ing in dish.ingredients:
                 if not ing.product_id:
                     continue
+                if ing.quantity is None or ing.unit is None:
+                    continue  # amount missing in the recipe — nothing to deduct/reserve
                 # A calculation rule replaced this ingredient (e.g. with a prepared product);
                 # its quantity already comes from calc product_requirements below.
                 if ing.product_id in replaced_product_ids:
@@ -891,6 +893,8 @@ class EventService:
             for ing in dish.ingredients:
                 if not ing.product_id:
                     continue
+                if ing.quantity is None or ing.unit is None:
+                    continue  # amount missing in the recipe — nothing to deduct/reserve
                 if ing.product_id in replaced_product_ids:
                     continue
 
@@ -1035,6 +1039,8 @@ class EventService:
             for ing in dish.ingredients:
                 if ing.product_id and ing.product_id in replaced_product_ids:
                     continue
+                if ing.quantity is None or ing.unit is None:
+                    continue  # amount missing in the recipe (flagged in Dish.notes)
                 # Group by product when linked (ingredient rows usually have no free-text name).
                 key = f"product:{ing.product_id}" if ing.product_id else (ing.name or "ללא שם")
                 if key not in raw_items:

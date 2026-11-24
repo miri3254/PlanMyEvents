@@ -12,9 +12,11 @@ from datetime import datetime
 class DishIngredientCreate(BaseModel):
     product_id: Optional[int] = None
     name: Optional[str] = Field(None, max_length=255)
-    quantity: float = Field(default=1.0, ge=0)
-    unit: str = Field(default="יחידות", max_length=50)
+    # None = missing in the source recipe (kept as an ingredient, flagged in dish notes)
+    quantity: Optional[float] = Field(default=1.0, ge=0)
+    unit: Optional[str] = Field(default="יחידות", max_length=50)
     is_serving_component: bool = False
+    note: Optional[str] = None
 
 
 class DishIngredientUpdate(BaseModel):
@@ -23,15 +25,17 @@ class DishIngredientUpdate(BaseModel):
     quantity: Optional[float] = Field(None, ge=0)
     unit: Optional[str] = Field(None, max_length=50)
     is_serving_component: Optional[bool] = None
+    note: Optional[str] = None
 
 
 class DishIngredientResponse(BaseModel):
     id: int
     product_id: Optional[int] = None
     name: Optional[str] = None
-    quantity: float
-    unit: str
+    quantity: Optional[float] = None
+    unit: Optional[str] = None
     is_serving_component: bool = False
+    note: Optional[str] = None
     product: Optional[Any] = None     # ProductResponse when loaded
 
     model_config = {"from_attributes": True}
@@ -84,7 +88,10 @@ class DishCreate(BaseModel):
     kosher_type: str = Field(default="פרווה")
     base_price: Optional[float] = Field(None, ge=0)
     client_price: Optional[float] = Field(None, ge=0)
-    serving_size: float = Field(default=1.0, ge=0)
+    serving_size: Optional[float] = Field(default=1.0, ge=0)  # guests; None = unknown
+    yield_quantity: Optional[float] = Field(None, ge=0)
+    yield_unit: Optional[str] = Field(None, max_length=100)
+    notes: Optional[str] = None
     serving_description: Optional[str] = None
     waiter_notes: Optional[str] = None
     is_active: bool = True
@@ -99,6 +106,9 @@ class DishUpdate(BaseModel):
     base_price: Optional[float] = Field(None, ge=0)
     client_price: Optional[float] = Field(None, ge=0)
     serving_size: Optional[float] = Field(None, ge=0)
+    yield_quantity: Optional[float] = Field(None, ge=0)
+    yield_unit: Optional[str] = Field(None, max_length=100)
+    notes: Optional[str] = None
     serving_description: Optional[str] = None
     waiter_notes: Optional[str] = None
     is_active: Optional[bool] = None
@@ -115,7 +125,10 @@ class DishResponse(BaseModel):
     kosher_type: str = "פרווה"
     base_price: Optional[float] = None
     client_price: Optional[float] = None
-    serving_size: float = 1.0
+    serving_size: Optional[float] = None
+    yield_quantity: Optional[float] = None
+    yield_unit: Optional[str] = None
+    notes: Optional[str] = None
     serving_description: Optional[str] = None
     waiter_notes: Optional[str] = None
     is_active: bool = True
@@ -144,8 +157,9 @@ class DishResponse(BaseModel):
                 product_id=i.product_id,
                 name=i.name,
                 quantity=i.quantity,
-                unit=i.unit.value if hasattr(i.unit, "value") else str(i.unit),
+                unit=(i.unit.value if hasattr(i.unit, "value") else str(i.unit)) if i.unit is not None else None,
                 is_serving_component=i.is_serving_component,
+                note=i.note,
                 product=prod,
             ))
 
@@ -199,6 +213,9 @@ class DishResponse(BaseModel):
             base_price=dish.base_price,
             client_price=dish.client_price,
             serving_size=dish.serving_size,
+            yield_quantity=dish.yield_quantity,
+            yield_unit=dish.yield_unit,
+            notes=dish.notes,
             serving_description=dish.serving_description,
             waiter_notes=dish.waiter_notes,
             is_active=dish.is_active,

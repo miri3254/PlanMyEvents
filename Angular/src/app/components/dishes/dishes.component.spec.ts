@@ -180,6 +180,14 @@ describe('DishesComponent', () => {
     expect(result).toBeNull();
   });
 
+  it('should convert through an editable multi-step path', () => {
+    component.unitConversions = [
+      { id: 1, fromUnit: 'כפית', toUnit: 'מ"ל', factor: 5, isSystem: false },
+      { id: 2, fromUnit: 'מ"ל', toUnit: 'ליטר', factor: 0.001, isSystem: true },
+    ] as any;
+    expect(component.convertUnits(2, 'כפית', 'ליטר')).toBe(0.01);
+  });
+
   it('should translate menu type to Hebrew', () => {
     expect(component.getMenuTypeHebrew('meat')).toBe('תפריט בשרי');
     expect(component.getMenuTypeHebrew('milk')).toBe('תפריט חלבי');

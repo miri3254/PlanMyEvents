@@ -27,6 +27,31 @@ EVENT_CATEGORY_DEFAULTS = [
     "מגשי אירוח",
 ]
 
+# Yield containers seen in the caterer's recipes (2026-11-24). Placeholder list until the
+# caterer confirms sizes; editable in settings (lookup "dish_yield_units").
+DISH_YIELD_UNIT_DEFAULTS = [
+    "גסטרונום",
+    "מגש שחור זהב קטן",
+    "מגש שחור זהב גדול",
+    "מגש קטן",
+    "מגש גדול",
+    "תבנית גדולה חד פעמית",
+    "קערה 2.5 ליטר",
+    "קערת מגשי אירוח",
+    "כלי רוטב למגשי אירוח",
+    "ליטר",
+    'ק"ג',
+    "יחידות",
+    "חצאים",
+    "קוביות",
+    "מלבנים קטנים",
+    "כוסות קטנות",
+    "כוסות שוט",
+    "רולדות",
+    "שקיות",
+    "מנות",
+]
+
 
 class LookupValuePayload(BaseModel):
     value: str = Field(min_length=1, max_length=255)
@@ -44,6 +69,7 @@ def _default_values(db: Session) -> dict[str, list[str]]:
         "event_statuses": [item.value for item in EventStatus],
         "tool_categories": [item.value for item in ToolCategory],
         "tool_sub_categories": [item.value for item in ToolSubCategory],
+        "dish_yield_units": DISH_YIELD_UNIT_DEFAULTS,
     }
 
 

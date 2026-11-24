@@ -596,6 +596,14 @@ def test_lookup_and_unit_conversion_crud_edges(client):
         200,
     )
     assert calculated["convertedValue"] == 24
+    spoon_to_liter = assert_ok(
+        client.post(
+            "/api/unit-conversions/calculate",
+            json={"value": 2, "from_unit": UnitType.TEASPOON.value, "to_unit": UnitType.LITER.value},
+        ),
+        200,
+    )
+    assert spoon_to_liter["convertedValue"] == 0.01
     conversion = assert_ok(client.put(f"/api/unit-conversions/{conversion['id']}", json={"factor": 10}), 200)
     assert conversion["factor"] == 10
     assert_ok(client.delete(f"/api/unit-conversions/{conversion['id']}"), 200)

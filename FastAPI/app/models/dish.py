@@ -28,7 +28,12 @@ class Dish(BaseModel):
     client_price = Column(Float, nullable=True)       # price shown to client
 
     # Serving
-    serving_size = Column(Float, default=1.0, nullable=False)  # serves N guests
+    serving_size = Column(Float, nullable=True)  # serves N guests; NULL = not yet known
+    # Recipe yield as the caterer counts it (2026-11-24): e.g. 2 × "גסטרונום".
+    # yield_unit is free text chosen from lookup "dish_yield_units" (editable in settings).
+    yield_quantity = Column(Float, nullable=True)
+    yield_unit = Column(String(100), nullable=True)
+    notes = Column(Text, nullable=True)  # internal recipe notes (e.g. missing quantities)
     serving_description = Column(Text, nullable=True)
     waiter_notes = Column(Text, nullable=True)
 
@@ -60,8 +65,9 @@ class DishIngredient(BaseModel):
     dish_id = Column(Integer, ForeignKey("dishes.id", ondelete="CASCADE"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id", ondelete="SET NULL"), nullable=True)
     name = Column(String(255), nullable=True)          # free-text name if no product
-    quantity = Column(Float, default=1.0, nullable=False)
-    unit = Column(SAEnum(UnitType), default=UnitType.UNIT, nullable=False)
+    quantity = Column(Float, nullable=True)  # NULL = amount missing in the source recipe
+    unit = Column(SAEnum(UnitType), nullable=True)  # NULL = unit missing in the source recipe
+    note = Column(Text, nullable=True)  # e.g. original recipe line / alternative
     is_serving_component = Column(Boolean, default=False, nullable=False)
 
     # relationships
