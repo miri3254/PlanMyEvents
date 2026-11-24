@@ -34,6 +34,20 @@ class DishService:
     def _response(self, dish: Dish) -> dict:
         return DishResponse.from_model(dish).model_dump()
 
+    def _sync_kosher_type(self, dish: Dish) -> None:
+        """Derive a dish's kosher type from its linked products."""
+        ingredient_types = {
+            ingredient.product.kosher_type.value
+            for ingredient in dish.ingredients
+            if ingredient.product is not None
+        }
+        if "בשרי" in ingredient_types and "חלבי" not in ingredient_types:
+            dish.kosher_type = "בשרי"
+        elif "חלבי" in ingredient_types and "בשרי" not in ingredient_types:
+            dish.kosher_type = "חלבי"
+        elif not ingredient_types or ingredient_types == {"פרווה"}:
+            dish.kosher_type = "פרווה"
+
     # ── LIST / GET ────────────────────────────────────────────────────
 
     def get_dishes(self, **kwargs) -> tuple[list[dict], int]:
@@ -56,6 +70,8 @@ class DishService:
             for ing_data in data.ingredients:
                 ing = DishIngredient(dish_id=db_dish.id, **ing_data.model_dump())
                 self.repo.add_ingredient(ing)
+
+        self._sync_kosher_type(db_dish)
 
         if data.serving_dishes:
             for sd_data in data.serving_dishes:
@@ -90,6 +106,8 @@ class DishService:
         self._get_or_404(dish_id)
         ing = DishIngredient(dish_id=dish_id, **data.model_dump())
         self.repo.add_ingredient(ing)
+        self.db.flush()
+        self._sync_kosher_type(self._get_or_404(dish_id))
         self.db.commit()
         return self._response(self.repo.get_with_relations(dish_id))
 
@@ -101,6 +119,8 @@ class DishService:
         for k, v in data.model_dump(exclude_unset=True).items():
             if hasattr(ing, k):
                 setattr(ing, k, v)
+        self.db.flush()
+        self._sync_kosher_type(dish)
         self.db.commit()
         return self._response(self.repo.get_with_relations(dish_id))
 
@@ -110,6 +130,8 @@ class DishService:
         if not ing:
             raise AppException(404, "מרכיב לא נמצא")
         self.repo.delete_ingredient(ing)
+        self.db.flush()
+        self._sync_kosher_type(dish)
         self.db.commit()
         return {"success": True, "message": "המרכיב הוסר בהצלחה"}
 
